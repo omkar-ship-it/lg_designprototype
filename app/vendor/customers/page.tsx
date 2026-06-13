@@ -40,13 +40,26 @@ const BADGE: Record<Segment, { label: string; className: string }> = {
   inactive: { label: 'Inactive', className: 'bg-gray-100 text-gray-500 border border-gray-200' },
 }
 
+// ── Visit-window filter ───────────────────────────────────────────────────────
+type VisitWindow = 'all' | '7d' | '30d' | '3m' | '1y'
+
+const VISIT_WINDOWS: { key: VisitWindow; label: string; days: number | null }[] = [
+  { key: 'all', label: 'All time',  days: null },
+  { key: '7d',  label: '7 Days',    days: 7    },
+  { key: '30d', label: 'Month',     days: 30   },
+  { key: '3m',  label: '3 Months',  days: 90   },
+  { key: '1y',  label: 'Year',      days: 365  },
+]
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function CustomersPage() {
-  const [search,  setSearch]  = useState('')
-  const [segment, setSegment] = useState<Segment | 'all'>('all')
+  const [search,      setSearch]      = useState('')
+  const [segment,     setSegment]     = useState<Segment | 'all'>('all')
+  const [visitWindow, setVisitWindow] = useState<VisitWindow>('all')
 
   const withSegments = customers.map(c => ({ ...c, segment: getSegment(c) }))
 
+  // Segment counts are always based on full data (not affected by visit window)
   const counts: Record<Segment | 'all', number> = {
     all:      withSegments.length,
     loyalist: withSegments.filter(c => c.segment === 'loyalist').length,
@@ -55,12 +68,17 @@ export default function CustomersPage() {
     inactive: withSegments.filter(c => c.segment === 'inactive').length,
   }
 
+  const windowDays = VISIT_WINDOWS.find(w => w.key === visitWindow)?.days ?? null
+
   const filtered = withSegments.filter(c => {
-    const matchSeg = segment === 'all' || c.segment === segment
-    const q = search.toLowerCase()
+    const matchSeg    = segment === 'all' || c.segment === segment
+    const q           = search.toLowerCase()
     const matchSearch = !q || c.name.toLowerCase().includes(q) || c.phone.includes(q)
-    return matchSeg && matchSearch
+    const matchVisit  = windowDays === null || daysSince(c.lastVisit) <= windowDays
+    return matchSeg && matchSearch && matchVisit
   })
+
+  const isFiltered = segment !== 'all' || visitWindow !== 'all' || search.length > 0
 
   const winRate = (c: Customer) =>
     c.gamesPlayed > 0 ? Math.round((c.rewardsEarned / c.gamesPlayed) * 100) : 0
@@ -69,7 +87,9 @@ export default function CustomersPage() {
     <div className="p-8 max-w-5xl">
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-2xl font-extrabold text-v-text">Customers</h1>
-        <p className="text-v-text-2 text-sm mt-1">{customers.length} registered</p>
+        <p className="text-v-text-2 text-sm mt-1">
+          {isFiltered ? `${filtered.length} of ${customers.length}` : customers.length} registered
+        </p>
       </motion.div>
 
       {/* Segment filter tabs */}
@@ -98,22 +118,54 @@ export default function CustomersPage() {
         })}
       </motion.div>
 
-      {/* Search */}
-      <div className="relative mb-5">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-v-text-3" />
-        <input
-          type="text"
-          placeholder="Search by name or phone…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full bg-v-surface border border-v-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple transition-all max-w-sm"
-        />
-      </div>
+      {/* Search + visit filter on one row */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
+        className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="relative flex-1 min-w-48 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-v-text-3" />
+          <input
+            type="text"
+            placeholder="Search by name or phone…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-v-surface border border-v-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple transition-all"
+          />
+        </div>
+
+        {/* Visit-window filter */}
+        <div className="flex items-center gap-1 bg-v-surface-2 border border-v-border rounded-xl p-1 shrink-0">
+          <span className="text-[10px] text-v-text-3 font-semibold px-2 hidden sm:block">Visited in</span>
+          {VISIT_WINDOWS.map(w => (
+            <button key={w.key} onClick={() => setVisitWindow(w.key)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${visitWindow === w.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-3 hover:text-v-text-2'}`}>
+              {w.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Clear all filters */}
+        {isFiltered && (
+          <button onClick={() => { setSegment('all'); setVisitWindow('all'); setSearch('') }}
+            className="text-xs text-v-purple font-semibold hover:underline shrink-0">
+            Clear filters
+          </button>
+        )}
+      </motion.div>
 
       {/* List */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-v-text-3 text-sm">No customers match this filter.</div>
+          <div className="text-center py-12">
+            <div className="text-4xl mb-3">🔍</div>
+            <p className="text-sm font-semibold text-v-text-2">No customers match</p>
+            <p className="text-xs text-v-text-3 mt-1">Try a different segment or visit window</p>
+            {isFiltered && (
+              <button onClick={() => { setSegment('all'); setVisitWindow('all'); setSearch('') }}
+                className="mt-3 text-xs text-v-purple font-semibold hover:underline">
+                Clear all filters
+              </button>
+            )}
+          </div>
         )}
         {filtered.map((c, i) => {
           const badge = BADGE[c.segment]
