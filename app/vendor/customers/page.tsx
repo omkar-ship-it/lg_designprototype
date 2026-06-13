@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Search, Crown, TrendingUp, Clock, Users, Activity, Gift, Gamepad2, AlertTriangle } from 'lucide-react'
+import { Search, Crown, TrendingUp, Clock, Users, Activity, Gift, Gamepad2, CheckCircle2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { customers } from '@/lib/mock-data'
 import { formatRelativeTime } from '@/lib/utils'
@@ -83,20 +83,24 @@ export default function CustomersPage() {
   const winRate = (c: Customer) =>
     c.gamesPlayed > 0 ? Math.round((c.rewardsEarned / c.gamesPlayed) * 100) : 0
 
-  // ── Summary stats (across ALL customers, unaffected by filters) ───────────────
-  const totalCheckIns    = customers.reduce((s, c) => s + c.totalVisits, 0)
-  const activeThisMonth  = withSegments.filter(c => daysSince(c.lastVisit) <= 30).length
-  const totalGames       = customers.reduce((s, c) => s + c.gamesPlayed, 0)
-  const totalRewards     = customers.reduce((s, c) => s + c.rewardsEarned, 0)
-  const atRiskCount      = withSegments.filter(c => c.segment === 'at-risk' || c.segment === 'inactive').length
+  // ── Summary stats — scoped to the selected visit window ───────────────────────
+  const windowCohort = customers.filter(c =>
+    windowDays === null || daysSince(c.lastVisit) <= windowDays
+  )
+  const statTotalCustomers = windowCohort.length
+  const statCheckIns       = windowCohort.reduce((s, c) => s + c.totalVisits, 0)
+  const statGames          = windowCohort.reduce((s, c) => s + c.gamesPlayed, 0)
+  const statRewards        = windowCohort.reduce((s, c) => s + c.rewardsEarned, 0)
+  const statRedeemed       = windowCohort.reduce(
+    (s, c) => s + c.rewards.filter(r => r.status === 'redeemed').length, 0
+  )
 
   const SUMMARY = [
-    { label: 'Total Customers',   value: customers.length,  icon: <Users className="w-4 h-4" />,        color: 'text-v-purple',    bg: 'bg-purple-50',  border: 'border-purple-100' },
-    { label: 'Total Check-ins',   value: totalCheckIns,     icon: <Activity className="w-4 h-4" />,     color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-100' },
-    { label: 'Active This Month', value: activeThisMonth,   icon: <TrendingUp className="w-4 h-4" />,   color: 'text-green-600',   bg: 'bg-green-50',   border: 'border-green-100' },
-    { label: 'Games Played',      value: totalGames,        icon: <Gamepad2 className="w-4 h-4" />,     color: 'text-indigo-600',  bg: 'bg-indigo-50',  border: 'border-indigo-100' },
-    { label: 'Rewards Earned',    value: totalRewards,      icon: <Gift className="w-4 h-4" />,         color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-100' },
-    { label: 'Need Attention',    value: atRiskCount,       icon: <AlertTriangle className="w-4 h-4" />, color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-100' },
+    { label: 'Total Customers',      value: statTotalCustomers, icon: <Users className="w-4 h-4" />,         color: 'text-v-purple',   bg: 'bg-purple-50',  border: 'border-purple-100' },
+    { label: 'Total Check-ins',      value: statCheckIns,       icon: <Activity className="w-4 h-4" />,      color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-100' },
+    { label: 'Games Played',         value: statGames,          icon: <Gamepad2 className="w-4 h-4" />,      color: 'text-indigo-600', bg: 'bg-indigo-50',  border: 'border-indigo-100' },
+    { label: 'Rewards Earned',       value: statRewards,        icon: <Gift className="w-4 h-4" />,          color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-100' },
+    { label: 'Redeemed',             value: statRedeemed,       icon: <CheckCircle2 className="w-4 h-4" />,  color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-green-100' },
   ]
 
   return (
@@ -108,12 +112,23 @@ export default function CustomersPage() {
         </p>
       </motion.div>
 
+      {/* Visit-window filter — drives stat cards + list */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.03 }}
+        className="flex items-center gap-1 bg-v-surface-2 border border-v-border rounded-xl p-1 w-fit mb-5">
+        {VISIT_WINDOWS.map(w => (
+          <button key={w.key} onClick={() => setVisitWindow(w.key)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${visitWindow === w.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-3 hover:text-v-text-2'}`}>
+            {w.label}
+          </button>
+        ))}
+      </motion.div>
+
       {/* Summary stat cards */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.04 }}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-7"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-7"
       >
         {SUMMARY.map((s, i) => (
           <motion.div
@@ -159,7 +174,7 @@ export default function CustomersPage() {
         })}
       </motion.div>
 
-      {/* Search + visit filter on one row */}
+      {/* Search row */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
         className="flex items-center gap-3 mb-5 flex-wrap">
         <div className="relative flex-1 min-w-48 max-w-sm">
@@ -171,17 +186,6 @@ export default function CustomersPage() {
             onChange={e => setSearch(e.target.value)}
             className="w-full bg-v-surface border border-v-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple transition-all"
           />
-        </div>
-
-        {/* Visit-window filter */}
-        <div className="flex items-center gap-1 bg-v-surface-2 border border-v-border rounded-xl p-1 shrink-0">
-          <span className="text-[10px] text-v-text-3 font-semibold px-2 hidden sm:block">Visited in</span>
-          {VISIT_WINDOWS.map(w => (
-            <button key={w.key} onClick={() => setVisitWindow(w.key)}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${visitWindow === w.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-3 hover:text-v-text-2'}`}>
-              {w.label}
-            </button>
-          ))}
         </div>
 
         {/* Clear all filters */}
