@@ -26,6 +26,7 @@ export interface Campaign {
   pinExpiresAt: number
   participations: number
   rewardsClaimed: number
+  redeemedCount: number
   createdAt: string
 }
 

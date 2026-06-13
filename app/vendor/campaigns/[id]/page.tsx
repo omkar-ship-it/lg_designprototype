@@ -2,8 +2,8 @@
 import { use } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Pencil } from 'lucide-react'
-import { Card, StatCard, ProgressBar } from '@/components/ui/card'
+import { ArrowLeft, Calendar, Pencil } from 'lucide-react'
+import { Card, ProgressBar } from '@/components/ui/card'
 import { MechanicBadge, StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LivePIN } from '@/components/vendor/live-pin'
@@ -11,15 +11,65 @@ import { RedemptionQueue } from '@/components/vendor/redemption-queue'
 import { campaigns, customers } from '@/lib/mock-data'
 import { getMechanicEmoji, formatDate, formatRelativeTime, capPercent } from '@/lib/utils'
 
+const METRICS = [
+  {
+    key: 'engagement',
+    label: 'Engagement Rate',
+    icon: '👥',
+    color: '#7C3AED',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    accent: '#7C3AED',
+  },
+  {
+    key: 'win',
+    label: 'Win Rate',
+    icon: '🎯',
+    color: '#16A34A',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
+    accent: '#16A34A',
+  },
+  {
+    key: 'redemption',
+    label: 'Redemption Rate',
+    icon: '✅',
+    color: '#D97706',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    accent: '#D97706',
+  },
+]
+
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const campaign = campaigns.find(c => c.id === id) ?? campaigns[0]
+
   const campaignCustomers = customers.filter(c =>
     c.gameHistory.some(g => g.campaignId === campaign.id)
   )
-  const redemptionRate = campaign.participations
-    ? Math.round((campaign.rewardsClaimed / campaign.participations) * 100)
-    : 0
+
+  const engRate = campaign.userCap > 0
+    ? Math.round((campaign.currentUsers / campaign.userCap) * 100) : 0
+  const winRate = campaign.participations > 0
+    ? Math.round((campaign.rewardsClaimed / campaign.participations) * 100) : 0
+  const redRate = campaign.rewardsClaimed > 0
+    ? Math.round((campaign.redeemedCount / campaign.rewardsClaimed) * 100) : 0
+
+  const rateValues: Record<string, { pct: number; sub: string }> = {
+    engagement: {
+      pct: engRate,
+      sub: `${campaign.currentUsers.toLocaleString()} of ${campaign.userCap.toLocaleString()} users`,
+    },
+    win: {
+      pct: winRate,
+      sub: `${campaign.rewardsClaimed.toLocaleString()} wins from ${campaign.participations.toLocaleString()} plays`,
+    },
+    redemption: {
+      pct: redRate,
+      sub: `${campaign.redeemedCount.toLocaleString()} of ${campaign.rewardsClaimed.toLocaleString()} rewards claimed`,
+    },
+  }
 
   return (
     <div className="p-8 max-w-7xl">
@@ -69,13 +119,28 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          {/* Stats */}
+
+          {/* ── 3 Hero Metrics ── */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard label="Total Players" value={campaign.participations} icon="🎮" color="#7C3AED" />
-              <StatCard label="Rewards Given" value={campaign.rewardsClaimed} icon="🎁" color="#F5C518" />
-              <StatCard label="Redemption Rate" value={`${redemptionRate}%`} icon="✅" color="#22C55E" />
-              <StatCard label="Cap Used" value={`${capPercent(campaign.currentUsers, campaign.userCap)}%`} icon="📊" color="#EC4899" sub={`${campaign.currentUsers} / ${campaign.userCap}`} />
+            <div className="grid grid-cols-3 gap-3">
+              {METRICS.map(m => {
+                const { pct, sub } = rateValues[m.key]
+                return (
+                  <div key={m.key} className={`vendor-card p-5 flex flex-col gap-2 ${m.bg} border ${m.border}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{m.icon}</span>
+                      <span className="text-[11px] font-semibold text-v-text-2">{m.label}</span>
+                    </div>
+                    <div className="text-4xl font-black leading-none" style={{ color: m.accent }}>
+                      {pct}%
+                    </div>
+                    <p className="text-[11px] text-v-text-3 leading-snug">{sub}</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-white/60 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: m.accent }} />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </motion.div>
 
@@ -132,7 +197,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Right col — PIN + Queue */}
         <div className="space-y-6">
-          {/* Live PIN */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
             <Card className={`p-6 text-center ${campaign.status !== 'active' ? 'opacity-50' : ''}`}>
               <h3 className="text-sm font-bold text-v-text mb-1">Live Staff PIN</h3>
@@ -148,7 +212,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </Card>
           </motion.div>
 
-          {/* Redemption queue */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
             <Card className="p-5">
               <RedemptionQueue />

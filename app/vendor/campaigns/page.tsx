@@ -12,6 +12,13 @@ import { ProgressBar } from '@/components/ui/card'
 import { MechanicBadge, StatusBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicColor, formatDate, capPercent } from '@/lib/utils'
+
+function engagementRate(c: typeof campaigns[0]) {
+  return c.userCap > 0 ? Math.round((c.currentUsers / c.userCap) * 100) : 0
+}
+function redemptionRate(c: typeof campaigns[0]) {
+  return c.rewardsClaimed > 0 ? Math.round((c.redeemedCount / c.rewardsClaimed) * 100) : 0
+}
 import type { CampaignStatus } from '@/lib/types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -99,6 +106,8 @@ function QuickMenu({ id }: { id: string }) {
 // ── List card ─────────────────────────────────────────────────────────────────
 function ListCard({ c }: { c: typeof campaigns[0] }) {
   const wr    = winRate(c)
+  const er    = engagementRate(c)
+  const rr    = redemptionRate(c)
   const dl    = c.status === 'active' ? daysLeft(c.endDate) : null
   const urgent = dl !== null && dl <= 3
   const muted  = c.status === 'ended'
@@ -145,22 +154,22 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
                   )}
                 </div>
 
-                {/* Row 3: stats */}
+                {/* Row 3: key rates */}
                 <div className="flex items-center gap-6 flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3 h-3 text-v-text-3" />
-                    <span className="text-sm font-bold text-v-text">{c.participations.toLocaleString()}</span>
-                    <span className="text-[10px] text-v-text-3">players</span>
+                    <Users className="w-3 h-3 text-v-purple" />
+                    <span className="text-sm font-bold text-v-purple">{er}%</span>
+                    <span className="text-[10px] text-v-text-3">engagement</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <TrendingUp className="w-3 h-3 text-emerald-500" />
+                    <span className="text-sm font-bold text-emerald-600">{wr}%</span>
+                    <span className="text-[10px] text-v-text-3">win rate</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Trophy className="w-3 h-3 text-amber-500" />
-                    <span className="text-sm font-bold text-v-text">{c.rewardsClaimed.toLocaleString()}</span>
-                    <span className="text-[10px] text-v-text-3">rewards</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp className="w-3 h-3 text-v-purple" />
-                    <span className="text-sm font-bold text-v-text">{wr}%</span>
-                    <span className="text-[10px] text-v-text-3">win rate</span>
+                    <span className="text-sm font-bold text-amber-600">{rr}%</span>
+                    <span className="text-[10px] text-v-text-3">redeemed</span>
                   </div>
                   {/* Cap bar */}
                   <div className="flex items-center gap-2 ml-auto hidden sm:flex">
@@ -194,6 +203,8 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
 // ── Grid card ─────────────────────────────────────────────────────────────────
 function GridCard({ c }: { c: typeof campaigns[0] }) {
   const wr    = winRate(c)
+  const er    = engagementRate(c)
+  const rr    = redemptionRate(c)
   const dl    = c.status === 'active' ? daysLeft(c.endDate) : null
   const urgent = dl !== null && dl <= 3
   const muted  = c.status === 'ended'
@@ -244,12 +255,12 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-1.5 mt-auto">
             {[
-              { label: 'Players',   value: c.participations, icon: '👥' },
-              { label: 'Rewards',   value: c.rewardsClaimed, icon: '🎁' },
-              { label: 'Win rate',  value: `${wr}%`,         icon: '🎯' },
+              { label: 'Engage', value: `${er}%`, color: '#7C3AED', bg: 'bg-purple-50', border: 'border-purple-100' },
+              { label: 'Win',    value: `${wr}%`, color: '#16A34A', bg: 'bg-green-50',  border: 'border-green-100'  },
+              { label: 'Redeem', value: `${rr}%`, color: '#D97706', bg: 'bg-amber-50',  border: 'border-amber-100'  },
             ].map(s => (
-              <div key={s.label} className="bg-v-surface-2 border border-v-border rounded-lg p-2 text-center">
-                <div className="text-sm font-bold text-v-text">{s.value}</div>
+              <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg p-2 text-center`}>
+                <div className="text-sm font-bold" style={{ color: s.color }}>{s.value}</div>
                 <div className="text-[9px] text-v-text-3 mt-0.5">{s.label}</div>
               </div>
             ))}
