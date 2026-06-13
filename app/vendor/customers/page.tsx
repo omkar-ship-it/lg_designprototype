@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Search, Crown, TrendingUp, Clock, Users } from 'lucide-react'
+import { Search, Crown, TrendingUp, Clock, Users, Activity, Gift, Gamepad2, AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { customers } from '@/lib/mock-data'
 import { formatRelativeTime } from '@/lib/utils'
@@ -83,13 +83,54 @@ export default function CustomersPage() {
   const winRate = (c: Customer) =>
     c.gamesPlayed > 0 ? Math.round((c.rewardsEarned / c.gamesPlayed) * 100) : 0
 
+  // ── Summary stats (across ALL customers, unaffected by filters) ───────────────
+  const totalCheckIns    = customers.reduce((s, c) => s + c.totalVisits, 0)
+  const activeThisMonth  = withSegments.filter(c => daysSince(c.lastVisit) <= 30).length
+  const totalGames       = customers.reduce((s, c) => s + c.gamesPlayed, 0)
+  const totalRewards     = customers.reduce((s, c) => s + c.rewardsEarned, 0)
+  const atRiskCount      = withSegments.filter(c => c.segment === 'at-risk' || c.segment === 'inactive').length
+
+  const SUMMARY = [
+    { label: 'Total Customers',   value: customers.length,  icon: <Users className="w-4 h-4" />,        color: 'text-v-purple',    bg: 'bg-purple-50',  border: 'border-purple-100' },
+    { label: 'Total Check-ins',   value: totalCheckIns,     icon: <Activity className="w-4 h-4" />,     color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-100' },
+    { label: 'Active This Month', value: activeThisMonth,   icon: <TrendingUp className="w-4 h-4" />,   color: 'text-green-600',   bg: 'bg-green-50',   border: 'border-green-100' },
+    { label: 'Games Played',      value: totalGames,        icon: <Gamepad2 className="w-4 h-4" />,     color: 'text-indigo-600',  bg: 'bg-indigo-50',  border: 'border-indigo-100' },
+    { label: 'Rewards Earned',    value: totalRewards,      icon: <Gift className="w-4 h-4" />,         color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-100' },
+    { label: 'Need Attention',    value: atRiskCount,       icon: <AlertTriangle className="w-4 h-4" />, color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-100' },
+  ]
+
   return (
     <div className="p-8 max-w-5xl">
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <h1 className="text-2xl font-extrabold text-v-text">Customers</h1>
         <p className="text-v-text-2 text-sm mt-1">
           {isFiltered ? `${filtered.length} of ${customers.length}` : customers.length} registered
         </p>
+      </motion.div>
+
+      {/* Summary stat cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.04 }}
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-7"
+      >
+        {SUMMARY.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 + i * 0.04 }}
+          >
+            <Card className={`p-4 border ${s.border} ${s.bg} flex flex-col gap-2`}>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-white shadow-sm ${s.color}`}>
+                {s.icon}
+              </div>
+              <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+              <div className="text-[11px] font-medium text-v-text-3 leading-tight">{s.label}</div>
+            </Card>
+          </motion.div>
+        ))}
       </motion.div>
 
       {/* Segment filter tabs */}
