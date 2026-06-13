@@ -12,8 +12,8 @@ export function Card({ children, className, hover, onClick }: CardProps) {
     <div
       onClick={onClick}
       className={cn(
-        'bg-v-surface border border-v-border rounded-2xl',
-        hover && 'hover:border-v-border-b hover:bg-v-surface-2 transition-all duration-200 cursor-pointer',
+        'vendor-card',
+        hover && 'vendor-card-hover transition-all duration-200 cursor-pointer',
         onClick && 'cursor-pointer',
         className,
       )}
@@ -43,12 +43,12 @@ export function StatCard({
       <div className="flex items-start justify-between mb-3">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-          style={{ background: `${color}18`, border: `1px solid ${color}30` }}
+          style={{ background: `${color}12`, border: `1px solid ${color}25` }}
         >
           {icon}
         </div>
         {trend && (
-          <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', trend.up ? 'text-v-success bg-v-success/10' : 'text-v-danger bg-v-danger/10')}>
+          <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', trend.up ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50')}>
             {trend.up ? '↑' : '↓'} {trend.value}
           </span>
         )}

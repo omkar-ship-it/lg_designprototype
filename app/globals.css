@@ -1,24 +1,33 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* ── Vendor palette ── */
-  --color-v-bg:        #08071A;
-  --color-v-surface:   #100E2B;
-  --color-v-surface-2: #1A1840;
-  --color-v-surface-3: #242055;
-  --color-v-border:    #2A2660;
-  --color-v-border-b:  #4A44A0;
+  /* ── Vendor palette — LIGHT ── */
+  --color-v-bg:        #F5F4FF;
+  --color-v-surface:   #FFFFFF;
+  --color-v-surface-2: #F4F2FF;
+  --color-v-surface-3: #EDE9FF;
+  --color-v-border:    #E5E1F8;
+  --color-v-border-b:  #C4B8FF;
   --color-v-purple:    #7C3AED;
   --color-v-purple-l:  #9D6FF0;
   --color-v-purple-d:  #5B21B6;
-  --color-v-gold:      #F5C518;
-  --color-v-gold-d:    #D4A815;
-  --color-v-text:      #F0EFFF;
-  --color-v-text-2:    #9B93C8;
-  --color-v-text-3:    #5B5897;
-  --color-v-success:   #22C55E;
-  --color-v-danger:    #F43F5E;
-  --color-v-warning:   #F59E0B;
+  --color-v-gold:      #D97706;
+  --color-v-gold-d:    #B45309;
+  --color-v-text:      #1E1B4B;
+  --color-v-text-2:    #6B68A8;
+  --color-v-text-3:    #9B93C8;
+  --color-v-success:   #16A34A;
+  --color-v-danger:    #DC2626;
+  --color-v-warning:   #D97706;
+
+  /* ── Vendor sidebar — always dark ── */
+  --color-vs-bg:       #100E2B;
+  --color-vs-surface:  #1A1840;
+  --color-vs-border:   #2A2660;
+  --color-vs-text:     #F0EFFF;
+  --color-vs-text-2:   #9B93C8;
+  --color-vs-text-3:   #5B5897;
+  --color-vs-purple:   #7C3AED;
 
   /* ── Customer palette ── */
   --color-c-purple:    #8B5CF6;
@@ -39,18 +48,29 @@ html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 
 body {
   font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
-  background: #08071A;
-  color: #F0EFFF;
-  min-height: 100vh;
+  background: #F5F4FF;
+  color: #1E1B4B;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2A2660; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #4A44A0; }
+::-webkit-scrollbar-thumb { background: #C4B8FF; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9B93C8; }
 
-/* Glows */
+/* Vendor light theme helpers */
+.vendor-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E1F8;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(124,58,237,0.06), 0 4px 16px rgba(124,58,237,0.04);
+}
+.vendor-card-hover:hover {
+  border-color: #C4B8FF;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.1), 0 8px 24px rgba(124,58,237,0.06);
+}
+
+/* Glows (used on customer side mostly) */
 .glow-purple { box-shadow: 0 0 32px rgba(124, 58, 237, 0.45); }
 .glow-gold   { box-shadow: 0 0 32px rgba(245, 197, 24, 0.4); }
 .glow-sm     { box-shadow: 0 0 16px rgba(124, 58, 237, 0.3); }
@@ -58,10 +78,10 @@ body {
 .text-glow-purple { text-shadow: 0 0 20px rgba(139, 92, 246, 0.8); }
 
 /* Gradient backgrounds */
-.vendor-bg   { background-color: #08071A; }
+.vendor-bg   { background-color: #F5F4FF; }
 .customer-bg { background: linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%); min-height: 100vh; }
 
-/* Glass */
+/* Glass (customer side) */
 .glass {
   background: rgba(255,255,255,0.05);
   backdrop-filter: blur(16px);
@@ -106,7 +126,7 @@ body {
   100% { background-position: 200% 0; }
 }
 .shimmer {
-  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.06) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, rgba(124,58,237,0.04) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -136,18 +156,3 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 .reveal-scale { animation: reveal-scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-
-/* PIN countdown ring */
-@keyframes countdown {
-  from { stroke-dashoffset: 0; }
-  to   { stroke-dashoffset: 226; }
-}
-
-/* Dice faces */
-.dice-shadow { box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
-
-/* Wheel spin */
-@keyframes spin-decel {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(var(--spin-deg, 1800deg)); }
-}

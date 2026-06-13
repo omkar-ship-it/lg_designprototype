@@ -2,9 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import {
-  LayoutDashboard, Megaphone, Users, Settings, ChevronRight, Zap,
-} from 'lucide-react'
+import { LayoutDashboard, Megaphone, Users, Settings, ChevronRight, Zap } from 'lucide-react'
 
 const nav = [
   { label: 'Dashboard',  href: '/vendor/dashboard',  icon: LayoutDashboard },
@@ -17,16 +15,16 @@ export function Sidebar() {
   const path = usePathname()
 
   return (
-    <aside className="w-60 shrink-0 bg-v-surface border-r border-v-border flex flex-col h-screen sticky top-0">
+    <aside className="w-60 shrink-0 flex flex-col h-screen sticky top-0" style={{ background: '#100E2B', borderRight: '1px solid #2A2660' }}>
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-v-border">
+      <div className="px-5 py-6" style={{ borderBottom: '1px solid #2A2660' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-v-purple/20 border border-v-purple/30 flex items-center justify-center text-xl">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl" style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.35)' }}>
             🧞
           </div>
           <div>
-            <div className="text-sm font-extrabold text-v-text">LoyalGenie</div>
-            <div className="text-[10px] text-v-text-3 font-medium">Brew & Bite Café</div>
+            <div className="text-sm font-extrabold" style={{ color: '#F0EFFF' }}>LoyalGenie</div>
+            <div className="text-[10px] font-medium" style={{ color: '#5B5897' }}>Brew & Bite Café</div>
           </div>
         </div>
       </div>
@@ -39,28 +37,28 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                active
-                  ? 'bg-v-purple/15 text-v-text border border-v-purple/25'
-                  : 'text-v-text-2 hover:text-v-text hover:bg-v-surface-2',
-              )}
+              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150')}
+              style={{
+                background: active ? 'rgba(124,58,237,0.15)' : 'transparent',
+                color: active ? '#F0EFFF' : '#9B93C8',
+                border: active ? '1px solid rgba(124,58,237,0.25)' : '1px solid transparent',
+              }}
             >
-              <Icon className={cn('w-4 h-4', active ? 'text-v-purple' : 'text-v-text-3')} />
+              <Icon className="w-4 h-4" style={{ color: active ? '#9D6FF0' : '#5B5897' }} />
               {label}
-              {active && <ChevronRight className="w-3 h-3 text-v-purple ml-auto" />}
+              {active && <ChevronRight className="w-3 h-3 ml-auto" style={{ color: '#9D6FF0' }} />}
             </Link>
           )
         })}
       </nav>
 
-      {/* Upgrade hint */}
+      {/* Status widget */}
       <div className="p-4">
-        <div className="glass-purple rounded-xl p-3 flex items-start gap-3">
-          <Zap className="w-4 h-4 text-v-gold mt-0.5 shrink-0" />
+        <div className="rounded-xl p-3 flex items-start gap-3" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
+          <Zap className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#F5C518' }} />
           <div>
-            <div className="text-xs font-bold text-v-text">3 Active Campaigns</div>
-            <div className="text-[10px] text-v-text-3 mt-0.5">312 players today</div>
+            <div className="text-xs font-bold" style={{ color: '#F0EFFF' }}>3 Active Campaigns</div>
+            <div className="text-[10px] mt-0.5" style={{ color: '#5B5897' }}>312 players today</div>
           </div>
         </div>
       </div>

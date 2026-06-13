@@ -47,7 +47,9 @@ export function LivePIN({ campaign, compact = false }: LivePINProps) {
     return (
       <div className={cn(
         'flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border',
-        urgency ? 'border-v-warning/40 bg-v-warning/8' : 'border-v-purple/30 bg-v-purple/10',
+        urgency
+          ? 'border-orange-200 bg-orange-50'
+          : 'border-v-border-b/40 bg-v-surface-2',
       )}>
         <AnimatePresence mode="wait">
           <motion.span
@@ -55,12 +57,12 @@ export function LivePIN({ campaign, compact = false }: LivePINProps) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
-            className={cn('text-lg font-black tracking-[0.2em]', urgency ? 'text-v-warning' : 'text-v-text')}
+            className={cn('text-lg font-black tracking-[0.2em]', urgency ? 'text-orange-600' : 'text-v-text')}
           >
             {refreshing ? '···' : pin}
           </motion.span>
         </AnimatePresence>
-        <span className={cn('text-[9px] font-semibold', urgency ? 'text-v-warning' : 'text-v-text-3')}>
+        <span className={cn('text-[9px] font-semibold', urgency ? 'text-orange-500' : 'text-v-text-3')}>
           {seconds}s
         </span>
       </div>
@@ -71,11 +73,11 @@ export function LivePIN({ campaign, compact = false }: LivePINProps) {
     <div className="flex flex-col items-center gap-4">
       <div className="relative flex items-center justify-center">
         <svg width="80" height="80" className="-rotate-90">
-          <circle cx="40" cy="40" r={r} fill="none" stroke="#2A2660" strokeWidth="3" />
+          <circle cx="40" cy="40" r={r} fill="none" stroke="#E5E1F8" strokeWidth="3" />
           <circle
             cx="40" cy="40" r={r}
             fill="none"
-            stroke={urgency ? '#F59E0B' : '#7C3AED'}
+            stroke={urgency ? '#D97706' : '#7C3AED'}
             strokeWidth="3"
             strokeLinecap="round"
             strokeDasharray={circ}
@@ -91,18 +93,18 @@ export function LivePIN({ campaign, compact = false }: LivePINProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 1.1, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-              className={cn('text-2xl font-black tracking-[0.15em]', urgency ? 'text-v-warning text-glow-gold' : 'text-v-text')}
+              className={cn('text-2xl font-black tracking-[0.15em]', urgency ? 'text-orange-600' : 'text-v-text')}
             >
               {refreshing ? '···' : pin}
             </motion.span>
           </AnimatePresence>
-          <span className={cn('text-[10px] font-semibold mt-0.5', urgency ? 'text-v-warning' : 'text-v-text-3')}>
+          <span className={cn('text-[10px] font-semibold mt-0.5', urgency ? 'text-orange-500' : 'text-v-text-3')}>
             {seconds}s
           </span>
         </div>
       </div>
       <div className="text-center">
-        <p className="text-xs font-semibold text-v-text-2">Staff PIN</p>
+        <p className="text-xs font-semibold text-v-text">Staff PIN</p>
         <p className="text-[10px] text-v-text-3">Rotates every 60s</p>
       </div>
     </div>

@@ -37,7 +37,7 @@ export function RedemptionQueue() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-v-text">Redemption Queue</h2>
+          <h2 className="text-sm font-bold text-v-text">Redemption Queue</h2>
           {queue.length > 0 && (
             <span className="w-5 h-5 rounded-full bg-v-danger text-white text-[10px] font-bold flex items-center justify-center">
               {queue.length}
@@ -52,40 +52,28 @@ export function RedemptionQueue() {
       <div className="space-y-2.5">
         <AnimatePresence>
           {queue.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="py-10 flex flex-col items-center text-center"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="py-10 flex flex-col items-center text-center">
               <span className="text-4xl mb-3">🎉</span>
               <p className="text-sm text-v-text-2 font-medium">All clear!</p>
               <p className="text-xs text-v-text-3 mt-1">No pending redemptions</p>
             </motion.div>
           )}
-
           {queue.map(item => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20, height: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            >
+            <motion.div key={item.id} layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20, height: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}>
               <Card className="p-3.5">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-v-surface-3 flex items-center justify-center text-lg shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-v-surface-2 border border-v-border flex items-center justify-center text-lg shrink-0">
                     {getMechanicEmoji(item.mechanic)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-bold text-v-text truncate">{item.customerName}</span>
                       <span className="text-[10px] text-v-text-3 shrink-0 flex items-center gap-1">
-                        <Clock className="w-2.5 h-2.5" />
-                        {formatRelativeTime(item.earnedAt)}
+                        <Clock className="w-2.5 h-2.5" />{formatRelativeTime(item.earnedAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-v-gold font-semibold mt-0.5">{item.reward}</p>
+                    <p className="text-xs font-semibold mt-0.5" style={{ color: '#D97706' }}>{item.reward}</p>
                     <p className="text-[10px] text-v-text-3 mt-0.5">{item.campaignName}</p>
                     <p className="text-[10px] text-v-text-3 font-mono mt-0.5">{item.code}</p>
                   </div>
@@ -93,24 +81,14 @@ export function RedemptionQueue() {
                 <div className="mt-3">
                   <AnimatePresence mode="wait">
                     {redeemed.includes(item.id) ? (
-                      <motion.div
-                        key="done"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="flex items-center justify-center gap-2 py-2 rounded-xl bg-v-success/10 text-v-success text-xs font-semibold"
-                      >
+                      <motion.div key="done" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                        className="flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
                         <CheckCircle2 className="w-4 h-4" /> Redeemed!
                       </motion.div>
                     ) : (
                       <motion.div key="btn" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => markRedeemed(item.id)}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Mark Redeemed
+                        <Button variant="primary" size="sm" className="w-full" onClick={() => markRedeemed(item.id)}>
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Mark Redeemed
                         </Button>
                       </motion.div>
                     )}

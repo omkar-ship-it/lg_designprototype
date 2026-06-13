@@ -21,11 +21,11 @@ export function Button({
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none'
 
   const variants = {
-    primary:   'bg-v-purple text-white hover:bg-v-purple-l active:scale-95 glow-sm',
-    secondary: 'bg-v-surface-2 text-v-text border border-v-border hover:border-v-border-b hover:bg-v-surface-3 active:scale-95',
+    primary:   'bg-v-purple text-white hover:bg-v-purple-l active:scale-95 shadow-sm shadow-purple-200',
+    secondary: 'bg-white text-v-text border border-v-border hover:border-v-border-b hover:bg-v-surface-2 active:scale-95',
     ghost:     'text-v-text-2 hover:text-v-text hover:bg-v-surface-2 active:scale-95',
-    danger:    'bg-v-danger/10 text-v-danger border border-v-danger/30 hover:bg-v-danger/20 active:scale-95',
-    gold:      'bg-v-gold text-v-bg font-bold hover:bg-v-gold-d active:scale-95 glow-gold',
+    danger:    'bg-red-50 text-v-danger border border-red-200 hover:bg-red-100 active:scale-95',
+    gold:      'bg-v-gold text-white font-bold hover:bg-v-gold-d active:scale-95 shadow-sm',
   }
 
   const sizes = {

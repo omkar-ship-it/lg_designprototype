@@ -24,11 +24,11 @@ export function Input({ label, hint, error, icon, className, id, ...props }: Inp
         <input
           id={inputId}
           className={cn(
-            'w-full bg-v-surface border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3',
-            'focus:outline-none focus:border-v-purple focus:ring-1 focus:ring-v-purple/40',
+            'w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3',
+            'focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12',
             'transition-all duration-200',
             icon && 'pl-10',
-            error && 'border-v-danger focus:border-v-danger focus:ring-v-danger/40',
+            error && 'border-v-danger focus:border-v-danger focus:ring-v-danger/12',
             className,
           )}
           {...props}
@@ -57,8 +57,8 @@ export function Select({ label, hint, className, id, children, ...props }: Selec
       <select
         id={inputId}
         className={cn(
-          'w-full bg-v-surface border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text',
-          'focus:outline-none focus:border-v-purple focus:ring-1 focus:ring-v-purple/40',
+          'w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text',
+          'focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12',
           'transition-all duration-200 appearance-none cursor-pointer',
           className,
         )}
@@ -91,7 +91,7 @@ export function Slider({ label, displayValue, className, ...props }: SliderProps
           'w-full h-2 rounded-full appearance-none cursor-pointer',
           '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5',
           '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-v-purple [&::-webkit-slider-thumb]:cursor-pointer',
-          '[&::-webkit-slider-thumb]:shadow-lg',
+          '[&::-webkit-slider-thumb]:shadow-md',
           '[&::-webkit-slider-runnable-track]:bg-v-border [&::-webkit-slider-runnable-track]:rounded-full',
           className,
         )}
