@@ -1,31 +1,13 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Bell, Search, Star } from 'lucide-react'
+import { ArrowLeft, Search, MapPin, Star } from 'lucide-react'
 import { BottomNav } from '@/components/customer/bottom-nav'
-import { customers, customerBusinesses } from '@/lib/mock-data'
+import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { CustomerBusiness } from '@/lib/types'
-
-const demo = customers[0]
-const firstName = demo.name.split(' ')[0]
-const activeCount = demo.rewards.filter(r => r.status === 'pending').length
-const redeemedCount = demo.rewards.filter(r => r.status === 'redeemed').length
-
-const stampCount   = demo.rewards.filter(r => r.mechanic === 'stamp').length
-const cardCount    = demo.rewards.filter(r => r.mechanic === 'spin' || r.mechanic === 'shake').length
-const mysteryCount = demo.rewards.filter(r => r.mechanic === 'dice').length
-const spinCount    = demo.rewards.filter(r => r.mechanic === 'spin').length
-const lotteryCount = demo.rewards.filter(r => r.mechanic === 'lottery').length
-
-const REWARD_ICONS = [
-  { emoji: '🧾', label: 'Stamps',    count: stampCount },
-  { emoji: '🎴', label: 'Cards',     count: cardCount },
-  { emoji: '📦', label: 'Mystery',   count: mysteryCount },
-  { emoji: '🎡', label: 'Spins',     count: spinCount },
-  { emoji: '🎟️', label: 'Lottery',  count: lotteryCount },
-]
 
 const CATEGORIES = ['All', 'Cafe', 'Salon', 'Gym', 'Restaurant', 'Jewellery'] as const
 type Category = typeof CATEGORIES[number]
@@ -53,16 +35,13 @@ function BusinessCard({ biz }: { biz: CustomerBusiness }) {
             className="relative h-[180px] flex items-end p-3"
             style={{ background: `linear-gradient(135deg, ${biz.coverFrom}, ${biz.coverTo})` }}
           >
-            {/* Big emoji */}
             <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-30 select-none">
               {biz.coverEmoji}
             </span>
-            {/* Rating badge top-right */}
             <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="text-xs font-bold text-gray-800">{biz.rating.toFixed(1)}</span>
             </div>
-            {/* Mechanic pills bottom-left */}
             <div className="flex flex-wrap gap-1 z-10">
               {biz.mechanics.map(m => {
                 const meta = MECHANIC_META[m.type]
@@ -90,7 +69,10 @@ function BusinessCard({ biz }: { biz: CustomerBusiness }) {
             <div className="flex items-center gap-3 mt-2">
               <StarRating rating={biz.rating} />
               <span className="text-xs text-gray-400">({biz.reviews} reviews)</span>
-              <span className="text-xs text-gray-400">· {biz.location.split(',')[0]}</span>
+              <span className="text-xs text-gray-400 flex items-center gap-0.5">
+                <MapPin className="w-3 h-3" />
+                {biz.location.split(',')[0]}
+              </span>
             </div>
           </div>
         </div>
@@ -99,65 +81,44 @@ function BusinessCard({ biz }: { biz: CustomerBusiness }) {
   )
 }
 
-export default function CustomerHomePage() {
+export default function DiscoverPage() {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<Category>('All')
+  const [mapView, setMapView] = useState(false)
 
   const filtered = customerBusinesses.filter(b => {
     const matchCat = category === 'All' || b.category === category
-    const matchSearch = b.name.toLowerCase().includes(search.toLowerCase()) || b.location.toLowerCase().includes(search.toLowerCase())
+    const matchSearch =
+      b.name.toLowerCase().includes(search.toLowerCase()) ||
+      b.location.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      {/* Purple header */}
-      <div
-        className="px-5 pt-12 pb-6"
-        style={{ background: 'linear-gradient(135deg, #4C1D95, #5B21B6)' }}
-      >
-        {/* Top row */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-4"
-        >
-          <div>
-            <p className="text-purple-300 text-xs font-medium">Welcome Back</p>
-            <h1 className="text-white text-xl font-extrabold">Hello, {firstName} 👋</h1>
-          </div>
-          <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-            <Bell className="w-5 h-5 text-white" />
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-5 pt-12 pb-4">
+        <div className="flex items-center justify-between mb-1">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </button>
-        </motion.div>
-
-        {/* Rewards summary */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/10 rounded-2xl p-4 mb-4"
-        >
-          <p className="text-purple-200 text-xs mb-1">Your Rewards</p>
-          <p className="text-white font-semibold text-sm">
-            {activeCount} active · {redeemedCount} redeemed
-          </p>
-          {/* Icon row */}
-          <div className="flex items-center gap-4 mt-3">
-            {REWARD_ICONS.map(r => (
-              <div key={r.label} className="flex flex-col items-center gap-0.5">
-                <span className="text-xl">{r.emoji}</span>
-                <span className="text-[10px] text-purple-200 font-medium">{r.count}</span>
-                <span className="text-[9px] text-purple-300">{r.label}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+          <h1 className="text-base font-extrabold text-gray-900">Discover</h1>
+          <button
+            onClick={() => setMapView(v => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-purple-700 transition-colors"
+          >
+            <span className={`w-2 h-2 rounded-full ${mapView ? 'bg-green-400' : 'bg-gray-300'}`} />
+            {mapView ? 'List view' : 'Map view'}
+          </button>
+        </div>
       </div>
 
-      {/* White body */}
       <div className="px-5 pt-4">
-        {/* Search bar */}
+        {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -186,7 +147,7 @@ export default function CustomerHomePage() {
           ))}
         </div>
 
-        {/* Business list */}
+        {/* List */}
         <div className="space-y-4">
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-gray-400 text-sm">No businesses found.</div>

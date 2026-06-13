@@ -151,3 +151,18 @@ export interface BusinessProfile {
   website: string
   qrCode: string
 }
+
+export interface CustomerBusiness {
+  id: string
+  name: string
+  category: 'Cafe' | 'Salon' | 'Gym' | 'Restaurant' | 'Jewellery'
+  tagline: string
+  rating: number
+  reviews: number
+  distance: string
+  location: string
+  coverFrom: string
+  coverTo: string
+  coverEmoji: string
+  mechanics: { type: MechanicType; label: string; description: string }[]
+}
