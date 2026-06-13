@@ -23,14 +23,15 @@ const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F4
 const ICONS = ['🎁', '☕', '🧁', '🥪', '🍰', '🏷️', '🎉', '🍳', '👑', '🎫', '🎟️', '💰']
 
 // ── Duration ──────────────────────────────────────────────────────────────────
-type DurationMode = '7d' | '14d' | '1m' | '2m' | '3m' | 'custom'
+type DurationMode = 'today' | '7d' | '14d' | '1m' | '2m' | '3m' | 'custom'
 
 const DURATION_ALL: { key: DurationMode; label: string; sub: string }[] = [
-  { key: '7d',     label: '7 Days',   sub: '1 week'    },
-  { key: '14d',    label: '14 Days',  sub: '2 weeks'   },
-  { key: '1m',     label: '1 Month',  sub: '~30 days'  },
-  { key: '2m',     label: '2 Months', sub: '~60 days'  },
-  { key: '3m',     label: '3 Months', sub: '~90 days'  },
+  { key: 'today',  label: 'Today',    sub: 'Right now'  },
+  { key: '7d',     label: '7 Days',   sub: '1 week'     },
+  { key: '14d',    label: '14 Days',  sub: '2 weeks'    },
+  { key: '1m',     label: '1 Month',  sub: '~30 days'   },
+  { key: '2m',     label: '2 Months', sub: '~60 days'   },
+  { key: '3m',     label: '3 Months', sub: '~90 days'   },
   { key: 'custom', label: 'Custom',   sub: 'Date range' },
 ]
 const DURATION_LOTTERY: { key: DurationMode; label: string; sub: string }[] = [
@@ -43,8 +44,10 @@ const TODAY = '2026-06-13'
 function addDays(from: string, n: number)   { const d = new Date(from); d.setDate(d.getDate() + n);    return d.toISOString().split('T')[0] }
 function addMonths(from: string, n: number) { const d = new Date(from); d.setMonth(d.getMonth() + n);  return d.toISOString().split('T')[0] }
 function fmtDate(iso: string) { return iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '' }
+function fmtTime(t: string) { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ap}` }
 function computeDates(mode: DurationMode, cs: string, ce: string) {
   if (mode === 'custom') return { start: cs, end: ce }
+  if (mode === 'today')  return { start: TODAY, end: TODAY }
   const s = TODAY
   const e = mode === '7d' ? addDays(s, 7) : mode === '14d' ? addDays(s, 14) : mode === '1m' ? addMonths(s, 1) : mode === '2m' ? addMonths(s, 2) : addMonths(s, 3)
   return { start: s, end: e }
@@ -186,9 +189,17 @@ export default function CreateCampaignPage() {
     durationMode: '1m' as DurationMode,
     customStart: '',
     customEnd: '',
+    // Active hours
+    activeHoursEnabled: false,
+    activeStartTime: '09:00',
+    activeEndTime: '21:00',
+    // Participation
     userCap: 200,
+    perDayUserLimit: 50,
     playsPerDay: 1,
+    // Rewards
     dailyRewardCap: 50,
+    dailyWinRate: 0,
   })
 
   // Shake rewards
@@ -207,6 +218,7 @@ export default function CreateCampaignPage() {
   // Stamp config with per-category toggle
   const [stampConfig, setStampConfig] = useState({
     totalStamps: 10,
+    prefillStamps: 0,
     surpriseFrom: 3,
     surpriseTo: 5,
     surpriseMode: 'single' as RewardMode,
@@ -229,21 +241,22 @@ export default function CreateCampaignPage() {
     { value: 6, isWin: true,  reward: 'Free Dessert' },
   ])
 
-  // Lottery — jackpot fixed, free-form additional prizes
+  // Lottery — jackpot fixed, free-form additional prizes (no probability — odds are built into ticket mechanics)
   const [lotteryConfig, setLotteryConfig] = useState({
     jackpotName: 'Grand Prize',
     jackpotReward: 'Free Month Subscription',
-    jackpotProbability: 1,
     prizes: [
-      { id: '1', name: '2nd Prize', reward: 'Free Breakfast', probability: 5 },
-      { id: '2', name: '3rd Prize', reward: 'Free Coffee',    probability: 20 },
-    ] as { id: string; name: string; reward: string; probability: number }[],
+      { id: '1', name: '2nd Prize', reward: 'Free Breakfast' },
+      { id: '2', name: '3rd Prize', reward: 'Free Coffee' },
+    ] as { id: string; name: string; reward: string }[],
   })
 
   const [launched, setLaunched] = useState(false)
 
-  const isLottery = mechanic === 'lottery'
-  const isStamp   = mechanic === 'stamp'
+  const isLottery     = mechanic === 'lottery'
+  const isStamp       = mechanic === 'stamp'
+  const isShakeOrSpin = mechanic === 'shake' || mechanic === 'spin'
+  const isToday       = basics.durationMode === 'today'
   const durationOptions = isLottery ? DURATION_LOTTERY : DURATION_ALL
 
   const selectMechanic = (m: MechanicType) => {
@@ -260,7 +273,6 @@ export default function CreateCampaignPage() {
   const shakeTotal = shakeRewards.reduce((s, r) => s + r.probability, 0)
   const surprisePoolTotal = stampConfig.surprisePool.reduce((s, r) => s + r.probability, 0)
   const bigPoolTotal = stampConfig.bigPool.reduce((s, r) => s + r.probability, 0)
-  const lotteryTotal = lotteryConfig.jackpotProbability + lotteryConfig.prizes.reduce((s, p) => s + p.probability, 0)
 
   const step2Valid = () => {
     if (!mechanic) return false
@@ -364,14 +376,16 @@ export default function CreateCampaignPage() {
                     <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Campaign Duration</label>
                     {basics.durationMode !== 'custom' && dates.start && (
                       <span className="text-xs text-v-purple font-semibold flex items-center gap-1.5">
-                        <CalendarDays className="w-3.5 h-3.5" />{fmtDate(dates.start)} → {fmtDate(dates.end)}
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        {isToday ? `Today · ${fmtDate(TODAY)}` : `${fmtDate(dates.start)} → ${fmtDate(dates.end)}`}
+                        {basics.activeHoursEnabled && ` · ${fmtTime(basics.activeStartTime)}–${fmtTime(basics.activeEndTime)}`}
                       </span>
                     )}
                   </div>
-                  <div className={`grid gap-2 ${isLottery ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-6'}`}>
+                  <div className="flex flex-wrap gap-2">
                     {durationOptions.map(opt => (
                       <button key={opt.key} onClick={() => setBasics(p => ({ ...p, durationMode: opt.key }))}
-                        className={`rounded-xl py-2.5 px-2 text-center border-2 transition-all ${basics.durationMode === opt.key ? 'border-v-purple bg-v-surface-3' : 'border-v-border bg-white hover:border-v-border-b'}`}>
+                        className={`rounded-xl py-2.5 px-3 text-center border-2 transition-all min-w-[4.5rem] ${basics.durationMode === opt.key ? 'border-v-purple bg-v-surface-3' : 'border-v-border bg-white hover:border-v-border-b'}`}>
                         <div className={`text-sm font-bold ${basics.durationMode === opt.key ? 'text-v-purple' : 'text-v-text'}`}>{opt.label}</div>
                         <div className="text-[10px] text-v-text-3 mt-0.5">{opt.sub}</div>
                       </button>
@@ -385,37 +399,94 @@ export default function CreateCampaignPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* Active hours — not for lottery */}
+                  {!isLottery && (
+                    <div className="mt-4 pt-4 border-t border-v-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Active Hours</span>
+                          <p className="text-xs text-v-text-3 mt-0.5">Restrict to specific hours each day (e.g. Lunch Rush)</p>
+                        </div>
+                        <button type="button" onClick={() => setBasics(p => ({ ...p, activeHoursEnabled: !p.activeHoursEnabled }))}
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${basics.activeHoursEnabled ? 'bg-v-purple' : 'bg-v-border'}`}>
+                          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${basics.activeHoursEnabled ? 'left-6' : 'left-1'}`} />
+                        </button>
+                      </div>
+                      <AnimatePresence>
+                        {basics.activeHoursEnabled && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4 overflow-hidden">
+                            <div>
+                              <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">Start Time</label>
+                              <input type="time" value={basics.activeStartTime} onChange={e => setBasics(p => ({ ...p, activeStartTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">End Time</label>
+                              <input type="time" value={basics.activeEndTime} onChange={e => setBasics(p => ({ ...p, activeEndTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
 
-                {/* User Cap — all except lottery */}
-                {!isLottery && (
-                  <Slider label="User Cap" displayValue={`${basics.userCap} users`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
-                )}
+                {/* ── Participation ── */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Participation</p>
 
-                {/* Plays per day — shake, spin, dice only */}
+                  {/* Shake & Spin: overall + per-day user cap */}
+                  {isShakeOrSpin && (
+                    <>
+                      <Slider label="Overall User Cap" displayValue={`${basics.userCap} users total`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
+                      {!isToday && (
+                        <Slider label="Per Day User Limit" displayValue={`${basics.perDayUserLimit} users / day`} min={5} max={500} step={5} value={basics.perDayUserLimit} onChange={e => setBasics(p => ({ ...p, perDayUserLimit: Number(e.target.value) }))} />
+                      )}
+                    </>
+                  )}
+
+                  {/* Dice & Stamp: single user cap */}
+                  {(mechanic === 'dice' || isStamp) && (
+                    <Slider label="User Cap" displayValue={`${basics.userCap} users`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
+                  )}
+
+                  {/* Lottery: no caps */}
+                  {isLottery && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                      <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                      <p>Lottery has no user cap — open to all customers. Prize odds are built into the ticket mechanics.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Plays per day ── shake, spin, dice */}
                 {!isLottery && !isStamp && (
                   <Stepper label="Plays Per User Per Day" hint="plays / day" value={basics.playsPerDay} min={1} max={10} onChange={v => setBasics(p => ({ ...p, playsPerDay: v }))} />
                 )}
 
-                {/* Daily reward cap — shake, spin, dice only */}
+                {/* ── Win control ── shake & spin: split rate + cap; dice: cap only */}
                 {!isLottery && !isStamp && (
-                  <div className="pt-2 border-t border-v-border">
-                    <Slider label="Daily Rewards Cap" displayValue={basics.dailyRewardCap === 0 ? 'Unlimited' : `${basics.dailyRewardCap} / day`} min={0} max={500} step={5} value={basics.dailyRewardCap} onChange={e => setBasics(p => ({ ...p, dailyRewardCap: Number(e.target.value) }))} />
-                    <p className="text-xs text-v-text-3 mt-1.5">Max rewards claimed per day across all users. Set to 0 for unlimited.</p>
+                  <div className="pt-2 border-t border-v-border space-y-4">
+                    <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Win Control</p>
+
+                    {isShakeOrSpin && (
+                      <div>
+                        <Slider label="Daily Win Rate Cap" displayValue={basics.dailyWinRate === 0 ? 'Unlimited' : `${basics.dailyWinRate}% of players / day`} min={0} max={100} step={5} value={basics.dailyWinRate} onChange={e => setBasics(p => ({ ...p, dailyWinRate: Number(e.target.value) }))} />
+                        <p className="text-xs text-v-text-3 mt-1.5">Max % of that day&apos;s players who can win. 0 = no rate limit.</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <Slider label="Daily Rewards Cap" displayValue={basics.dailyRewardCap === 0 ? 'Unlimited' : `${basics.dailyRewardCap} rewards / day`} min={0} max={500} step={5} value={basics.dailyRewardCap} onChange={e => setBasics(p => ({ ...p, dailyRewardCap: Number(e.target.value) }))} />
+                      <p className="text-xs text-v-text-3 mt-1.5">Hard cap on total rewards given per day. 0 = unlimited.</p>
+                    </div>
                   </div>
                 )}
 
-                {/* Info notes */}
-                {isLottery && (
-                  <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
-                    <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
-                    <p>Lottery has no user cap or daily reward cap. Prize probabilities and participation are managed by ticket allocation in the next step.</p>
-                  </div>
-                )}
                 {isStamp && (
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
-                    <p>Stamp Card has no plays per day or daily reward cap — rewards fire at specific stamp positions, not per-play probability.</p>
+                    <p>Stamp Card rewards fire at specific stamp positions — no daily cap or win rate applies.</p>
                   </div>
                 )}
               </div>
@@ -488,9 +559,15 @@ export default function CreateCampaignPage() {
                 <Slider label="Total Stamps" displayValue={`${stampConfig.totalStamps} stamps`} min={5} max={20} step={1} value={stampConfig.totalStamps}
                   onChange={e => {
                     const n = Number(e.target.value)
-                    setStampConfig(p => ({ ...p, totalStamps: n, surpriseTo: Math.min(p.surpriseTo, Math.floor(n / 2)), bigRewardFrom: Math.min(p.bigRewardFrom, n), bigRewardTo: Math.min(p.bigRewardTo, n) }))
+                    setStampConfig(p => ({ ...p, totalStamps: n, prefillStamps: Math.min(p.prefillStamps, n - 1), surpriseTo: Math.min(p.surpriseTo, Math.floor(n / 2)), bigRewardFrom: Math.min(p.bigRewardFrom, n), bigRewardTo: Math.min(p.bigRewardTo, n) }))
                   }}
                 />
+
+                {/* Pre-fill stamps */}
+                <div>
+                  <Stepper label="Pre-fill Stamps" hint="stamps pre-filled" value={stampConfig.prefillStamps} min={0} max={Math.max(0, stampConfig.totalStamps - 1)} onChange={v => setStampConfig(p => ({ ...p, prefillStamps: v }))} />
+                  <p className="text-xs text-v-text-3 mt-1.5">Customers start with this many stamps already earned — lowers the barrier to the first reward.</p>
+                </div>
 
                 {/* Surprise Drop */}
                 <div className="p-4 bg-v-surface-2 border border-v-border rounded-xl space-y-3">
@@ -548,16 +625,23 @@ export default function CreateCampaignPage() {
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from({ length: stampConfig.totalStamps }, (_, i) => {
                       const n = i + 1
-                      const isSurprise = n >= stampConfig.surpriseFrom && n <= stampConfig.surpriseTo
-                      const isBig = n >= stampConfig.bigRewardFrom && n <= stampConfig.bigRewardTo
+                      const isPrefilled = n <= stampConfig.prefillStamps
+                      const isSurprise  = n >= stampConfig.surpriseFrom && n <= stampConfig.surpriseTo
+                      const isBig       = n >= stampConfig.bigRewardFrom && n <= stampConfig.bigRewardTo
                       return (
-                        <div key={n} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold border-2 ${isBig ? 'border-amber-400 bg-amber-50 text-amber-600' : isSurprise ? 'border-v-purple/40 bg-v-surface-2 text-v-purple' : 'border-v-border text-v-text-3'}`}>
-                          {isBig ? '🏆' : isSurprise ? '?' : n}
+                        <div key={n} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold border-2 ${
+                          isPrefilled ? 'border-v-purple bg-v-purple text-white' :
+                          isBig       ? 'border-amber-400 bg-amber-50 text-amber-600' :
+                          isSurprise  ? 'border-v-purple/40 bg-v-surface-2 text-v-purple' :
+                          'border-v-border text-v-text-3'
+                        }`}>
+                          {isPrefilled ? '✓' : isBig ? '🏆' : isSurprise ? '?' : n}
                         </div>
                       )
                     })}
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-[10px] text-v-text-3">
+                  <div className="flex flex-wrap items-center gap-4 mt-2 text-[10px] text-v-text-3">
+                    {stampConfig.prefillStamps > 0 && <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-v-purple bg-v-purple inline-block" /> Pre-filled ({stampConfig.prefillStamps})</span>}
                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-v-purple/40 bg-v-surface-2 inline-block" /> Surprise range</span>
                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-amber-400 bg-amber-50 inline-block" /> Big reward range</span>
                   </div>
@@ -605,8 +689,8 @@ export default function CreateCampaignPage() {
           {/* LOTTERY */}
           {step === 2 && mechanic === 'lottery' && (
             <Card className="p-6">
-              <h2 className="text-base font-bold text-v-text mb-1">Lottery — Prizes & Probabilities</h2>
-              <p className="text-xs text-v-text-3 mb-5">Configure the jackpot and add as many additional prizes as you need. Remaining % = no win.</p>
+              <h2 className="text-base font-bold text-v-text mb-1">Lottery — Prizes</h2>
+              <p className="text-xs text-v-text-3 mb-5">Configure the jackpot and add as many additional prizes as you need. Win odds are built into the scratch-card mechanics — no probability setup required.</p>
               <div className="space-y-3">
 
                 {/* Jackpot — always present, can't be deleted */}
@@ -616,19 +700,9 @@ export default function CreateCampaignPage() {
                     <span className="text-sm font-bold text-amber-700">Jackpot</span>
                     <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 font-semibold border border-amber-200">Required</span>
                   </div>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className="bg-white border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-amber-400" placeholder="Prize name (e.g. Grand Prize)" value={lotteryConfig.jackpotName} onChange={e => setLotteryConfig(p => ({ ...p, jackpotName: e.target.value }))} />
-                      <input className="bg-white border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-amber-400" placeholder="Reward (e.g. Free Month Sub)" value={lotteryConfig.jackpotReward} onChange={e => setLotteryConfig(p => ({ ...p, jackpotReward: e.target.value }))} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-v-text-3 shrink-0">Win chance:</span>
-                      <input type="range" min={1} max={10} value={lotteryConfig.jackpotProbability} onChange={e => setLotteryConfig(p => ({ ...p, jackpotProbability: Number(e.target.value) }))} className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:cursor-pointer" style={{ accentColor: '#F59E0B' }} />
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <input type="number" min={1} max={10} value={lotteryConfig.jackpotProbability} onChange={e => setLotteryConfig(p => ({ ...p, jackpotProbability: Math.min(10, Math.max(1, Number(e.target.value))) }))} className="w-11 bg-white border border-amber-200 rounded-lg px-1.5 py-1 text-xs text-v-text text-center focus:outline-none" />
-                        <span className="text-xs text-amber-600">%</span>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className="bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-amber-400" placeholder="Prize name (e.g. Grand Prize)" value={lotteryConfig.jackpotName} onChange={e => setLotteryConfig(p => ({ ...p, jackpotName: e.target.value }))} />
+                    <input className="bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-amber-400" placeholder="Reward (e.g. Free Month Sub)" value={lotteryConfig.jackpotReward} onChange={e => setLotteryConfig(p => ({ ...p, jackpotReward: e.target.value }))} />
                   </div>
                 </div>
 
@@ -641,32 +715,16 @@ export default function CreateCampaignPage() {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <input className="bg-white border border-v-border rounded-lg px-3 py-1.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder={`Prize name (e.g. ${i === 0 ? '2nd Prize' : '3rd Prize'})`} value={prize.name} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, name: e.target.value } : x) }))} />
-                        <input className="bg-white border border-v-border rounded-lg px-3 py-1.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder="Reward" value={prize.reward} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, reward: e.target.value } : x) }))} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-v-text-3 shrink-0">Win chance:</span>
-                        <input type="range" min={1} max={50} value={prize.probability} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, probability: Number(e.target.value) } : x) }))} className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-v-purple [&::-webkit-slider-thumb]:cursor-pointer" style={{ accentColor: '#7C3AED' }} />
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <input type="number" min={1} max={50} value={prize.probability} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, probability: Math.min(50, Math.max(1, Number(e.target.value))) } : x) }))} className="w-11 bg-white border border-v-border rounded-lg px-1.5 py-1 text-xs text-v-text text-center focus:outline-none focus:border-v-purple" />
-                          <span className="text-xs text-v-text-2">%</span>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input className="bg-white border border-v-border rounded-lg px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder={`Prize name (e.g. ${i === 0 ? '2nd Prize' : '3rd Prize'})`} value={prize.name} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, name: e.target.value } : x) }))} />
+                      <input className="bg-white border border-v-border rounded-lg px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder="Reward (e.g. Free Coffee)" value={prize.reward} onChange={e => setLotteryConfig(p => ({ ...p, prizes: p.prizes.map(x => x.id === prize.id ? { ...x, reward: e.target.value } : x) }))} />
                     </div>
                   </div>
                 ))}
 
-                <Button variant="secondary" size="sm" onClick={() => setLotteryConfig(p => ({ ...p, prizes: [...p.prizes, { id: Math.random().toString(36).slice(2), name: `Prize ${p.prizes.length + 2}`, reward: '', probability: 10 }] }))}>
+                <Button variant="secondary" size="sm" onClick={() => setLotteryConfig(p => ({ ...p, prizes: [...p.prizes, { id: Math.random().toString(36).slice(2), name: `Prize ${p.prizes.length + 2}`, reward: '' }] }))}>
                   <Plus className="w-3 h-3" /> Add Prize
                 </Button>
-
-                {/* Probability bar for lottery */}
-                <ProbabilityBar entries={[
-                  { id: 'jackpot', name: lotteryConfig.jackpotName || 'Jackpot', probability: lotteryConfig.jackpotProbability },
-                  ...lotteryConfig.prizes.map(p => ({ id: p.id, name: p.name || `Prize`, probability: p.probability })),
-                ]} />
               </div>
             </Card>
           )}
@@ -680,10 +738,19 @@ export default function CreateCampaignPage() {
                   {[
                     { label: 'Campaign Name', value: basics.name || '—' },
                     { label: 'Mechanic',       value: mechanic ? `${getMechanicEmoji(mechanic)} ${getMechanicLabel(mechanic)}` : '—' },
-                    { label: 'Duration',       value: dates.start && dates.end ? `${fmtDate(dates.start)} → ${fmtDate(dates.end)}` : '—' },
-                    ...(!isLottery ? [{ label: 'User Cap', value: `${basics.userCap} users` }] : []),
+                    {
+                      label: 'Duration',
+                      value: (() => {
+                        let dur = isToday ? `Today · ${fmtDate(TODAY)}` : (dates.start && dates.end ? `${fmtDate(dates.start)} → ${fmtDate(dates.end)}` : '—')
+                        if (basics.activeHoursEnabled) dur += ` · ${fmtTime(basics.activeStartTime)}–${fmtTime(basics.activeEndTime)}`
+                        return dur
+                      })(),
+                    },
+                    ...(!isLottery ? [{ label: isShakeOrSpin ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(isShakeOrSpin && !isToday ? [{ label: 'Per Day User Limit', value: `${basics.perDayUserLimit} users / day` }] : []),
                     ...(!isLottery && !isStamp ? [
-                      { label: 'Plays Per Day',     value: `${basics.playsPerDay} / day` },
+                      { label: 'Plays Per Day', value: `${basics.playsPerDay} / day` },
+                      ...(isShakeOrSpin && basics.dailyWinRate > 0 ? [{ label: 'Daily Win Rate Cap', value: `${basics.dailyWinRate}% of players` }] : []),
                       { label: 'Daily Rewards Cap', value: basics.dailyRewardCap === 0 ? 'Unlimited' : `${basics.dailyRewardCap} / day` },
                     ] : []),
                     {
@@ -691,7 +758,7 @@ export default function CreateCampaignPage() {
                       value:
                         mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward${shakeRewards.length !== 1 ? 's' : ''}` :
                         mechanic === 'spin'    ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''}` :
-                        mechanic === 'stamp'   ? `Surprise (stamps ${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big reward (stamps ${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
+                        mechanic === 'stamp'   ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
                         mechanic === 'dice'    ? `${diceOutcomes.filter(o => o.isWin && o.reward).length} winning face${diceOutcomes.filter(o => o.isWin).length !== 1 ? 's' : ''}` :
                         mechanic === 'lottery' ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` : '—',
                     },

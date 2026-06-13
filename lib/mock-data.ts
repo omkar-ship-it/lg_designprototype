@@ -262,6 +262,43 @@ export const customers: Customer[] = [
     rewards: [],
     gameHistory: [],
   },
+  {
+    id: 'cust-6',
+    name: 'Farhan Siddiqui',
+    phone: '+91 98765 66666',
+    email: 'farhan.siddiqui@gmail.com',
+    dob: '1991-12-03',
+    joinedAt: '2026-01-20T10:00:00Z',
+    lastVisit: '2026-05-09T11:00:00Z',
+    totalVisits: 18,
+    gamesPlayed: 14,
+    rewardsEarned: 7,
+    status: 'active',
+    rewards: [
+      { id: 'cr7', campaignId: 'camp-3', campaignName: 'Monsoon Shake & Win', mechanic: 'shake' as const, reward: '₹50 Off', earnedAt: '2026-05-09T11:00:00Z', status: 'pending' as const, code: 'FARHAN-SW-007' },
+    ],
+    gameHistory: [
+      { id: 'gh9', campaignId: 'camp-3', campaignName: 'Monsoon Shake & Win', mechanic: 'shake' as const, playedAt: '2026-05-09T11:00:00Z', won: true, reward: '₹50 Off' },
+      { id: 'gh10', campaignId: 'camp-1', campaignName: 'Weekend Spin Fiesta', mechanic: 'spin' as const, playedAt: '2026-04-28T13:00:00Z', won: false },
+    ],
+  },
+  {
+    id: 'cust-7',
+    name: 'Divya Krishnan',
+    phone: '+91 98765 77777',
+    email: 'divya.krishnan@gmail.com',
+    dob: '1997-06-25',
+    joinedAt: '2026-02-14T09:00:00Z',
+    lastVisit: '2026-04-14T15:30:00Z',
+    totalVisits: 5,
+    gamesPlayed: 4,
+    rewardsEarned: 1,
+    status: 'inactive',
+    rewards: [],
+    gameHistory: [
+      { id: 'gh11', campaignId: 'camp-1', campaignName: 'Weekend Spin Fiesta', mechanic: 'spin' as const, playedAt: '2026-04-14T15:30:00Z', won: false },
+    ],
+  },
 ]
 
 export const redemptionQueue: RedemptionQueueItem[] = [
