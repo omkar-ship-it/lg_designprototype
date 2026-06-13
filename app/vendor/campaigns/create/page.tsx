@@ -82,15 +82,15 @@ function Stepper({ label, hint, value, min = 1, max = 20, onChange }: { label: s
   )
 }
 
-function ProbabilityBar({ entries }: { entries: { name: string; probability: number; id: string }[] }) {
+function ProbabilityBar({ entries, shareMode }: { entries: { name: string; probability: number; id: string }[]; shareMode?: boolean }) {
   const total = entries.reduce((s, r) => s + r.probability, 0)
   const noWin = Math.max(0, 100 - total)
   const over = total > 100
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between mb-1.5 text-xs text-v-text-2">
-        <span>Probability breakdown</span>
-        <span className={over ? 'text-v-danger font-bold' : total === 100 ? 'text-v-success font-bold' : ''}>{total}% allocated</span>
+        <span>{shareMode ? 'Share breakdown' : 'Probability breakdown'}</span>
+        <span className={over ? 'text-v-danger font-bold' : total === 100 ? 'text-v-success font-bold' : ''}>{total}% {shareMode ? 'of winners allocated' : 'allocated'}</span>
       </div>
       <div className="flex h-2.5 rounded-full overflow-hidden bg-v-border gap-px">
         {entries.filter(r => r.probability > 0).map((r, i) => (
@@ -116,13 +116,18 @@ function ProbabilityBar({ entries }: { entries: { name: string; probability: num
   )
 }
 
-function RewardPool({ rewards, setRewards, compact }: { rewards: RewardEntry[]; setRewards: (r: RewardEntry[]) => void; compact?: boolean }) {
+function RewardPool({ rewards, setRewards, compact, shareMode }: { rewards: RewardEntry[]; setRewards: (r: RewardEntry[]) => void; compact?: boolean; shareMode?: boolean }) {
   const update = (id: string, field: keyof RewardEntry, value: string | number) =>
     setRewards(rewards.map(r => r.id === id ? { ...r, [field]: value } : r))
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Rewards Pool</span>
+        <div>
+          <span className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">
+            {shareMode ? 'Reward Distribution — among winners' : 'Rewards Pool'}
+          </span>
+          {shareMode && <p className="text-[10px] text-v-text-3 mt-0.5">Shares should add up to 100% — how wins are split across reward types.</p>}
+        </div>
         <Button variant="secondary" size="sm" onClick={() => setRewards([...rewards, newReward()])}>
           <Plus className="w-3 h-3" /> Add
         </Button>
@@ -138,7 +143,7 @@ function RewardPool({ rewards, setRewards, compact }: { rewards: RewardEntry[]; 
                 <input className="w-full bg-v-surface-2 border border-v-border rounded-lg px-2.5 py-1.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder="Reward name" value={r.name} onChange={e => update(r.id, 'name', e.target.value)} />
                 {!compact && <input className="w-full bg-v-surface-2 border border-v-border rounded-lg px-2.5 py-1.5 text-xs text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple" placeholder="Description (optional)" value={r.description} onChange={e => update(r.id, 'description', e.target.value)} />}
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-v-text-3 shrink-0">Win %:</span>
+                  <span className="text-[11px] text-v-text-3 shrink-0">{shareMode ? 'Share:' : 'Win %:'}</span>
                   <input type="range" min={1} max={99} value={r.probability} onChange={e => update(r.id, 'probability', Number(e.target.value))} className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-v-purple [&::-webkit-slider-thumb]:cursor-pointer" style={{ accentColor: '#7C3AED' }} />
                   <div className="flex items-center gap-0.5 shrink-0">
                     <input type="number" min={1} max={99} value={r.probability} onChange={e => update(r.id, 'probability', Math.min(99, Math.max(1, Number(e.target.value))))} className="w-11 bg-white border border-v-border rounded-lg px-1.5 py-1 text-xs text-v-text text-center focus:outline-none focus:border-v-purple" />
@@ -154,7 +159,7 @@ function RewardPool({ rewards, setRewards, compact }: { rewards: RewardEntry[]; 
         ))}
         {rewards.length === 0 && <div className="text-center py-4 text-v-text-3 text-xs border-2 border-dashed border-v-border rounded-xl">No rewards yet — click Add</div>}
       </div>
-      {rewards.length > 0 && <ProbabilityBar entries={rewards} />}
+      {rewards.length > 0 && <ProbabilityBar entries={rewards} shareMode={shareMode} />}
     </div>
   )
 }
@@ -197,6 +202,8 @@ export default function CreateCampaignPage() {
     userCap: 200,
     perDayUserLimit: 50,
     playsPerDay: 1,
+    // Shake & Win only
+    overallWinRate: 30,
   })
 
   // Shake rewards
@@ -271,11 +278,13 @@ export default function CreateCampaignPage() {
   })()
   const suggestedDailyLimit = Math.max(1, Math.floor(basics.userCap / campaignDays))
 
-  // Win rates — derived from game config, not vendor inputs
-  const shakeWinRate = Math.min(100, shakeRewards.reduce((s, r) => s + r.probability, 0))
-  const spinWinRate  = spinSegments.length > 0 ? Math.round((spinSegments.filter(s => s.isWin).length / spinSegments.length) * 100) : 0
-  const diceWinRate  = Math.round((diceOutcomes.filter(o => o.isWin).length / 6) * 100)
-  const activeWinRate = mechanic === 'shake' ? shakeWinRate : mechanic === 'spin' ? spinWinRate : mechanic === 'dice' ? diceWinRate : 0
+  // Win rates
+  // Shake: explicit vendor input (overallWinRate). Pool probabilities = share AMONG winners (sum to 100%)
+  // Spin/Dice: structurally derived from config
+  const shakePoolTotal = shakeRewards.reduce((s, r) => s + r.probability, 0)
+  const spinWinRate    = spinSegments.length > 0 ? Math.round((spinSegments.filter(s => s.isWin).length / spinSegments.length) * 100) : 0
+  const diceWinRate    = Math.round((diceOutcomes.filter(o => o.isWin).length / 6) * 100)
+  const activeWinRate  = mechanic === 'shake' ? basics.overallWinRate : mechanic === 'spin' ? spinWinRate : mechanic === 'dice' ? diceWinRate : 0
 
   const selectMechanic = (m: MechanicType) => {
     setMechanic(m)
@@ -288,13 +297,12 @@ export default function CreateCampaignPage() {
   const dates = computeDates(basics.durationMode, basics.customStart, basics.customEnd)
   const durationValid = basics.durationMode !== 'custom' || (basics.customStart && basics.customEnd)
 
-  const shakeTotal = shakeRewards.reduce((s, r) => s + r.probability, 0)
   const surprisePoolTotal = stampConfig.surprisePool.reduce((s, r) => s + r.probability, 0)
   const bigPoolTotal = stampConfig.bigPool.reduce((s, r) => s + r.probability, 0)
 
   const step2Valid = () => {
     if (!mechanic) return false
-    if (mechanic === 'shake') return shakeRewards.some(r => r.name) && shakeTotal <= 100
+    if (mechanic === 'shake') return shakeRewards.some(r => r.name) && shakePoolTotal <= 100
     if (mechanic === 'spin')  return spinSegments.some(s => s.isWin && s.reward.trim())
     if (mechanic === 'dice')  return diceOutcomes.some(o => o.isWin && o.reward.trim())
     if (mechanic === 'lottery') return lotteryConfig.jackpotReward.trim().length > 0
@@ -487,6 +495,18 @@ export default function CreateCampaignPage() {
                   <Stepper label="Plays Per User Per Day" hint="plays / day" value={basics.playsPerDay} min={1} max={10} onChange={v => setBasics(p => ({ ...p, playsPerDay: v }))} />
                 )}
 
+                {/* ── Win Rate — Shake only (explicit vendor input) */}
+                {mechanic === 'shake' && (
+                  <div className="pt-2 border-t border-v-border space-y-2">
+                    <div>
+                      <Slider label="Overall Win Rate" displayValue={`${basics.overallWinRate}% of customers win`} min={5} max={100} step={5} value={basics.overallWinRate} onChange={e => setBasics(p => ({ ...p, overallWinRate: Number(e.target.value) }))} />
+                      <p className="text-xs text-v-text-3 mt-1.5">
+                        Daily win rate is the same — <span className="font-semibold text-v-text-2">{basics.overallWinRate}%</span> of each day&apos;s players will win. Configure what they win in the next step.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stamp info note */}
                 {isStamp && (
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
@@ -503,15 +523,16 @@ export default function CreateCampaignPage() {
           {/* SHAKE & WIN */}
           {step === 2 && mechanic === 'shake' && (
             <Card className="p-6">
-              <h2 className="text-base font-bold text-v-text mb-1">Shake & Win — Rewards</h2>
-              <p className="text-xs text-v-text-3 mb-5">Add one reward or a pool of rewards each with a win probability. The remaining % becomes "No win".</p>
-              <RewardPool rewards={shakeRewards} setRewards={setShakeRewards} />
-              {shakeWinRate > 0 && (
-                <div className="mt-4 flex items-center justify-between p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs">
-                  <span className="text-v-text-2">Effective win rate</span>
-                  <span className="font-bold text-v-purple">{shakeWinRate}% win · {100 - shakeWinRate}% no win</span>
-                </div>
-              )}
+              <h2 className="text-base font-bold text-v-text mb-1">Shake & Win — Reward Distribution</h2>
+              <p className="text-xs text-v-text-3 mb-1">Configure how winning plays are distributed across reward types.</p>
+              <div className="flex items-center gap-2 mb-5 p-2.5 bg-v-surface-2 border border-v-border rounded-xl text-xs">
+                <span className="text-v-text-3">Overall win rate:</span>
+                <span className="font-bold text-v-purple">{basics.overallWinRate}% of players win</span>
+                <span className="text-v-text-3 mx-1">·</span>
+                <span className="text-v-text-3">Daily win rate:</span>
+                <span className="font-bold text-v-purple">{basics.overallWinRate}% / day</span>
+              </div>
+              <RewardPool rewards={shakeRewards} setRewards={setShakeRewards} shareMode />
             </Card>
           )}
 
@@ -773,10 +794,14 @@ export default function CreateCampaignPage() {
                     ...(!isLottery ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
                     ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
                     ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
+                    ...(mechanic === 'shake' ? [
+                      { label: 'Overall Win Rate', value: `${basics.overallWinRate}% of customers win` },
+                      { label: 'Daily Win Rate',   value: `${basics.overallWinRate}% / day (same as overall)` },
+                    ] : []),
                     {
                       label: 'Rewards',
                       value:
-                        mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} · ${shakeWinRate}% win rate` :
+                        mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} · distributed among ${basics.overallWinRate}% winners` :
                         mechanic === 'spin'    ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''} · ${spinWinRate}% win rate` :
                         mechanic === 'dice'    ? `${diceOutcomes.filter(o => o.isWin).length} of 6 faces win · ${diceWinRate}% win rate` :
                         mechanic === 'stamp'   ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
@@ -798,7 +823,7 @@ export default function CreateCampaignPage() {
                 const dailyPlays   = (isToday ? basics.userCap : basics.perDayUserLimit) * basics.playsPerDay
                 const dailyRewards = Math.round(dailyPlays * activeWinRate / 100)
                 const winSrc =
-                  mechanic === 'shake' ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} in pool` :
+                  mechanic === 'shake' ? `overall win rate you set` :
                   mechanic === 'spin'  ? `${spinSegments.filter(s => s.isWin).length} of ${spinSegments.length} segments` :
                   `${diceOutcomes.filter(o => o.isWin).length} of 6 faces`
                 return (
