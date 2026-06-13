@@ -2,7 +2,7 @@
 import { use } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Trophy, TrendingUp, Calendar } from 'lucide-react'
+import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Pencil } from 'lucide-react'
 import { Card, StatCard, ProgressBar } from '@/components/ui/card'
 import { MechanicBadge, StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -47,12 +47,23 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
           </div>
-          {campaign.status === 'active' && (
-            <Button variant="danger" size="sm">Pause Campaign</Button>
-          )}
-          {campaign.status === 'draft' && (
-            <Button variant="gold" size="sm">Launch Campaign</Button>
-          )}
+          <div className="flex items-center gap-2">
+            {campaign.status !== 'ended' && (
+              <Link href={`/vendor/campaigns/${campaign.id}/edit`}>
+                <Button variant="secondary" size="sm"><Pencil className="w-3.5 h-3.5" /> Edit</Button>
+              </Link>
+            )}
+            {campaign.status === 'active' && (
+              <Link href={`/vendor/campaigns/${campaign.id}/edit`}>
+                <Button variant="danger" size="sm">Pause Campaign</Button>
+              </Link>
+            )}
+            {campaign.status === 'draft' && (
+              <Link href={`/vendor/campaigns/${campaign.id}/edit`}>
+                <Button variant="gold" size="sm">Launch Campaign</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </motion.div>
 

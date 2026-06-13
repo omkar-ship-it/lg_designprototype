@@ -77,10 +77,10 @@ function QuickMenu({ id }: { id: string }) {
             onMouseLeave={() => setOpen(false)}
           >
             {[
-              { icon: Eye,         label: 'View details', href: `/vendor/campaigns/${id}`, color: 'text-v-text' },
-              { icon: Pause,       label: 'Pause',        href: '#', color: 'text-v-text' },
-              { icon: Copy,        label: 'Duplicate',    href: '#', color: 'text-v-text' },
-              { icon: StopCircle,  label: 'End campaign', href: '#', color: 'text-v-danger' },
+              { icon: Eye,         label: 'View details', href: `/vendor/campaigns/${id}`,       color: 'text-v-text' },
+              { icon: Pause,       label: 'Edit & Pause', href: `/vendor/campaigns/${id}/edit`,  color: 'text-v-text' },
+              { icon: Copy,        label: 'Duplicate',    href: '#',                             color: 'text-v-text' },
+              { icon: StopCircle,  label: 'End campaign', href: `/vendor/campaigns/${id}/edit`,  color: 'text-v-danger' },
             ].map(({ icon: Icon, label, href, color }) => (
               <Link key={label} href={href}
                 onClick={e => { if (href === '#') e.preventDefault(); setOpen(false) }}
