@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Check, Zap, Plus, Trash2, AlertCircle, CalendarDays } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Zap, Plus, Trash2, AlertCircle, CalendarDays, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, Slider } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -197,9 +197,6 @@ export default function CreateCampaignPage() {
     userCap: 200,
     perDayUserLimit: 50,
     playsPerDay: 1,
-    // Rewards
-    dailyRewardCap: 50,
-    dailyWinRate: 0,
   })
 
   // Shake rewards
@@ -253,11 +250,32 @@ export default function CreateCampaignPage() {
 
   const [launched, setLaunched] = useState(false)
 
-  const isLottery     = mechanic === 'lottery'
-  const isStamp       = mechanic === 'stamp'
-  const isShakeOrSpin = mechanic === 'shake' || mechanic === 'spin'
-  const isToday       = basics.durationMode === 'today'
-  const durationOptions = isLottery ? DURATION_LOTTERY : DURATION_ALL
+  const isLottery        = mechanic === 'lottery'
+  const isStamp          = mechanic === 'stamp'
+  const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
+  const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
+  const isToday          = basics.durationMode === 'today'
+  const durationOptions  = isLottery ? DURATION_LOTTERY : DURATION_ALL
+
+  // Campaign duration in days
+  const campaignDays = (() => {
+    if (basics.durationMode === 'today') return 1
+    if (basics.durationMode === '7d')  return 7
+    if (basics.durationMode === '14d') return 14
+    if (basics.durationMode === '1m')  return 30
+    if (basics.durationMode === '2m')  return 60
+    if (basics.durationMode === '3m')  return 90
+    if (basics.customStart && basics.customEnd)
+      return Math.max(1, Math.round((new Date(basics.customEnd).getTime() - new Date(basics.customStart).getTime()) / 86400000) + 1)
+    return 30
+  })()
+  const suggestedDailyLimit = Math.max(1, Math.floor(basics.userCap / campaignDays))
+
+  // Win rates — derived from game config, not vendor inputs
+  const shakeWinRate = Math.min(100, shakeRewards.reduce((s, r) => s + r.probability, 0))
+  const spinWinRate  = spinSegments.length > 0 ? Math.round((spinSegments.filter(s => s.isWin).length / spinSegments.length) * 100) : 0
+  const diceWinRate  = Math.round((diceOutcomes.filter(o => o.isWin).length / 6) * 100)
+  const activeWinRate = mechanic === 'shake' ? shakeWinRate : mechanic === 'spin' ? spinWinRate : mechanic === 'dice' ? diceWinRate : 0
 
   const selectMechanic = (m: MechanicType) => {
     setMechanic(m)
@@ -435,18 +453,23 @@ export default function CreateCampaignPage() {
                 <div className="pt-2 border-t border-v-border space-y-4">
                   <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Participation</p>
 
-                  {/* Shake & Spin: overall + per-day user cap */}
-                  {isShakeOrSpin && (
+                  {/* Shake, Spin, Dice: overall + per-day */}
+                  {isShakeSpinOrDice && (
                     <>
                       <Slider label="Overall User Cap" displayValue={`${basics.userCap} users total`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
                       {!isToday && (
-                        <Slider label="Per Day User Limit" displayValue={`${basics.perDayUserLimit} users / day`} min={5} max={500} step={5} value={basics.perDayUserLimit} onChange={e => setBasics(p => ({ ...p, perDayUserLimit: Number(e.target.value) }))} />
+                        <div>
+                          <Slider label="Daily User Limit" displayValue={`${basics.perDayUserLimit} users / day`} min={1} max={basics.userCap} step={1} value={basics.perDayUserLimit} onChange={e => setBasics(p => ({ ...p, perDayUserLimit: Number(e.target.value) }))} />
+                          <p className="text-xs text-v-text-3 mt-1.5">
+                            Suggested: <span className="font-semibold text-v-text-2">{suggestedDailyLimit} / day</span> — even distribution over {campaignDays} days. Override if needed.
+                          </p>
+                        </div>
                       )}
                     </>
                   )}
 
-                  {/* Dice & Stamp: single user cap */}
-                  {(mechanic === 'dice' || isStamp) && (
+                  {/* Stamp: single user cap */}
+                  {isStamp && (
                     <Slider label="User Cap" displayValue={`${basics.userCap} users`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
                   )}
 
@@ -459,34 +482,16 @@ export default function CreateCampaignPage() {
                   )}
                 </div>
 
-                {/* ── Plays per day ── shake, spin, dice */}
-                {!isLottery && !isStamp && (
+                {/* ── Plays per day — shake, spin, dice */}
+                {isShakeSpinOrDice && (
                   <Stepper label="Plays Per User Per Day" hint="plays / day" value={basics.playsPerDay} min={1} max={10} onChange={v => setBasics(p => ({ ...p, playsPerDay: v }))} />
                 )}
 
-                {/* ── Win control ── shake & spin: split rate + cap; dice: cap only */}
-                {!isLottery && !isStamp && (
-                  <div className="pt-2 border-t border-v-border space-y-4">
-                    <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Win Control</p>
-
-                    {isShakeOrSpin && (
-                      <div>
-                        <Slider label="Daily Win Rate Cap" displayValue={basics.dailyWinRate === 0 ? 'Unlimited' : `${basics.dailyWinRate}% of players / day`} min={0} max={100} step={5} value={basics.dailyWinRate} onChange={e => setBasics(p => ({ ...p, dailyWinRate: Number(e.target.value) }))} />
-                        <p className="text-xs text-v-text-3 mt-1.5">Max % of that day&apos;s players who can win. 0 = no rate limit.</p>
-                      </div>
-                    )}
-
-                    <div>
-                      <Slider label="Daily Rewards Cap" displayValue={basics.dailyRewardCap === 0 ? 'Unlimited' : `${basics.dailyRewardCap} rewards / day`} min={0} max={500} step={5} value={basics.dailyRewardCap} onChange={e => setBasics(p => ({ ...p, dailyRewardCap: Number(e.target.value) }))} />
-                      <p className="text-xs text-v-text-3 mt-1.5">Hard cap on total rewards given per day. 0 = unlimited.</p>
-                    </div>
-                  </div>
-                )}
-
+                {/* Stamp info note */}
                 {isStamp && (
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
-                    <p>Stamp Card rewards fire at specific stamp positions — no daily cap or win rate applies.</p>
+                    <p>Stamp Card rewards fire at specific stamp positions — reward volume is determined by your stamp config, not a cap.</p>
                   </div>
                 )}
               </div>
@@ -501,6 +506,12 @@ export default function CreateCampaignPage() {
               <h2 className="text-base font-bold text-v-text mb-1">Shake & Win — Rewards</h2>
               <p className="text-xs text-v-text-3 mb-5">Add one reward or a pool of rewards each with a win probability. The remaining % becomes "No win".</p>
               <RewardPool rewards={shakeRewards} setRewards={setShakeRewards} />
+              {shakeWinRate > 0 && (
+                <div className="mt-4 flex items-center justify-between p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs">
+                  <span className="text-v-text-2">Effective win rate</span>
+                  <span className="font-bold text-v-purple">{shakeWinRate}% win · {100 - shakeWinRate}% no win</span>
+                </div>
+              )}
             </Card>
           )}
 
@@ -545,6 +556,12 @@ export default function CreateCampaignPage() {
                 <Button variant="secondary" size="sm" onClick={() => setSpinSegments(s => [...s, { label: 'New Segment', color: '#7C3AED', isWin: false, reward: '' }])}>
                   <Plus className="w-3 h-3" /> Add Segment
                 </Button>
+              </div>
+              <div className="mt-4 flex items-center justify-between p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs">
+                <span className="text-v-text-2">Effective win rate</span>
+                <span className="font-bold text-v-purple">
+                  {spinSegments.filter(s => s.isWin).length} of {spinSegments.length} segments win = {spinWinRate}%
+                </span>
               </div>
             </Card>
           )}
@@ -683,6 +700,12 @@ export default function CreateCampaignPage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-4 flex items-center justify-between p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs">
+                <span className="text-v-text-2">Effective win rate</span>
+                <span className="font-bold text-v-purple">
+                  {diceOutcomes.filter(o => o.isWin).length} of 6 faces win = {diceWinRate}%
+                </span>
+              </div>
             </Card>
           )}
 
@@ -732,12 +755,13 @@ export default function CreateCampaignPage() {
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
+              {/* Summary */}
               <Card className="p-6">
                 <h2 className="text-base font-bold text-v-text mb-4">Review & Launch</h2>
                 <div className="space-y-0">
                   {[
                     { label: 'Campaign Name', value: basics.name || '—' },
-                    { label: 'Mechanic',       value: mechanic ? `${getMechanicEmoji(mechanic)} ${getMechanicLabel(mechanic)}` : '—' },
+                    { label: 'Mechanic', value: mechanic ? `${getMechanicEmoji(mechanic)} ${getMechanicLabel(mechanic)}` : '—' },
                     {
                       label: 'Duration',
                       value: (() => {
@@ -746,20 +770,16 @@ export default function CreateCampaignPage() {
                         return dur
                       })(),
                     },
-                    ...(!isLottery ? [{ label: isShakeOrSpin ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
-                    ...(isShakeOrSpin && !isToday ? [{ label: 'Per Day User Limit', value: `${basics.perDayUserLimit} users / day` }] : []),
-                    ...(!isLottery && !isStamp ? [
-                      { label: 'Plays Per Day', value: `${basics.playsPerDay} / day` },
-                      ...(isShakeOrSpin && basics.dailyWinRate > 0 ? [{ label: 'Daily Win Rate Cap', value: `${basics.dailyWinRate}% of players` }] : []),
-                      { label: 'Daily Rewards Cap', value: basics.dailyRewardCap === 0 ? 'Unlimited' : `${basics.dailyRewardCap} / day` },
-                    ] : []),
+                    ...(!isLottery ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
+                    ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
                     {
                       label: 'Rewards',
                       value:
-                        mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward${shakeRewards.length !== 1 ? 's' : ''}` :
-                        mechanic === 'spin'    ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''}` :
+                        mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} · ${shakeWinRate}% win rate` :
+                        mechanic === 'spin'    ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''} · ${spinWinRate}% win rate` :
+                        mechanic === 'dice'    ? `${diceOutcomes.filter(o => o.isWin).length} of 6 faces win · ${diceWinRate}% win rate` :
                         mechanic === 'stamp'   ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
-                        mechanic === 'dice'    ? `${diceOutcomes.filter(o => o.isWin && o.reward).length} winning face${diceOutcomes.filter(o => o.isWin).length !== 1 ? 's' : ''}` :
                         mechanic === 'lottery' ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` : '—',
                     },
                   ].map(item => (
@@ -770,6 +790,53 @@ export default function CreateCampaignPage() {
                   ))}
                 </div>
               </Card>
+
+              {/* Expected Campaign Impact — Shake, Spin, Dice only */}
+              {isShakeSpinOrDice && (() => {
+                const totalPlays   = basics.userCap * basics.playsPerDay
+                const totalRewards = Math.round(totalPlays * activeWinRate / 100)
+                const dailyPlays   = (isToday ? basics.userCap : basics.perDayUserLimit) * basics.playsPerDay
+                const dailyRewards = Math.round(dailyPlays * activeWinRate / 100)
+                const winSrc =
+                  mechanic === 'shake' ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} in pool` :
+                  mechanic === 'spin'  ? `${spinSegments.filter(s => s.isWin).length} of ${spinSegments.length} segments` :
+                  `${diceOutcomes.filter(o => o.isWin).length} of 6 faces`
+                return (
+                  <Card className="p-5 bg-v-surface-3 border-v-border-b">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="w-4 h-4 text-v-purple" />
+                      <h3 className="text-sm font-bold text-v-text">Expected Campaign Impact</h3>
+                    </div>
+                    <div className={`grid gap-3 ${isToday ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                      <div className="bg-white rounded-xl p-3.5">
+                        <div className="text-xl font-black text-v-purple">{activeWinRate}%</div>
+                        <div className="text-xs font-semibold text-v-text-2 mt-1">Win Rate</div>
+                        <div className="text-[10px] text-v-text-3 mt-0.5">From {winSrc}</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3.5">
+                        <div className="text-xl font-black text-v-text">~{totalRewards}</div>
+                        <div className="text-xs font-semibold text-v-text-2 mt-1">Total Rewards</div>
+                        <div className="text-[10px] text-v-text-3 mt-0.5">{basics.userCap} users × {basics.playsPerDay} play{basics.playsPerDay > 1 ? 's' : ''} × {activeWinRate}%</div>
+                      </div>
+                      {!isToday && (
+                        <>
+                          <div className="bg-white rounded-xl p-3.5">
+                            <div className="text-xl font-black text-v-text">~{dailyRewards}</div>
+                            <div className="text-xs font-semibold text-v-text-2 mt-1">Rewards / Day</div>
+                            <div className="text-[10px] text-v-text-3 mt-0.5">{basics.perDayUserLimit} users × {basics.playsPerDay} play{basics.playsPerDay > 1 ? 's' : ''} × {activeWinRate}%</div>
+                          </div>
+                          <div className="bg-white rounded-xl p-3.5">
+                            <div className="text-xl font-black text-v-text">{campaignDays}d</div>
+                            <div className="text-xs font-semibold text-v-text-2 mt-1">Duration</div>
+                            <div className="text-[10px] text-v-text-3 mt-0.5">{fmtDate(dates.start)} → {fmtDate(dates.end)}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-v-text-3 mt-3">To change expected rewards, adjust win probabilities in game config or update your user cap.</p>
+                  </Card>
+                )
+              })()}
 
               <Card className="p-5 text-center">
                 <p className="text-xs text-v-text-3 mb-2">A PIN will be auto-generated on launch</p>
