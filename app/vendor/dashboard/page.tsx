@@ -112,82 +112,42 @@ export default function DashboardPage() {
         </Link>
       </motion.div>
 
-      {/* ── Hero: Repeat Visit Rate + Segment Health ── */}
-      <motion.div variants={fadeUp(1)} initial="hidden" animate="show">
+      {/* ── Hero: Repeat Visit Rate + Retention Rate ── */}
+      <motion.div variants={fadeUp(1)} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {/* Repeat Visit Rate */}
         <Card className="p-6 bg-gradient-to-br from-v-surface to-purple-50 border-purple-200 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-v-purple/5 -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-v-purple/5 -translate-y-1/2 translate-x-1/2" />
           <div className="relative">
-            <div className="flex items-start justify-between gap-6 mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <RotateCcw className="w-4 h-4 text-v-purple" />
-                  <span className="text-sm font-semibold text-v-text-2">Repeat Visit Rate</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-v-purple/10 text-v-purple font-semibold">Hero Metric</span>
-                </div>
-                <div className="flex items-end gap-3">
-                  <span className="text-6xl font-black text-v-purple leading-none">{repeatVisitRate}%</span>
-                  <div className="mb-1">
-                    <Trend now={repeatVisitRate} prev={LM.repeatVisitRate} />
-                    <p className="text-xs text-v-text-3 mt-0.5">
-                      {visitedLast30.length} of {n} customers visited in the last 30 days
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-v-text-3 mt-2 max-w-sm">
-                  This is LoyalGenie's core value — the more customers return, the more revenue you retain.
-                </p>
-              </div>
-
-              {/* Active Rate + Loyalist growth mini-tiles */}
-              <div className="hidden md:flex flex-col gap-3 shrink-0">
-                <div className="bg-white/70 border border-v-border rounded-xl p-4 text-center min-w-[110px]">
-                  <div className="text-2xl font-black text-v-text">{activeRate}%</div>
-                  <div className="text-[10px] text-v-text-3 mt-0.5">Active Rate</div>
-                  <div className="mt-1"><Trend now={activeRate} prev={LM.activeRate} /></div>
-                </div>
-                <div className={`border rounded-xl p-4 text-center min-w-[110px] ${loyalistGrowth > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white/70 border-v-border'}`}>
-                  <div className={`text-2xl font-black ${loyalistGrowth > 0 ? 'text-amber-600' : 'text-v-text'}`}>
-                    {loyalistGrowth > 0 ? `+${loyalistGrowth}` : loyalistGrowth}
-                  </div>
-                  <div className="text-[10px] text-v-text-3 mt-0.5">Loyalist Growth</div>
-                  <div className="text-[10px] text-amber-600 font-semibold mt-0.5">
-                    {seg.loyalist.length} total now
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 mb-3">
+              <RotateCcw className="w-4 h-4 text-v-purple" />
+              <span className="text-sm font-semibold text-v-text-2">Repeat Visit Rate</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-v-purple/10 text-v-purple font-semibold">Hero</span>
             </div>
-
-            {/* Segment health bar */}
-            <div>
-              <p className="text-[11px] font-semibold text-v-text-2 mb-2">Customer Base Breakdown</p>
-              <div className="flex h-3 rounded-full overflow-hidden gap-px">
-                <div className="bg-amber-400 transition-all" style={{ width: `${seg.loyalist.length / n * 100}%` }} title="Loyalist" />
-                <div className="bg-blue-400 transition-all"  style={{ width: `${seg.regular.length  / n * 100}%` }} title="Regular" />
-                <div className="bg-orange-400 transition-all" style={{ width: `${seg.atRisk.length  / n * 100}%` }} title="At-Risk" />
-                <div className="bg-gray-300 transition-all"  style={{ width: `${seg.inactive.length / n * 100}%` }} title="Inactive" />
-              </div>
-              <div className="flex items-center gap-4 mt-2 flex-wrap">
-                {[
-                  { label: 'Loyalist', count: seg.loyalist.length, prev: LM.loyalistCount, color: 'text-amber-600', dot: 'bg-amber-400' },
-                  { label: 'Regular',  count: seg.regular.length,  prev: 2,                color: 'text-blue-600',  dot: 'bg-blue-400'  },
-                  { label: 'At-Risk',  count: seg.atRisk.length,   prev: 1,                color: 'text-orange-600',dot: 'bg-orange-400' },
-                  { label: 'Inactive', count: seg.inactive.length,  prev: 1,               color: 'text-gray-500',  dot: 'bg-gray-300'  },
-                ].map(s => (
-                  <div key={s.label} className="flex items-center gap-1.5">
-                    <div className={`w-2 h-2 rounded-full ${s.dot}`} />
-                    <span className={`text-xs font-bold ${s.color}`}>{s.count}</span>
-                    <span className="text-[11px] text-v-text-3">{s.label}</span>
-                    {s.count !== s.prev && (
-                      <span className={`text-[9px] font-bold ${s.count > s.prev ? 'text-v-success' : 'text-v-danger'}`}>
-                        {s.count > s.prev ? `+${s.count - s.prev}` : s.count - s.prev}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="text-6xl font-black text-v-purple leading-none mb-2">{repeatVisitRate}%</div>
+            <Trend now={repeatVisitRate} prev={LM.repeatVisitRate} />
+            <p className="text-xs text-v-text-3 mt-2">
+              {visitedLast30.length} of {n} customers visited in the last 30 days
+            </p>
           </div>
         </Card>
+
+        {/* Customer Retention Rate */}
+        <Card className="p-6 bg-gradient-to-br from-v-surface to-green-50 border-green-200 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-green-500/5 -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-semibold text-v-text-2">Customer Retention Rate</span>
+            </div>
+            <div className="text-6xl font-black text-green-600 leading-none mb-2">{retentionRate}%</div>
+            <Trend now={retentionRate} prev={LM.retentionRate} />
+            <p className="text-xs text-v-text-3 mt-2">
+              of last month's customers came back this month
+            </p>
+          </div>
+        </Card>
+
       </motion.div>
 
       {/* ── Main grid ── */}
