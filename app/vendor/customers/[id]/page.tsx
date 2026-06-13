@@ -2,28 +2,76 @@
 import { use, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Phone, Mail, TrendingUp, Gift, CheckCircle2, Clock, Trophy, Star, Coffee } from 'lucide-react'
+import {
+  ArrowLeft, Calendar, Phone, Mail, TrendingUp, Gift,
+  CheckCircle2, Clock, Trophy, Crown, AlertTriangle, Zap,
+} from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { MechanicBadge } from '@/components/ui/badge'
 import { customers, campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, formatDate, formatRelativeTime } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
 
-// Derived visit history from game plays + synthetic visits
-function buildVisitHistory(customer: typeof customers[0]) {
-  type VisitEvent = {
-    id: string
-    type: 'visit' | 'game_win' | 'game_loss' | 'reward_redeemed'
-    label: string
-    sub?: string
-    mechanic?: MechanicType
-    date: string
-    icon: string
-  }
+// ── Segment logic (same as customers list) ────────────────────────────────────
+const TODAY_STR = '2026-06-13'
+const TODAY_DATE = new Date(TODAY_STR)
 
+function daysSince(iso: string) {
+  return Math.floor((TODAY_DATE.getTime() - new Date(iso).getTime()) / 86400000)
+}
+
+type Segment = 'loyalist' | 'regular' | 'at-risk' | 'inactive'
+
+function getSegment(c: typeof customers[0]): Segment {
+  const days = daysSince(c.lastVisit)
+  if (days > 45)        return 'inactive'
+  if (days > 14)        return 'at-risk'
+  if (c.totalVisits >= 15) return 'loyalist'
+  return 'regular'
+}
+
+const SEGMENT_META: Record<Segment, {
+  label: string; icon: string; color: string
+  bg: string; border: string; textColor: string
+  action: string; concern: string | null
+}> = {
+  loyalist: {
+    label: 'Loyalist', icon: '👑', color: '#B45309',
+    bg: 'bg-amber-50', border: 'border-amber-300', textColor: 'text-amber-700',
+    action: 'Reward with an exclusive offer to sustain loyalty',
+    concern: null,
+  },
+  regular: {
+    label: 'Regular', icon: '📈', color: '#1D4ED8',
+    bg: 'bg-blue-50', border: 'border-blue-300', textColor: 'text-blue-700',
+    action: 'Nudge to Loyalist with a stamp card or streak reward',
+    concern: null,
+  },
+  'at-risk': {
+    label: 'At-Risk', icon: '⚠️', color: '#C2410C',
+    bg: 'bg-orange-50', border: 'border-orange-300', textColor: 'text-orange-700',
+    action: 'Launch a win-back campaign — they\'re slipping away',
+    concern: 'Has not visited in 15–45 days. Risk of churn is high.',
+  },
+  inactive: {
+    label: 'Inactive', icon: '💤', color: '#6B7280',
+    bg: 'bg-gray-100', border: 'border-gray-300', textColor: 'text-gray-600',
+    action: 'Re-engagement needed — personalised outreach may help',
+    concern: 'Has not visited in over 45 days. Likely churned.',
+  },
+}
+
+// ── Visit history builder ─────────────────────────────────────────────────────
+type VisitEvent = {
+  id: string
+  type: 'game_win' | 'game_loss' | 'reward_redeemed' | 'visit'
+  label: string; sub?: string; mechanic?: MechanicType
+  date: string; icon: string
+}
+
+function buildVisitHistory(customer: typeof customers[0]): VisitEvent[] {
   const events: VisitEvent[] = []
 
-  // Seed from game history
   customer.gameHistory.forEach(g => {
     events.push({
       id: g.id,
@@ -36,7 +84,6 @@ function buildVisitHistory(customer: typeof customers[0]) {
     })
   })
 
-  // Seed from redeemed rewards
   customer.rewards.filter(r => r.status === 'redeemed' && r.redeemedAt).forEach(r => {
     events.push({
       id: `rd-${r.id}`,
@@ -49,237 +96,358 @@ function buildVisitHistory(customer: typeof customers[0]) {
     })
   })
 
-  // Synthetic extra visits to fill totalVisits count
   const existingCount = events.filter(e => e.type !== 'reward_redeemed').length
   const extra = Math.max(0, Math.min(customer.totalVisits - existingCount, 8))
   const base = new Date(customer.joinedAt).getTime()
-  const now = new Date(customer.lastVisit).getTime()
+  const now  = new Date(customer.lastVisit).getTime()
   for (let i = 0; i < extra; i++) {
     const t = new Date(base + (now - base) * ((i + 1) / (extra + 1)))
-    events.push({
-      id: `v-${i}`,
-      type: 'visit',
-      label: 'Visited the café',
-      date: t.toISOString(),
-      icon: '☕',
-    })
+    events.push({ id: `v-${i}`, type: 'visit', label: 'Visited the café', date: t.toISOString(), icon: '☕' })
   }
 
   return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
-// Derive campaigns the customer participated in, split active vs previous
+// ── Campaign activity builder ─────────────────────────────────────────────────
 function buildCampaignActivity(customer: typeof customers[0]) {
-  const seen = new Map<string, { id: string; name: string; mechanic: MechanicType; plays: number; wins: number; status: string }>()
-
+  const seen = new Map<string, {
+    id: string; name: string; mechanic: MechanicType
+    plays: number; wins: number; status: string
+  }>()
   customer.gameHistory.forEach(g => {
     const camp = campaigns.find(c => c.id === g.campaignId)
     if (!camp) return
-    if (!seen.has(g.campaignId)) {
+    if (!seen.has(g.campaignId))
       seen.set(g.campaignId, { id: g.campaignId, name: g.campaignName, mechanic: g.mechanic, plays: 0, wins: 0, status: camp.status })
-    }
     const entry = seen.get(g.campaignId)!
     entry.plays++
     if (g.won) entry.wins++
   })
-
   const all = Array.from(seen.values())
-  return {
-    active: all.filter(c => c.status === 'active'),
-    previous: all.filter(c => c.status !== 'active'),
-  }
+  return { active: all.filter(c => c.status === 'active'), previous: all.filter(c => c.status !== 'active') }
 }
 
-// Redemption summary
-function buildRedemptionSummary(customer: typeof customers[0]) {
-  const pending = customer.rewards.filter(r => r.status === 'pending')
+// ── Redemption summary ────────────────────────────────────────────────────────
+const VALUE_MAP: Record<string, number> = {
+  'Free Coffee': 120, '₹30 Off': 30, 'Free Breakfast': 450, 'Free Sandwich': 180,
+  '₹50 Off': 50, 'Free Muffin': 80, '20% Off': 60, 'Surprise Drop': 80, 'Free Dessert': 150,
+}
+function buildRedemption(customer: typeof customers[0]) {
+  const pending  = customer.rewards.filter(r => r.status === 'pending')
   const redeemed = customer.rewards.filter(r => r.status === 'redeemed')
-  const total = customer.rewards.length
-
-  const VALUE_MAP: Record<string, number> = {
-    'Free Coffee': 120, '₹30 Off': 30, 'Free Breakfast': 450,
-    'Free Sandwich': 180, '₹50 Off': 50, 'Free Muffin': 80,
-    '20% Off': 60, 'Surprise Drop': 80, 'Free Dessert': 150,
-  }
   const totalValue = customer.rewards.reduce((s, r) => s + (VALUE_MAP[r.reward] ?? 50), 0)
-
-  return { pending, redeemed, total, totalValue }
+  return { pending, redeemed, total: customer.rewards.length, totalValue }
 }
 
-const STEP_COLORS = {
-  game_win: 'text-amber-600 bg-amber-50 border-amber-200',
-  game_loss: 'text-v-text-3 bg-v-surface-2 border-v-border',
+// ── Derived metrics ───────────────────────────────────────────────────────────
+function monthsSince(iso: string) {
+  return Math.max(1, (TODAY_DATE.getTime() - new Date(iso).getTime()) / (30 * 86400000))
+}
+
+const EVENT_STYLE: Record<VisitEvent['type'], string> = {
+  game_win:        'text-amber-600 bg-amber-50 border-amber-200',
+  game_loss:       'text-v-text-3 bg-v-surface-2 border-v-border',
   reward_redeemed: 'text-v-success bg-emerald-50 border-emerald-200',
-  visit: 'text-v-purple bg-v-surface-2 border-v-border',
+  visit:           'text-v-purple bg-v-surface-2 border-v-border',
 }
+
+const VISIT_FILTERS = [
+  { key: '7d',  label: '7 Days' },
+  { key: '30d', label: 'Month'  },
+  { key: '90d', label: '3 Months' },
+  { key: 'all', label: 'All time' },
+] as const
+type VisitFilter = typeof VISIT_FILTERS[number]['key']
 
 type Tab = 'overview' | 'visits' | 'campaigns' | 'rewards'
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const customer = customers.find(c => c.id === id) ?? customers[0]
   const [tab, setTab] = useState<Tab>('overview')
+  const [visitFilter, setVisitFilter] = useState<VisitFilter>('all')
 
-  const visitHistory = buildVisitHistory(customer)
-  const campaignActivity = buildCampaignActivity(customer)
-  const redemption = buildRedemptionSummary(customer)
+  const segment        = getSegment(customer)
+  const segMeta        = SEGMENT_META[segment]
+  const visitHistory   = buildVisitHistory(customer)
+  const campaignAct    = buildCampaignActivity(customer)
+  const redemption     = buildRedemption(customer)
+  const daysAgo        = daysSince(customer.lastVisit)
+  const visitsPerMonth = Math.round((customer.totalVisits / monthsSince(customer.joinedAt)) * 10) / 10
+  const winRatePct     = customer.gamesPlayed > 0
+    ? Math.round((customer.rewardsEarned / customer.gamesPlayed) * 100) : 0
+  const lifetimeValue  = Math.round(customer.totalVisits * 300)
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'visits', label: 'Visit History' },
-    { key: 'campaigns', label: 'Campaigns' },
-    { key: 'rewards', label: 'Rewards & Games' },
+  const filteredHistory = visitHistory.filter(e => {
+    if (visitFilter === 'all') return true
+    const cutoff = { '7d': 7, '30d': 30, '90d': 90 }[visitFilter]
+    return daysSince(e.date) <= cutoff
+  })
+
+  const isAtRisk   = segment === 'at-risk' || segment === 'inactive'
+  const tabs: { key: Tab; label: string; count?: number }[] = [
+    { key: 'overview',   label: 'Overview' },
+    { key: 'visits',     label: 'Visit History',   count: customer.totalVisits },
+    { key: 'campaigns',  label: 'Campaigns',        count: campaignAct.active.length + campaignAct.previous.length },
+    { key: 'rewards',    label: 'Rewards',          count: redemption.pending.length || undefined },
   ]
 
   return (
     <div className="p-8 max-w-5xl">
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
         <Link href="/vendor/customers" className="inline-flex items-center gap-1.5 text-sm text-v-text-2 hover:text-v-text mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Customers
         </Link>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex items-start gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-v-surface-3 border border-v-border-b flex items-center justify-center text-2xl font-extrabold text-v-purple shrink-0">
-            {customer.name[0]}
+          <div className="relative shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-v-surface-3 border border-v-border-b flex items-center justify-center text-2xl font-extrabold text-v-purple">
+              {customer.name[0]}
+            </div>
+            <span className="absolute -bottom-1 -right-1 text-lg">{segMeta.icon}</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
               <h1 className="text-2xl font-extrabold text-v-text">{customer.name}</h1>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${customer.status === 'active' ? 'bg-emerald-50 text-v-success border border-emerald-200' : 'bg-v-surface-2 text-v-text-3 border border-v-border'}`}>
-                {customer.status === 'active' ? 'Active' : 'Inactive'}
+              <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-bold border ${segMeta.bg} ${segMeta.border} ${segMeta.textColor}`}>
+                {segMeta.icon} {segMeta.label}
               </span>
+              {redemption.pending.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 border border-amber-300 text-amber-700">
+                  <Gift className="w-3 h-3" /> {redemption.pending.length} reward{redemption.pending.length > 1 ? 's' : ''} pending
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-5 flex-wrap text-xs text-v-text-3">
               <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" />{customer.phone}</span>
               <span className="flex items-center gap-1.5"><Mail className="w-3 h-3" />{customer.email}</span>
               <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" />DOB: {formatDate(customer.dob)}</span>
-              <span className="flex items-center gap-1.5"><Star className="w-3 h-3" />Member since {formatDate(customer.joinedAt)}</span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3 h-3" />
+                <span className={daysAgo > 14 ? 'text-orange-500 font-semibold' : ''}>
+                  Last visit {daysAgo === 0 ? 'today' : `${daysAgo}d ago`}
+                </span>
+              </span>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Stats row */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      {/* ── At-Risk / Inactive alert ── */}
+      {isAtRisk && (
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className={`flex items-start gap-3 px-4 py-3 rounded-xl border mb-5 ${segMeta.bg} ${segMeta.border}`}>
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: segMeta.color }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: segMeta.color }}>{segMeta.concern}</p>
+            <p className="text-xs mt-0.5" style={{ color: segMeta.color }}>{segMeta.action}</p>
+          </div>
+          <Link href="/vendor/campaigns/create">
+            <button className="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all hover:opacity-80 shrink-0"
+              style={{ borderColor: segMeta.color, color: segMeta.color, background: 'white' }}>
+              Launch Campaign
+            </button>
+          </Link>
+        </motion.div>
+      )}
+
+      {/* ── Decision Stats ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total Visits', value: customer.totalVisits, icon: '📅', trend: '+3 this month', up: true },
-          { label: 'Games Played', value: customer.gamesPlayed, icon: '🎮', trend: `${customer.gameHistory.filter(g => g.won).length} wins`, up: true },
-          { label: 'Rewards Earned', value: customer.rewardsEarned, icon: '🎁', trend: `₹${redemption.totalValue} value`, up: true },
-          { label: 'Last Seen', value: formatRelativeTime(customer.lastVisit), icon: '⏱️', trend: 'Most recent visit', up: false },
+          {
+            label: 'Visits / Month',
+            value: `${visitsPerMonth}×`,
+            sub: `${customer.totalVisits} total visits`,
+            icon: '📅', color: '#7C3AED',
+          },
+          {
+            label: 'Win Rate',
+            value: `${winRatePct}%`,
+            sub: `${customer.rewardsEarned} of ${customer.gamesPlayed} plays`,
+            icon: '🎯', color: winRatePct >= 50 ? '#16A34A' : winRatePct > 0 ? '#D97706' : '#6B7280',
+          },
+          {
+            label: 'Lifetime Value',
+            value: `₹${lifetimeValue.toLocaleString()}`,
+            sub: `est. ₹300/visit`,
+            icon: '💰', color: '#D97706',
+          },
+          {
+            label: 'Pending Rewards',
+            value: redemption.pending.length,
+            sub: redemption.pending.length > 0 ? 'Needs redemption' : 'All redeemed',
+            icon: redemption.pending.length > 0 ? '🔔' : '✅',
+            color: redemption.pending.length > 0 ? '#C2410C' : '#16A34A',
+          },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}>
             <Card className="p-4">
               <div className="text-xl mb-2">{s.icon}</div>
-              <div className="text-lg font-bold text-v-text">{s.value}</div>
-              <div className="text-xs text-v-text-3 mt-0.5">{s.label}</div>
-              <div className={`text-[10px] mt-1 font-medium ${s.up ? 'text-v-success' : 'text-v-text-3'}`}>{s.trend}</div>
+              <div className="text-xl font-black leading-none" style={{ color: s.color }}>{s.value}</div>
+              <div className="text-xs text-v-text-3 mt-0.5 font-medium">{s.label}</div>
+              <div className="text-[10px] text-v-text-3 mt-1">{s.sub}</div>
             </Card>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Tab bar */}
+      {/* ── Tab bar ── */}
       <div className="flex gap-1 mb-6 bg-v-surface-2 border border-v-border rounded-xl p-1">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${tab === t.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-2 hover:text-v-text'}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${tab === t.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-2 hover:text-v-text'}`}>
             {t.label}
+            {t.count !== undefined && (
+              <span className={`text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center font-bold ${tab === t.key ? 'bg-v-purple text-white' : 'bg-v-border text-v-text-3'}`}>
+                {t.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Tab content */}
+      {/* ── Tab content ── */}
       <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
 
         {/* OVERVIEW */}
         {tab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Redemption summary */}
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Gift className="w-4 h-4 text-v-purple" />
-                <h3 className="text-sm font-bold text-v-text">Redemption Summary</h3>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {[
-                  { label: 'Total', value: redemption.total, color: 'text-v-purple', bg: 'bg-v-surface-3 border-v-border-b' },
-                  { label: 'Pending', value: redemption.pending.length, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-                  { label: 'Redeemed', value: redemption.redeemed.length, color: 'text-v-success', bg: 'bg-emerald-50 border-emerald-200' },
-                ].map(s => (
-                  <div key={s.label} className={`rounded-xl p-3 border text-center ${s.bg}`}>
-                    <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-                    <div className="text-[10px] text-v-text-3 mt-0.5">{s.label}</div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Loyalty profile */}
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Crown className="w-4 h-4 text-v-purple" />
+                  <h3 className="text-sm font-bold text-v-text">Loyalty Profile</h3>
+                </div>
+                <div className={`rounded-xl p-4 border mb-4 ${segMeta.bg} ${segMeta.border}`}>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="text-2xl">{segMeta.icon}</span>
+                    <div>
+                      <div className="text-base font-black" style={{ color: segMeta.color }}>{segMeta.label}</div>
+                      <div className="text-[11px]" style={{ color: segMeta.color }}>
+                        {segment === 'loyalist' ? `${customer.totalVisits} total visits · Very engaged` :
+                         segment === 'regular'  ? `${customer.totalVisits} visits · Building habit` :
+                         segment === 'at-risk'  ? `${daysAgo} days since last visit` :
+                                                  `${daysAgo} days since last visit — churned`}
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-              {/* Progress bar */}
-              {redemption.total > 0 && (
-                <div>
-                  <div className="flex h-2.5 rounded-full overflow-hidden bg-v-surface-3 gap-px">
-                    <div className="h-full bg-v-success rounded-full transition-all" style={{ width: `${(redemption.redeemed.length / redemption.total) * 100}%` }} />
-                    <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${(redemption.pending.length / redemption.total) * 100}%` }} />
-                  </div>
-                  <div className="flex items-center justify-between mt-1.5 text-[10px] text-v-text-3">
-                    <span>{Math.round((redemption.redeemed.length / Math.max(1, redemption.total)) * 100)}% redeemed</span>
-                    <span>Est. value: ₹{redemption.totalValue}</span>
+                  <div className="flex items-start gap-1.5 pt-3 border-t" style={{ borderColor: `${segMeta.color}30` }}>
+                    <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: segMeta.color }} />
+                    <p className="text-xs font-medium" style={{ color: segMeta.color }}>{segMeta.action}</p>
                   </div>
                 </div>
-              )}
-              {redemption.total === 0 && (
-                <p className="text-xs text-v-text-3 text-center py-2">No rewards yet</p>
-              )}
-            </Card>
-
-            {/* Campaign summary */}
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-v-purple" />
-                <h3 className="text-sm font-bold text-v-text">Campaign Participation</h3>
-              </div>
-              {campaignActivity.active.length === 0 && campaignActivity.previous.length === 0 ? (
-                <p className="text-xs text-v-text-3 text-center py-4">No campaigns yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {[...campaignActivity.active.map(c => ({ ...c, badge: 'Active' })), ...campaignActivity.previous.map(c => ({ ...c, badge: 'Ended' }))].map(c => (
-                    <div key={c.id} className="flex items-center gap-3 p-2.5 bg-v-surface-2 border border-v-border rounded-xl">
-                      <div className="text-xl shrink-0">{getMechanicEmoji(c.mechanic)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-v-text truncate">{c.name}</p>
-                        <p className="text-[10px] text-v-text-3">{c.plays} play{c.plays !== 1 ? 's' : ''} · {c.wins} win{c.wins !== 1 ? 's' : ''}</p>
-                      </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${c.badge === 'Active' ? 'bg-emerald-50 text-v-success border border-emerald-200' : 'bg-v-surface-3 text-v-text-3 border border-v-border'}`}>
-                        {c.badge}
-                      </span>
+                <div className="space-y-2.5">
+                  {[
+                    { label: 'Member since',    value: formatDate(customer.joinedAt) },
+                    { label: 'Visit frequency', value: `${visitsPerMonth}× / month` },
+                    { label: 'Games played',    value: `${customer.gamesPlayed} (${winRatePct}% win rate)` },
+                    { label: 'Lifetime value',  value: `₹${lifetimeValue.toLocaleString()} est.` },
+                  ].map(row => (
+                    <div key={row.label} className="flex items-center justify-between text-xs">
+                      <span className="text-v-text-3">{row.label}</span>
+                      <span className="font-semibold text-v-text">{row.value}</span>
                     </div>
                   ))}
                 </div>
-              )}
-            </Card>
+              </Card>
 
-            {/* Recent activity preview */}
-            <Card className="p-5 md:col-span-2">
+              {/* Redemption summary */}
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Gift className="w-4 h-4 text-v-purple" />
+                  <h3 className="text-sm font-bold text-v-text">Reward Summary</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[
+                    { label: 'Total',    value: redemption.total,           color: 'text-v-purple', bg: 'bg-v-surface-3 border-v-border-b' },
+                    { label: 'Pending',  value: redemption.pending.length,  color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
+                    { label: 'Redeemed', value: redemption.redeemed.length, color: 'text-v-success', bg: 'bg-emerald-50 border-emerald-200' },
+                  ].map(s => (
+                    <div key={s.label} className={`rounded-xl p-3 border text-center ${s.bg}`}>
+                      <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
+                      <div className="text-[10px] text-v-text-3 mt-0.5">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {redemption.total > 0 ? (
+                  <div>
+                    <div className="flex h-2.5 rounded-full overflow-hidden bg-v-surface-3 mb-1.5">
+                      <div className="h-full bg-v-success transition-all" style={{ width: `${(redemption.redeemed.length / redemption.total) * 100}%` }} />
+                      <div className="h-full bg-amber-400 transition-all" style={{ width: `${(redemption.pending.length / redemption.total) * 100}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-v-text-3">
+                      <span>{Math.round((redemption.redeemed.length / Math.max(1, redemption.total)) * 100)}% redeemed</span>
+                      <span>Est. value: ₹{redemption.totalValue}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-v-text-3 text-center py-2">No rewards yet</p>
+                )}
+
+                {/* Campaigns quick view */}
+                <div className="mt-4 pt-4 border-t border-v-border">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-xs font-semibold text-v-text">Campaigns</p>
+                    <button onClick={() => setTab('campaigns')} className="text-[10px] text-v-purple font-semibold hover:underline">
+                      View all
+                    </button>
+                  </div>
+                  {campaignAct.active.length + campaignAct.previous.length === 0 ? (
+                    <p className="text-xs text-v-text-3">No campaigns yet</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {[...campaignAct.active.map(c => ({ ...c, live: true })), ...campaignAct.previous.map(c => ({ ...c, live: false }))].map(c => (
+                        <div key={c.id} className="flex items-center gap-2.5 p-2 bg-v-surface-2 border border-v-border rounded-lg">
+                          <span className="text-base shrink-0">{getMechanicEmoji(c.mechanic)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-v-text truncate">{c.name}</p>
+                            <p className="text-[10px] text-v-text-3">{c.plays} plays · {c.wins} wins</p>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${c.live ? 'bg-emerald-50 text-v-success border border-emerald-200' : 'bg-v-surface-3 text-v-text-3 border border-v-border'}`}>
+                            {c.live ? 'Live' : 'Ended'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+
+            {/* Recent activity */}
+            <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-v-purple" />
                   <h3 className="text-sm font-bold text-v-text">Recent Activity</h3>
                 </div>
-                <button onClick={() => setTab('visits')} className="text-xs text-v-purple font-semibold hover:underline">View all</button>
+                <button onClick={() => setTab('visits')} className="text-xs text-v-purple font-semibold hover:underline">
+                  Full history
+                </button>
               </div>
-              <div className="space-y-2.5">
-                {visitHistory.slice(0, 4).map((event, i) => (
-                  <div key={event.id} className="flex items-start gap-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm border shrink-0 ${STEP_COLORS[event.type]}`}>
-                      {event.icon}
+              {visitHistory.length === 0 ? (
+                <p className="text-sm text-v-text-3 text-center py-4">No activity yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {visitHistory.slice(0, 5).map(event => (
+                    <div key={event.id} className="flex items-start gap-3">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm border shrink-0 ${EVENT_STYLE[event.type]}`}>
+                        {event.icon}
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-xs font-semibold text-v-text">{event.label}</p>
+                        {event.sub && <p className="text-[10px] text-v-text-3">{event.sub}</p>}
+                      </div>
+                      <span className="text-[10px] text-v-text-3 shrink-0 pt-0.5">{formatRelativeTime(event.date)}</span>
                     </div>
-                    <div className="flex-1 min-w-0 pt-0.5">
-                      <p className="text-xs font-semibold text-v-text">{event.label}</p>
-                      {event.sub && <p className="text-[10px] text-v-text-3">{event.sub}</p>}
-                    </div>
-                    <span className="text-[10px] text-v-text-3 shrink-0 pt-0.5">{formatRelativeTime(event.date)}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         )}
@@ -287,21 +455,35 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         {/* VISIT HISTORY */}
         {tab === 'visits' && (
           <Card className="p-5">
-            <div className="flex items-center gap-2 mb-5">
-              <Calendar className="w-4 h-4 text-v-purple" />
-              <h3 className="text-sm font-bold text-v-text">Visit History</h3>
-              <span className="text-xs text-v-text-3 ml-auto">{customer.totalVisits} total visits</span>
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-v-purple" />
+                <h3 className="text-sm font-bold text-v-text">Visit History</h3>
+                <span className="text-xs text-v-text-3">· {customer.totalVisits} total</span>
+              </div>
+              {/* Date filter */}
+              <div className="flex items-center gap-1 bg-v-surface-2 border border-v-border rounded-xl p-1">
+                {VISIT_FILTERS.map(f => (
+                  <button key={f.key} onClick={() => setVisitFilter(f.key)}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${visitFilter === f.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {visitHistory.length === 0 ? (
-              <p className="text-sm text-v-text-3 text-center py-8">No visit history yet</p>
+            {filteredHistory.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-3xl mb-2">📭</div>
+                <p className="text-sm text-v-text-3">No activity in this period</p>
+              </div>
             ) : (
               <div className="relative">
-                {/* vertical line */}
                 <div className="absolute left-[13px] top-4 bottom-4 w-px bg-v-border" />
                 <div className="space-y-0">
-                  {visitHistory.map((event, i) => (
-                    <motion.div key={event.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }} className="flex gap-4 pb-4 last:pb-0">
-                      <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-sm border-2 shrink-0 ${STEP_COLORS[event.type]}`}>
+                  {filteredHistory.map((event, i) => (
+                    <motion.div key={event.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
+                      className="flex gap-4 pb-4 last:pb-0">
+                      <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-sm border-2 shrink-0 ${EVENT_STYLE[event.type]}`}>
                         {event.icon}
                       </div>
                       <div className="flex-1 pt-0.5 min-w-0">
@@ -332,22 +514,21 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         {/* CAMPAIGNS */}
         {tab === 'campaigns' && (
           <div className="space-y-5">
-            {/* Active campaigns */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 rounded-full bg-v-success animate-pulse" />
                 <h3 className="text-sm font-bold text-v-text">Active Campaigns</h3>
-                <span className="text-xs text-v-text-3">({campaignActivity.active.length})</span>
+                <span className="text-xs text-v-text-3">({campaignAct.active.length})</span>
               </div>
-              {campaignActivity.active.length === 0 ? (
+              {campaignAct.active.length === 0 ? (
                 <Card className="p-5 text-center">
-                  <p className="text-sm text-v-text-3">Not participating in any active campaigns</p>
+                  <p className="text-sm text-v-text-3">Not in any active campaigns</p>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {campaignActivity.active.map(c => {
+                  {campaignAct.active.map(c => {
                     const camp = campaigns.find(x => x.id === c.id)
-                    const winRate = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
+                    const wr = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
                     return (
                       <Card key={c.id} className="p-4">
                         <div className="flex items-start gap-3">
@@ -362,9 +543,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-3">
                           {[
-                            { label: 'Plays', value: c.plays },
-                            { label: 'Wins', value: c.wins },
-                            { label: 'Win rate', value: `${winRate}%` },
+                            { label: 'Plays',    value: c.plays },
+                            { label: 'Wins',     value: c.wins },
+                            { label: 'Win Rate', value: `${wr}%` },
                           ].map(s => (
                             <div key={s.label} className="text-center p-2 bg-v-surface-2 rounded-lg border border-v-border">
                               <div className="text-sm font-bold text-v-text">{s.value}</div>
@@ -374,8 +555,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                         {camp && (
                           <p className="text-[10px] text-v-text-3 mt-2.5 flex items-center gap-1">
-                            <Calendar className="w-2.5 h-2.5" />
-                            Ends {formatDate(camp.endDate)}
+                            <Calendar className="w-2.5 h-2.5" /> Ends {formatDate(camp.endDate)}
                           </p>
                         )}
                       </Card>
@@ -385,28 +565,27 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               )}
             </div>
 
-            {/* Previous campaigns */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-3.5 h-3.5 text-v-text-3" />
                 <h3 className="text-sm font-bold text-v-text">Previous Campaigns</h3>
-                <span className="text-xs text-v-text-3">({campaignActivity.previous.length})</span>
+                <span className="text-xs text-v-text-3">({campaignAct.previous.length})</span>
               </div>
-              {campaignActivity.previous.length === 0 ? (
+              {campaignAct.previous.length === 0 ? (
                 <Card className="p-5 text-center">
                   <p className="text-sm text-v-text-3">No previous campaign history</p>
                 </Card>
               ) : (
                 <div className="space-y-2">
-                  {campaignActivity.previous.map(c => {
-                    const winRate = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
+                  {campaignAct.previous.map(c => {
+                    const wr = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
                     return (
                       <Card key={c.id} className="p-3.5 opacity-80">
                         <div className="flex items-center gap-3">
                           <div className="text-xl shrink-0">{getMechanicEmoji(c.mechanic)}</div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-v-text truncate">{c.name}</p>
-                            <p className="text-xs text-v-text-3">{c.plays} plays · {c.wins} wins · {winRate}% win rate</p>
+                            <p className="text-xs text-v-text-3">{c.plays} plays · {c.wins} wins · {wr}% win rate</p>
                           </div>
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-v-surface-3 text-v-text-3 border border-v-border shrink-0">Ended</span>
                         </div>
@@ -419,14 +598,14 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
 
-        {/* REWARDS & GAMES */}
+        {/* REWARDS */}
         {tab === 'rewards' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Rewards wallet */}
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-4 h-4 text-amber-500" />
                 <h3 className="text-sm font-bold text-v-text">Rewards Wallet</h3>
+                <span className="text-xs text-v-text-3 ml-auto">{customer.rewards.length} total</span>
               </div>
               {customer.rewards.length === 0 ? (
                 <p className="text-sm text-v-text-3 text-center py-8">No rewards yet</p>
@@ -459,10 +638,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               )}
             </Card>
 
-            {/* Game history */}
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <Coffee className="w-4 h-4 text-v-purple" />
+                <TrendingUp className="w-4 h-4 text-v-purple" />
                 <h3 className="text-sm font-bold text-v-text">Game History</h3>
                 <span className="text-xs text-v-text-3 ml-auto">{customer.gameHistory.length} plays</span>
               </div>
