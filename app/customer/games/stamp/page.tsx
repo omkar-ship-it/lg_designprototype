@@ -61,37 +61,41 @@ function StampCardInner() {
       <div className="absolute bottom-40 -left-20 w-56 h-56 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(40px)' }} />
 
-      {/* Back */}
-      <button onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-8 self-start relative z-10">
-        <ArrowLeft size={16} /> Back
-      </button>
-
-      {/* Campaign Details Card */}
+      {/* Campaign Details Card — At Top */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full mb-6 relative z-10 p-4 rounded-2xl"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,158,11,0.2)' }}
+        className="w-full mb-8 relative z-10 p-4 rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(245,158,11,0.3)' }}
       >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-lg font-bold text-white">Loyalty Stamp Card</h2>
-            <p className="text-xs text-white/50 mt-0.5">Collect 10 stamps to unlock rewards</p>
+            <h2 className="text-xl font-bold text-white">☕ Loyalty Stamp Card</h2>
+            <p className="text-xs text-white/60 mt-1">Collect 10 stamps to unlock rewards</p>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
+          <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
         </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-3 gap-4 text-xs">
           <div>
-            <p className="text-white/40 mb-1">Duration</p>
-            <p className="text-white font-medium">Jun 1 – Jun 30</p>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Duration</p>
+            <p className="text-white font-bold text-sm">Jun 1–30</p>
           </div>
           <div>
-            <p className="text-white/40 mb-1">Participation</p>
-            <p className="text-white font-medium">187 customers joined</p>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Joined</p>
+            <p className="text-white font-bold text-sm">187 customers</p>
+          </div>
+          <div>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Progress</p>
+            <p className="text-white font-bold text-sm">{stamps}/10</p>
           </div>
         </div>
       </motion.div>
+
+      {/* Back */}
+      <button onClick={() => router.back()}
+        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-6 self-start relative z-10">
+        <ArrowLeft size={16} /> Back
+      </button>
 
       <div className="text-center mb-6 relative z-10">
         <h1 className="text-2xl font-extrabold text-white mb-1">☕ Stamp Card</h1>

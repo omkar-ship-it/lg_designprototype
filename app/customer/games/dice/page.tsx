@@ -112,45 +112,42 @@ export default function DicePage() {
         </motion.div>
       ))}
 
-      {/* Campaign Details Card */}
-      <div className="w-full px-5 mb-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(34,197,94,0.3)' }}
+      {/* Campaign Details Card — At Top */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full px-5 mb-8 p-4 rounded-2xl relative z-10"
+        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(34,197,94,0.3)' }}
         >
           <div className="flex items-start justify-between mb-3">
             <div>
-              <h2 className="text-lg font-bold text-white">🎲 Lucky Dice</h2>
-              <p className="text-xs text-white/50 mt-0.5">Roll and match to win</p>
+              <h2 className="text-xl font-bold text-white">🎲 Lucky Dice</h2>
+              <p className="text-xs text-white/60 mt-1">Roll and match to win</p>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-xs">
+          <div className="grid grid-cols-3 gap-4 text-xs">
             <div>
-              <p className="text-white/40 mb-1">Win Rate</p>
-              <p className="text-white font-bold">50% chance</p>
+              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Win Rate</p>
+              <p className="text-white font-bold text-sm">50%</p>
             </div>
             <div>
-              <p className="text-white/40 mb-1\">Duration</p>
-              <p className="text-white font-medium text-sm\">Jul 1–31</p>
+              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Duration</p>
+              <p className="text-white font-bold text-sm">Jul 1–31</p>
             </div>
             <div>
-              <p className="text-white/40 mb-1">Joined</p>
-              <p className="text-white font-medium\">328 players</p>
+              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Players</p>
+              <p className="text-white font-bold text-sm">328 joined</p>
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Back */}
-      <div className="w-full flex items-center px-5 mb-2 z-10">
-        <button onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm">
-          <ArrowLeft size={16} /> Back
-        </button>
-      </div>
+      <button onClick={() => router.back()}
+        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-6 self-start relative z-10 px-5">
+        <ArrowLeft size={16} /> Back
+      </button>
 
       <div className="text-center z-10 mb-4">
         <h1 className="text-xl font-extrabold text-white">Roll the Dice</h1>

@@ -204,41 +204,39 @@ export default function LotteryPage() {
         </motion.div>
       ))}
 
-      {/* Campaign Details Card */}
-      <div className="w-full mb-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,197,24,0.3)' }}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h2 className="text-lg font-bold text-white">🎟️ Summer Lottery</h2>
-              <p className="text-xs text-white/50 mt-0.5">Scratch 3 to match and win tiered rewards</p>
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#EF4444', color: '#fff' }}>ENDED</span>
+      {/* Campaign Details Card — At Top */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full px-5 mb-8 p-4 rounded-2xl relative z-10"
+        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(245,197,24,0.3)' }}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h2 className="text-xl font-bold text-white">🎟️ Summer Lottery</h2>
+            <p className="text-xs text-white/60 mt-1">Scratch 3 to match and win tiered rewards</p>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-xs">
-            <div>
-              <p className="text-white/40 mb-1">Tier Chances</p>
-              <p className="text-white font-bold text-xs\">👑 2% • 🍳 8%</p>
-            </div>
-            <div>
-              <p className="text-white/40 mb-1">Ended</p>
-              <p className="text-white font-medium text-sm\">May 1–31</p>
-            </div>
-            <div>
-              <p className="text-white/40 mb-1\">Tickets Sold</p>
-              <p className="text-white font-medium\">2,341</p>
-            </div>
+          <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: '#EF4444', color: '#fff' }}>ENDED</span>
+        </div>
+        <div className="grid grid-cols-3 gap-4 text-xs">
+          <div>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Tier Odds</p>
+            <p className="text-white font-bold text-sm">👑 2% • 🍳 8%</p>
           </div>
-        </motion.div>
-      </div>
+          <div>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Campaign</p>
+            <p className="text-white font-bold text-sm">May 1–31</p>
+          </div>
+          <div>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Sales</p>
+            <p className="text-white font-bold text-sm">2,341 sold</p>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Back */}
       <button onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-4 self-start relative z-10">
+        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-6 self-start relative z-10 px-5">
         <ArrowLeft size={16} /> Back
       </button>
 
