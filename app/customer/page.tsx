@@ -5,26 +5,70 @@ import { motion } from 'framer-motion'
 import { Bell, Search, Star } from 'lucide-react'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customers, customerBusinesses } from '@/lib/mock-data'
-import type { CustomerBusiness } from '@/lib/types'
+import { MECHANIC_META } from '@/lib/utils'
+import type { CustomerBusiness, MechanicType } from '@/lib/types'
 
-const demo = customers[0]
-const firstName = demo.name.split(' ')[0]
-const activeCount   = demo.rewards.filter(r => r.status === 'pending').length
-const redeemedCount = demo.rewards.filter(r => r.status === 'redeemed').length
-const stampCount    = demo.rewards.filter(r => r.mechanic === 'stamp').length
-const cardCount     = demo.rewards.filter(r => r.mechanic === 'spin' || r.mechanic === 'shake').length
-const mysteryCount  = demo.rewards.filter(r => r.mechanic === 'dice').length
-const spinCount     = demo.rewards.filter(r => r.mechanic === 'spin').length
-const lotteryCount  = demo.rewards.filter(r => r.mechanic === 'lottery').length
+const demo        = customers[0]
+const firstName   = demo.name.split(' ')[0]
+const activeCount = demo.rewards.filter(r => r.status === 'pending').length
 
-const REWARD_ICONS = [
-  { emoji: '🧾', label: 'Stamps',  count: stampCount },
-  { emoji: '🎴', label: 'Cards',   count: cardCount },
-  { emoji: '📦', label: 'Mystery', count: mysteryCount },
-  { emoji: '🎡', label: 'Spins',   count: spinCount },
-  { emoji: '🎟️', label: 'Lottery', count: lotteryCount },
-]
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
 
+// ── Active campaign summary items ─────────────────────────────
+type CampaignItem = {
+  bizId: string
+  bizName: string
+  mechType: MechanicType
+  label: string
+  metric: string
+  subMetric: string
+  canPlay: boolean
+  from: string
+  to: string
+  emoji: string
+}
+
+function buildActiveCampaigns(): CampaignItem[] {
+  const items: CampaignItem[] = []
+  for (const biz of customerBusinesses) {
+    for (const m of biz.mechanics) {
+      if (m.status !== 'active') continue
+      const meta = MECHANIC_META[m.type]
+      let metric = '', subMetric = ''
+      if (m.type === 'stamp' && m.stampsCollected !== undefined && m.totalStamps) {
+        metric    = `${m.stampsCollected}/${m.totalStamps} stamps`
+        subMetric = m.playedToday ? 'Visited today ✓' : 'Visit to collect'
+      } else if (m.type === 'checkin') {
+        metric    = `🔥 ${m.checkInStreak ?? 0} day streak`
+        subMetric = m.playedToday ? 'Come back tomorrow' : 'Check in today'
+      } else if (m.type === 'lottery') {
+        metric    = `🎟️ ${m.userTickets ?? 0} tickets`
+        subMetric = m.drawDate ? `Draw ${fmtDate(m.drawDate)}` : 'Enter now'
+      } else {
+        metric    = m.playedToday ? 'Played today ✓' : 'Play now!'
+        subMetric = m.playedToday ? 'Come back tomorrow' : `${m.activeToday ?? 0} playing today`
+      }
+      items.push({
+        bizId: biz.id, bizName: biz.name,
+        mechType: m.type, label: m.label,
+        metric, subMetric, canPlay: !m.playedToday,
+        from: meta.cardFrom, to: meta.cardTo, emoji: meta.emoji,
+      })
+    }
+  }
+  // Playable today first
+  return items.sort((a, b) => (b.canPlay ? 1 : 0) - (a.canPlay ? 1 : 0))
+}
+
+const activeCampaigns = buildActiveCampaigns()
+
+// Top loyalty stats
+const totalPoints = Math.max(0, ...customerBusinesses.flatMap(b => b.mechanics.map(m => m.totalPoints ?? 0)))
+const topStreak   = Math.max(0, ...customerBusinesses.flatMap(b => b.mechanics.map(m => m.checkInStreak ?? 0)))
+
+// ── Category filter ───────────────────────────────────────────
 const CATEGORIES = [
   { key: 'All',        emoji: '✨' },
   { key: 'Cafe',       emoji: '☕' },
@@ -48,42 +92,26 @@ function BusinessCard({ biz, index }: { biz: CustomerBusiness; index: number }) 
           whileTap={{ scale: 0.97 }}
           className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-purple-100/50 transition-shadow border border-gray-100/80"
         >
-          {/* Cover — real photo + brand gradient overlay */}
           <div className="relative h-[200px] overflow-hidden">
-            <img
-              src={biz.coverImage}
-              alt={biz.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(160deg, ${biz.coverFrom}99 0%, ${biz.coverTo}EE 100%)` }}
-            />
-
-            {/* Rating */}
+            <img src={biz.coverImage} alt={biz.name} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(160deg, ${biz.coverFrom}99 0%, ${biz.coverTo}EE 100%)` }} />
             <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-md rounded-full px-2.5 py-1 flex items-center gap-1 shadow">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="text-xs font-bold text-white">{biz.rating.toFixed(1)}</span>
             </div>
-
-            {/* Bottom row: distance left, mechanic pills right */}
             <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
               <span className="text-white/80 text-[11px] font-semibold drop-shadow">{biz.distance}</span>
               <div className="flex flex-wrap gap-1 justify-end">
                 {biz.mechanics.map(m => (
-                  <span
-                    key={m.type}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(0,0,0,0.50)', color: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)' }}
-                  >
+                  <span key={m.type} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(0,0,0,0.50)', color: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)' }}>
                     {m.label}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-
-          {/* Info */}
           <div className="px-4 py-3.5">
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex-1 min-w-0">
@@ -125,70 +153,126 @@ export default function CustomerHomePage() {
         className="relative px-5 pt-12 pb-5 overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #3B0764 0%, #4C1D95 50%, #5B21B6 100%)' }}
       >
-        {/* Subtle dot pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }}
-        />
+        <div className="absolute inset-0 opacity-[0.06]"
+          style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }} />
 
-        {/* Top row */}
+        {/* Greeting row */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative flex items-center justify-between mb-5"
+          className="relative flex items-start justify-between mb-4"
         >
           <div>
             <p className="text-purple-300 text-xs font-medium tracking-wide">Welcome back</p>
             <h1 className="text-white text-xl font-extrabold mt-0.5">Hello, {firstName} 👋</h1>
+            {/* Points + streak inline */}
+            <div className="flex items-center gap-3 mt-2">
+              {totalPoints > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-base leading-none">⭐</span>
+                  <span className="text-sm font-bold text-white">{totalPoints.toLocaleString()} pts</span>
+                </div>
+              )}
+              {totalPoints > 0 && topStreak > 0 && <span className="text-purple-400 text-xs">·</span>}
+              {topStreak > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-base leading-none">🔥</span>
+                  <span className="text-sm font-bold text-white">{topStreak} day streak</span>
+                </div>
+              )}
+            </div>
           </div>
-          <button className="relative w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
+          <button className="relative w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm mt-0.5">
             <Bell className="w-5 h-5 text-white" />
-            <motion.div
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-400"
+            <motion.div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-400"
               animate={{ scale: [1, 1.35, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            />
+              transition={{ duration: 1.5, repeat: Infinity }} />
           </button>
         </motion.div>
 
-        {/* Rewards wallet card */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="relative rounded-2xl p-4 overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)' }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-purple-200 text-xs font-semibold uppercase tracking-wide">Your Wallet</p>
-            <div className="flex items-center gap-3 text-xs">
-              <span className="text-white font-bold">{activeCount} <span className="text-purple-300 font-normal">active</span></span>
-              <span className="text-purple-400">·</span>
-              <span className="text-white font-bold">{redeemedCount} <span className="text-purple-300 font-normal">redeemed</span></span>
-            </div>
-          </div>
-          <div className="flex items-center gap-5">
-            {REWARD_ICONS.map((r, i) => (
-              <motion.div
-                key={r.label}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.14 + i * 0.06 }}
-                className="flex flex-col items-center gap-0.5"
-              >
-                <motion.span
-                  className="text-[22px] leading-none"
-                  animate={r.count > 0 ? { scale: [1, 1.2, 1] } : {}}
-                  transition={{ duration: 0.4, delay: 0.3 + i * 0.07 }}
+        {/* ── Active campaigns strip ───────────────────────── */}
+        {activeCampaigns.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <p className="text-purple-300/80 text-[10px] font-semibold uppercase tracking-widest mb-2 relative">
+              Your active campaigns
+            </p>
+            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-5 px-5 scrollbar-none relative">
+              {activeCampaigns.map((item, i) => (
+                <motion.div
+                  key={`${item.bizId}-${item.mechType}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.12 + i * 0.06 }}
                 >
-                  {r.emoji}
-                </motion.span>
-                <span className="text-sm font-extrabold text-white leading-none mt-1">{r.count}</span>
-                <span className="text-[9px] text-purple-300/80 leading-none">{r.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+                  <Link href={`/customer/business/${item.bizId}/campaign/${item.mechType}`}>
+                    <div
+                      className="w-[148px] shrink-0 rounded-2xl overflow-hidden"
+                      style={{
+                        background: `linear-gradient(145deg, ${item.from}CC, ${item.to})`,
+                        boxShadow: `0 4px 20px ${item.from}44`,
+                        border: '1px solid rgba(255,255,255,0.15)',
+                      }}
+                    >
+                      {/* Card header */}
+                      <div className="px-3 pt-3 pb-1 flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-extrabold text-white/90 uppercase tracking-wide truncate">
+                            {item.bizName}
+                          </p>
+                          <p className="text-[9px] text-white/55 truncate">{item.label}</p>
+                        </div>
+                        <span className="text-lg leading-none ml-1 shrink-0">{item.emoji}</span>
+                      </div>
+                      {/* Metric */}
+                      <div className="px-3 pb-3 pt-1">
+                        <p className="text-sm font-extrabold text-white leading-tight">{item.metric}</p>
+                        <p className={`text-[10px] mt-0.5 font-semibold ${item.canPlay ? 'text-white/80' : 'text-white/40'}`}>
+                          {item.subMetric}
+                        </p>
+                        {/* Playable indicator */}
+                        {item.canPlay && (
+                          <div className="mt-2 flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                            <span className="text-[9px] font-bold text-green-300">Play today</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Redeem nudge ─────────────────────────────────── */}
+        {activeCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="relative mt-3"
+          >
+            <Link href="/customer/wallet">
+              <div
+                className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
+                style={{ background: 'rgba(245,197,24,0.13)', border: '1px solid rgba(245,197,24,0.32)' }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">💳</span>
+                  <p className="text-sm font-semibold text-yellow-300">
+                    {activeCount} reward{activeCount !== 1 ? 's' : ''} ready to redeem
+                  </p>
+                </div>
+                <span className="text-yellow-400 font-bold text-sm">→</span>
+              </div>
+            </Link>
+          </motion.div>
+        )}
       </div>
 
       {/* ── White body ───────────────────────────────────────── */}
