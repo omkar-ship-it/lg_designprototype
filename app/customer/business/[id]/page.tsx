@@ -266,7 +266,14 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
                   {/* Info */}
                   <div className="p-4">
-                    <h3 className="text-sm font-bold text-gray-900 mb-1">{m.label}</h3>
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-sm font-bold text-gray-900">{m.label}</h3>
+                      {m.type === 'checkin' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                          +100 pts / visit
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
 
                     {/* Campaign details */}
