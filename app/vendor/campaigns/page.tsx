@@ -287,19 +287,19 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
             ].map(s => (
               <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg p-1.5 text-center`}>
                 <div className="text-xs font-bold" style={{ color: s.color }}>{s.value}</div>
-                <div className="text-[8px] text-v-text-3 mt-0.5\">{s.label}</div>
+                <div className="text-[8px] text-v-text-3 mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Participation info */}
-          <div className="flex items-center gap-3 text-xs text-v-text-3\">
+          <div className="flex items-center gap-3 text-xs text-v-text-3">
             <div className="flex items-center gap-1">
-              <Users className="w-3 h-3\" />
-              <span className=\"font-medium\">{c.currentUsers.toLocaleString()} joined</span>
+              <Users className="w-3 h-3" />
+              <span className="font-medium">{c.currentUsers.toLocaleString()} joined</span>
             </div>
             <span>•</span>
-            <span className="text-v-text-2\">{c.participations.toLocaleString()} plays</span>
+            <span className="text-v-text-2">{c.participations.toLocaleString()} plays</span>
           </div>
 
           {/* Cap bar */}
