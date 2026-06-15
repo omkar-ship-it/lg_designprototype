@@ -21,6 +21,8 @@ function CheckInInner() {
 
   const [state, setState] = useState<State>('idle')
   const [checkInCount, setCheckInCount] = useState(0)
+  const [streak] = useState((config as any)?.currentStreak ?? 5)
+  const [totalPoints] = useState((config as any)?.totalPoints ?? 500)
 
   const handleCheckIn = () => {
     if (state === 'checking') return
@@ -33,6 +35,7 @@ function CheckInInner() {
       <WinCelebration
         reward={`+${POINTS_PER_CHECKIN} Points`}
         emoji="📍"
+        hidePlayAgain
         onClose={() => {
           setCheckInCount(c => c + 1)
           setState('idle')
@@ -70,16 +73,16 @@ function CheckInInner() {
         </div>
         <div className="grid grid-cols-3 gap-4 text-xs">
           <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Points</p>
-            <p className="text-white font-bold text-sm">+{POINTS_PER_CHECKIN}</p>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Today</p>
+            <p className="text-white font-bold text-sm">+{POINTS_PER_CHECKIN} pts</p>
           </div>
           <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Period</p>
-            <p className="text-white font-bold text-sm">Jun 1–Aug 31</p>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">🔥 Streak</p>
+            <p className="text-white font-bold text-sm">{streak} days</p>
           </div>
           <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Check-ins</p>
-            <p className="text-white font-bold text-sm">{checkInCount}/{config?.checkInsPerUser || 30}</p>
+            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">⭐ Total</p>
+            <p className="text-white font-bold text-sm">{totalPoints + checkInCount * POINTS_PER_CHECKIN} pts</p>
           </div>
         </div>
       </motion.div>

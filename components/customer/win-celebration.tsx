@@ -57,10 +57,12 @@ interface WinCelebrationProps {
   emoji?: string
   code?: string
   businessName?: string
+  hidePlayAgain?: boolean
   onClose?: () => void
 }
 
-export function WinCelebration({ reward, emoji = '🎁', code, onClose }: WinCelebrationProps) {
+export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, onClose }: WinCelebrationProps) {
+  const router = useRouter()
   const displayCode = code ?? `LG-WIN7`
 
   return (
@@ -88,13 +90,14 @@ export function WinCelebration({ reward, emoji = '🎁', code, onClose }: WinCel
             🎉 YOU WON!
           </p>
           <h2 className="text-3xl font-extrabold text-white mb-1 text-glow-gold leading-tight">{reward}</h2>
-          <p className="text-sm text-white/60 mb-5">Added to your wallet</p>
+          <p className="text-sm text-white/60 mb-4">Added to your wallet</p>
 
           {/* Reward code pill */}
-          <div className="inline-block bg-white/10 border border-white/20 rounded-xl px-5 py-2.5 mb-6">
+          <div className="inline-block bg-white/10 border border-white/20 rounded-xl px-5 py-2.5 mb-3">
             <p className="text-[10px] text-white/40 uppercase tracking-widest mb-0.5">Reward Code</p>
             <p className="font-mono text-lg font-bold text-white tracking-wider">{displayCode}</p>
           </div>
+          <p className="text-xs text-white/35 mb-6">Show this code to the staff at the counter to redeem</p>
         </motion.div>
 
         <motion.div
@@ -112,10 +115,18 @@ export function WinCelebration({ reward, emoji = '🎁', code, onClose }: WinCel
           </Link>
           <button
             className="block w-full py-3 rounded-2xl glass text-white text-sm text-center"
-            onClick={onClose}
+            onClick={() => router.back()}
           >
-            Play Again
+            ← Back to Business
           </button>
+          {!hidePlayAgain && (
+            <button
+              className="block w-full py-2 text-white/30 text-sm text-center"
+              onClick={onClose}
+            >
+              Play Again
+            </button>
+          )}
         </motion.div>
       </div>
     </div>
@@ -148,8 +159,14 @@ export function NoWin({ onClose }: { onClose?: () => void }) {
             className="block w-full py-4 rounded-2xl glass text-white font-bold text-base text-center mb-3"
             onClick={() => { onClose?.(); router.back() }}
           >
-            ← Back
+            ← Back to Business
           </button>
+          <Link
+            href="/customer/home"
+            className="block w-full py-2 text-white/40 text-sm text-center"
+          >
+            See other campaigns
+          </Link>
         </motion.div>
       </div>
     </div>

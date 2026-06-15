@@ -174,5 +174,28 @@ export interface CustomerBusiness {
   coverFrom: string
   coverTo: string
   coverEmoji: string
-  mechanics: { type: MechanicType; label: string; description: string; status: CampaignStatus; startDate: string; endDate: string; participants: number; totalRewards: number; stampsCollected?: number; totalStamps?: number }[]
+  mechanics: {
+    type: MechanicType
+    label: string
+    description: string
+    status: CampaignStatus
+    startDate: string
+    endDate: string
+    participants: number
+    totalRewards: number
+    activeToday?: number
+    playedToday?: boolean
+    // stamp
+    stampsCollected?: number
+    totalStamps?: number
+    finalReward?: string
+    // spin / dice / shake
+    prizes?: string[]
+    // checkin
+    checkInStreak?: number
+    totalPoints?: number
+    // lottery
+    drawDate?: string
+    userTickets?: number
+  }[]
 }

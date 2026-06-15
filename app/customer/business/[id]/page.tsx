@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Users, Gift } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Users, Gift, Flame, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -27,6 +27,9 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
+function daysUntil(dateStr: string) {
+  return Math.ceil((new Date(dateStr).getTime() - new Date('2026-06-15').getTime()) / 86400000)
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -277,57 +280,109 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="text-sm font-bold text-gray-900">{m.label}</h3>
-                        {m.type === 'checkin' && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                            +100 pts / visit
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Urgency chip */}
+                          {m.status === 'active' && daysUntil(m.endDate) <= 7 && daysUntil(m.endDate) > 0 && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">
+                              Ends in {daysUntil(m.endDate)}d
+                            </span>
+                          )}
+                          {m.type === 'checkin' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                              +100 pts
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
+                      <p className="text-xs text-gray-500 mb-2.5 leading-relaxed">{m.description}</p>
 
-                      {/* Stamp progress */}
+                      {/* Stamp: progress + final reward */}
                       {m.type === 'stamp' && m.stampsCollected !== undefined && m.totalStamps && (
-                        <div className="mb-3">
+                        <div className="mb-2.5">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[10px] text-gray-400 font-medium">Your progress</span>
                             <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
                               {m.stampsCollected}/{m.totalStamps} stamps
                             </span>
                           </div>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{ width: `${(m.stampsCollected / m.totalStamps) * 100}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                            />
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                            <div className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${(m.stampsCollected / m.totalStamps) * 100}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
                           </div>
+                          {m.finalReward && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">🏆</span>
+                              <span className="text-[11px] font-semibold text-gray-700">Complete for: <span style={{ color: meta.cardFrom }}>{m.finalReward}</span></span>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {/* Campaign details */}
-                      <div className="flex items-center gap-3 mb-3 flex-wrap">
-                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <CalendarDays className="w-3 h-3 shrink-0 text-gray-400" />
-                          <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                      {/* Spin / dice / shake: prize preview */}
+                      {(m.type === 'spin' || m.type === 'dice' || m.type === 'shake') && m.prizes && (
+                        <div className="flex flex-wrap gap-1 mb-2.5">
+                          {m.prizes.slice(0, 3).map(p => (
+                            <span key={p} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{p}</span>
+                          ))}
                         </div>
-                        <span className="text-gray-200">|</span>
-                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <Users className="w-3 h-3 shrink-0 text-gray-400" />
-                          <span>{m.participants.toLocaleString()} participants</span>
+                      )}
+
+                      {/* Lottery: draw date + tickets */}
+                      {m.type === 'lottery' && (
+                        <div className="flex items-center gap-3 mb-2.5">
+                          <div className="flex items-center gap-1 text-[11px] text-gray-600 font-medium">
+                            <CalendarDays className="w-3 h-3 text-gray-400" />
+                            <span>Draw: {fmtDate(m.drawDate ?? m.endDate)}</span>
+                          </div>
+                          {(m.userTickets ?? 0) > 0 && (
+                            <div className="flex items-center gap-1 text-[11px] font-bold" style={{ color: meta.cardFrom }}>
+                              <Ticket className="w-3 h-3" />
+                              <span>{m.userTickets} ticket{m.userTickets !== 1 ? 's' : ''}</span>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-gray-200">|</span>
-                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <Gift className="w-3 h-3 shrink-0 text-gray-400" />
-                          <span>{m.totalRewards.toLocaleString()} rewards</span>
+                      )}
+
+                      {/* Check-in: streak + points */}
+                      {m.type === 'checkin' && (m.checkInStreak || m.totalPoints) && (
+                        <div className="flex items-center gap-3 mb-2.5">
+                          {m.checkInStreak && (
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-orange-500">
+                              <Flame className="w-3 h-3" />
+                              <span>{m.checkInStreak} day streak</span>
+                            </div>
+                          )}
+                          {m.totalPoints !== undefined && (
+                            <div className="flex items-center gap-1 text-[11px] font-semibold text-purple-600">
+                              <span>⭐ {m.totalPoints} pts total</span>
+                            </div>
+                          )}
                         </div>
+                      )}
+
+                      {/* Social proof + date row */}
+                      <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
+                        {(m.activeToday ?? 0) > 0 && (
+                          <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
+                        )}
+                        {(m.activeToday ?? 0) > 0 && <span className="text-gray-200">·</span>}
+                        <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
                       </div>
 
-                      <button
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); openCampaign(m) }}
-                        className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
-                        style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                      >
-                        Play Now
-                      </button>
+                      {/* Play Now / Played Today */}
+                      {m.playedToday ? (
+                        <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
+                          ✓ Played today · Come back tomorrow
+                        </div>
+                      ) : (
+                        <button
+                          onClick={e => { e.preventDefault(); e.stopPropagation(); openCampaign(m) }}
+                          className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+                          style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                        >
+                          Play Now
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 </Link>

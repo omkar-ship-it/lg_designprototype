@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
@@ -228,6 +228,17 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
 
+            {/* Grand reward reveal */}
+            {mechanic.finalReward && (
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 mb-4">
+                <span className="text-2xl">🏆</span>
+                <div>
+                  <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wide">Complete for</p>
+                  <p className="text-sm font-bold text-gray-800">{mechanic.finalReward}</p>
+                </div>
+              </div>
+            )}
+
             {/* Compact stats row */}
             <div className="flex items-center gap-3 text-[11px] text-gray-400 mb-4">
               <div className="flex items-center gap-1">
@@ -243,28 +254,74 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <>
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-gray-50 rounded-2xl p-3 text-center">
-                <CalendarDays className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Start</p>
-                <p className="text-xs font-bold text-gray-800">{fmtDate(mechanic.startDate)}</p>
+            {/* Prizes — spin / dice / shake */}
+            {(mechanic.type === 'spin' || mechanic.type === 'dice' || mechanic.type === 'shake') && mechanic.prizes && mechanic.prizes.length > 0 && (
+              <div className="mb-6">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
+                <div className="flex flex-wrap gap-2">
+                  {mechanic.prizes.map((p, i) => (
+                    <span
+                      key={i}
+                      className="text-sm font-semibold px-3 py-1.5 rounded-full"
+                      style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-2xl p-3 text-center">
-                <Users className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Players</p>
-                <p className="text-xs font-bold text-gray-800">{mechanic.participants.toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 rounded-2xl p-3 text-center">
-                <Gift className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Rewards</p>
-                <p className="text-xs font-bold text-gray-800">{mechanic.totalRewards.toLocaleString()}</p>
-              </div>
-            </div>
+            )}
 
-            {/* Duration bar */}
+            {/* Lottery — draw date + tickets */}
+            {mechanic.type === 'lottery' && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Draw Date</p>
+                  <p className="text-sm font-bold text-gray-800">
+                    {mechanic.drawDate ? fmtDate(mechanic.drawDate) : '—'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Your Tickets</p>
+                  <p className="text-2xl font-black" style={{ color: meta.cardFrom }}>
+                    {mechanic.userTickets ?? 0}
+                    <span className="text-xs font-semibold text-gray-400 ml-1">tickets</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Check-in — streak + points */}
+            {mechanic.type === 'checkin' && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-2xl mb-0.5">🔥</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Streak</p>
+                  <p className="text-2xl font-black text-gray-900">
+                    {mechanic.checkInStreak ?? 0}
+                    <span className="text-xs font-semibold text-gray-400 ml-1">days</span>
+                  </p>
+                </div>
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-2xl mb-0.5">⭐</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Total Points</p>
+                  <p className="text-2xl font-black text-gray-900">
+                    {mechanic.totalPoints ?? 0}
+                    <span className="text-xs font-semibold text-gray-400 ml-1">pts</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Duration + players */}
             <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Duration</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
+                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                  <Users className="w-3 h-3" />
+                  <span>{mechanic.participants.toLocaleString()} players</span>
+                </div>
+              </div>
               <p className="text-sm font-semibold text-gray-800">
                 {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
               </p>
@@ -277,17 +334,23 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
         {/* PLAY CTA */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={openOTP}
-          className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
-          style={{
-            background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
-            boxShadow: `0 8px 28px ${meta.cardFrom}55`,
-          }}
-        >
-          Play Now {meta.emoji}
-        </motion.button>
+        {mechanic.playedToday ? (
+          <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
+            <span>✓</span> Played today · Come back tomorrow
+          </div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={openOTP}
+            className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
+            style={{
+              background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
+              boxShadow: `0 8px 28px ${meta.cardFrom}55`,
+            }}
+          >
+            Play Now {meta.emoji}
+          </motion.button>
+        )}
       </div>
 
       {/* OTP bottom sheet */}
