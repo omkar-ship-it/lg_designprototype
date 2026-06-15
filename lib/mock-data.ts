@@ -172,6 +172,32 @@ export const campaigns: Campaign[] = [
       ],
     },
   },
+  {
+    id: 'camp-6',
+    name: 'Daily Check-in Rewards',
+    mechanic: 'checkin',
+    status: 'active',
+    startDate: '2026-06-01',
+    endDate: '2026-08-31',
+    userCap: 2000,
+    currentUsers: 1247,
+    playsPerUser: 1,
+    participations: 3421,
+    rewardsClaimed: 3421,
+    redeemedCount: 1854,
+    pin: '123',
+    pinExpiresAt: Date.now() + 3600000,
+    createdAt: '2026-05-31T10:00:00Z',
+    rewards: [
+      { id: 'r10', name: '100 Points', description: 'Loyalty points for daily check-in', value: '100pts', icon: '📍' },
+    ],
+    config: {
+      type: 'checkin',
+      pointsPerCheckIn: 100,
+      maxCheckInsPerDay: 1,
+      checkInsPerUser: 30,
+    },
+  },
 ]
 
 export const customers: Customer[] = [

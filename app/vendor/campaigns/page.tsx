@@ -27,6 +27,7 @@ function getWinProbability(c: typeof campaigns[0]): number | null {
   if (c.mechanic === 'stamp') return 100
   if (c.mechanic === 'dice') return 50
   if (c.mechanic === 'lottery') return 70
+  if (c.mechanic === 'checkin') return 100
   return null
 }
 import type { CampaignStatus } from '@/lib/types'

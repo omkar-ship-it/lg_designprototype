@@ -14,6 +14,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   shake:   '/customer/games/shake',
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
+  checkin: '/customer/games/checkin',
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
