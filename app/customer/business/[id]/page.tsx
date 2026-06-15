@@ -285,6 +285,24 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       </div>
                       <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
 
+                      {/* Stamp progress */}
+                      {m.type === 'stamp' && m.stampsCollected !== undefined && m.totalStamps && (
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] text-gray-400 font-medium">Your progress</span>
+                            <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
+                              {m.stampsCollected}/{m.totalStamps} stamps
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${(m.stampsCollected / m.totalStamps) * 100}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       {/* Campaign details */}
                       <div className="flex items-center gap-3 mb-3 flex-wrap">
                         <div className="flex items-center gap-1 text-[10px] text-gray-500">

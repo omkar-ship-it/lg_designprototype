@@ -137,32 +137,140 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         </div>
         <p className="text-sm text-gray-500 mb-5 leading-relaxed">{mechanic.description}</p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-gray-50 rounded-2xl p-3 text-center">
-            <CalendarDays className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Start</p>
-            <p className="text-xs font-bold text-gray-800">{fmtDate(mechanic.startDate)}</p>
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-3 text-center">
-            <Users className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Players</p>
-            <p className="text-xs font-bold text-gray-800">{mechanic.participants.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-3 text-center">
-            <Gift className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Rewards</p>
-            <p className="text-xs font-bold text-gray-800">{mechanic.totalRewards.toLocaleString()}</p>
-          </div>
-        </div>
+        {/* Stamp card layout */}
+        {mechanic.type === 'stamp' && mechanic.stampsCollected !== undefined && mechanic.totalStamps ? (
+          <div className="mb-6">
+            {/* Physical card */}
+            <div
+              className="rounded-3xl overflow-hidden mb-4"
+              style={{ boxShadow: `0 16px 48px ${meta.cardFrom}33, 0 0 0 1px ${meta.cardFrom}30` }}
+            >
+              {/* Card header */}
+              <div
+                className="relative px-5 py-4 overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+              >
+                <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">
+                  {meta.emoji}
+                </span>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-[9px] font-black text-black/40 uppercase tracking-[0.2em] mb-0.5">Loyalty Card</p>
+                    <p className="text-lg font-extrabold text-black/70">{biz.name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-black/35 font-bold uppercase tracking-wide mb-0.5">Stamps</p>
+                    <p className="text-4xl font-black text-black/65 leading-none">
+                      {mechanic.stampsCollected}
+                      <span className="text-base font-semibold text-black/30">/{mechanic.totalStamps}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-        {/* Duration bar */}
-        <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Duration</p>
-          <p className="text-sm font-semibold text-gray-800">
-            {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
-          </p>
-        </div>
+              {/* Perforated line */}
+              <div className="h-0" style={{ borderTop: `2px dashed ${meta.cardFrom}55` }} />
+
+              {/* Stamp grid */}
+              <div className="bg-white px-5 pt-5 pb-4">
+                <div className="grid grid-cols-5 gap-2.5 mb-4">
+                  {Array.from({ length: mechanic.totalStamps }, (_, i) => {
+                    const n          = i + 1
+                    const isFilled   = n <= mechanic.stampsCollected!
+                    const isFinalPos = n === mechanic.totalStamps
+                    return (
+                      <div key={n} className="flex flex-col items-center relative">
+                        <div className="relative w-12 h-12 mb-1">
+                          {isFilled ? (
+                            <div
+                              className="absolute inset-0 rounded-full flex items-center justify-center text-xl"
+                              style={{
+                                background: isFinalPos
+                                  ? `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})`
+                                  : `linear-gradient(145deg, ${meta.cardFrom}CC, ${meta.cardTo})`,
+                                boxShadow: `0 4px 14px ${meta.cardFrom}55`,
+                              }}
+                            >
+                              {isFinalPos ? '🏆' : meta.emoji}
+                            </div>
+                          ) : (
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{ background: '#F9FAFB', border: '2px dashed #E5E7EB' }}
+                            />
+                          )}
+                          {isFinalPos && !isFilled && (
+                            <div className="absolute inset-0 rounded-full flex items-center justify-center text-lg opacity-30">
+                              🏆
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600">{n}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Progress bar */}
+                <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                  <span>{mechanic.stampsCollected} collected</span>
+                  <span>{mechanic.totalStamps - mechanic.stampsCollected} more to go</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(mechanic.stampsCollected / mechanic.totalStamps) * 100}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Compact stats row */}
+            <div className="flex items-center gap-3 text-[11px] text-gray-400 mb-4">
+              <div className="flex items-center gap-1">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>{fmtDate(mechanic.startDate)} – {fmtDate(mechanic.endDate)}</span>
+              </div>
+              <span className="text-gray-200">|</span>
+              <div className="flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" />
+                <span>{mechanic.participants.toLocaleString()} players</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-gray-50 rounded-2xl p-3 text-center">
+                <CalendarDays className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Start</p>
+                <p className="text-xs font-bold text-gray-800">{fmtDate(mechanic.startDate)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-2xl p-3 text-center">
+                <Users className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Players</p>
+                <p className="text-xs font-bold text-gray-800">{mechanic.participants.toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-50 rounded-2xl p-3 text-center">
+                <Gift className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Rewards</p>
+                <p className="text-xs font-bold text-gray-800">{mechanic.totalRewards.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Duration bar */}
+            <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Duration</p>
+              <p className="text-sm font-semibold text-gray-800">
+                {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Business name */}
         <p className="text-xs text-gray-400 mb-1">Offered by</p>

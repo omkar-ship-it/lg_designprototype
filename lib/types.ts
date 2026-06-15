@@ -174,5 +174,5 @@ export interface CustomerBusiness {
   coverFrom: string
   coverTo: string
   coverEmoji: string
-  mechanics: { type: MechanicType; label: string; description: string; status: CampaignStatus; startDate: string; endDate: string; participants: number; totalRewards: number }[]
+  mechanics: { type: MechanicType; label: string; description: string; status: CampaignStatus; startDate: string; endDate: string; participants: number; totalRewards: number; stampsCollected?: number; totalStamps?: number }[]
 }
