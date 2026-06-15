@@ -3,6 +3,7 @@ import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Users, Gift } from 'lucide-react'
+import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
@@ -231,84 +232,87 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.17 + i * 0.08, type: 'spring', stiffness: 280, damping: 22 }}
               >
-                <motion.div
-                  onClick={() => openCampaign(m)}
-                  whileHover={{ y: -4, transition: { duration: 0.18 } }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:shadow-purple-100/50 transition-shadow cursor-pointer"
+                <Link
+                  href={`/customer/business/${biz.id}/campaign/${m.type}`}
+                  className="block"
                 >
-                  {/* Cover */}
-                  <div className="relative h-32 overflow-hidden"
-                    style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                    <div className="absolute inset-0 opacity-10"
-                      style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
-                    <motion.span
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-20 select-none pointer-events-none"
-                      animate={{ y: [0, -6, 0], rotate: [0, 3, -3, 0] }}
-                      transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                  <motion.div
+                    whileHover={{ y: -4, transition: { duration: 0.18 } }}
+                    className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:shadow-purple-100/50 transition-shadow"
+                  >
+                    {/* Cover */}
+                    <div
+                      className="relative h-32 overflow-hidden"
+                      style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                     >
-                      {meta.emoji}
-                    </motion.span>
-                    <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                      style={{ background: meta.badgeBg, color: meta.badgeText }}>
-                      {meta.label}
-                    </span>
-                    <span
-                      className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                      style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
-                    >
-                      {STATUS_STYLES[m.status]?.label}
-                    </span>
-                    <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
-                      {meta.emoji}
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-sm font-bold text-gray-900">{m.label}</h3>
-                      {m.type === 'checkin' && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                          +100 pts / visit
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
-
-                    {/* Campaign details */}
-                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <CalendarDays className="w-3 h-3 shrink-0 text-gray-400" />
-                        <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
-                      </div>
-                      <span className="text-gray-200">|</span>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <Users className="w-3 h-3 shrink-0 text-gray-400" />
-                        <span>{m.participants.toLocaleString()} participants</span>
-                      </div>
-                      <span className="text-gray-200">|</span>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <Gift className="w-3 h-3 shrink-0 text-gray-400" />
-                        <span>{m.totalRewards.toLocaleString()} rewards</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 tracking-wide">CODE</span>
-                        <span className="text-xs font-bold text-purple-700">Join with code</span>
-                      </div>
+                      <div
+                        className="absolute inset-0 opacity-10"
+                        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
+                      />
                       <motion.span
-                        animate={{ x: [0, 4, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                        className="text-purple-400 text-xs"
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-20 select-none pointer-events-none"
+                        animate={{ y: [0, -6, 0], rotate: [0, 3, -3, 0] }}
+                        transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
                       >
-                        →
+                        {meta.emoji}
                       </motion.span>
+                      <span
+                        className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                        style={{ background: meta.badgeBg, color: meta.badgeText }}
+                      >
+                        {meta.label}
+                      </span>
+                      <span
+                        className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                        style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                      >
+                        {STATUS_STYLES[m.status]?.label}
+                      </span>
+                      <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
+                        {meta.emoji}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
+
+                    {/* Info */}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="text-sm font-bold text-gray-900">{m.label}</h3>
+                        {m.type === 'checkin' && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            +100 pts / visit
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
+
+                      {/* Campaign details */}
+                      <div className="flex items-center gap-3 mb-3 flex-wrap">
+                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <CalendarDays className="w-3 h-3 shrink-0 text-gray-400" />
+                          <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                        </div>
+                        <span className="text-gray-200">|</span>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <Users className="w-3 h-3 shrink-0 text-gray-400" />
+                          <span>{m.participants.toLocaleString()} participants</span>
+                        </div>
+                        <span className="text-gray-200">|</span>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <Gift className="w-3 h-3 shrink-0 text-gray-400" />
+                          <span>{m.totalRewards.toLocaleString()} rewards</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); openCampaign(m) }}
+                        className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+                        style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                      >
+                        Play Now
+                      </button>
+                    </div>
+                  </motion.div>
+                </Link>
               </motion.div>
             )
           })}
