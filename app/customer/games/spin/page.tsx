@@ -93,16 +93,48 @@ export default function SpinWheelPage() {
         </motion.div>
       ))}
 
+      {/* Campaign Details Card */}
+      <div className="w-full px-5 mb-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,197,24,0.3)' }}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-bold text-white\">🎡 Spin Fiesta</h2>
+              <p className="text-xs text-white/50 mt-0.5">Weekend spin to win</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div>
+              <p className="text-white/40 mb-1">Win Probability</p>
+              <p className="text-white font-bold">55%</p>
+            </div>
+            <div>
+              <p className="text-white/40 mb-1">Duration</p>
+              <p className="text-white font-medium text-sm">Jun 10–30</p>
+            </div>
+            <div>
+              <p className="text-white/40 mb-1">Participants</p>
+              <p className="text-white font-medium">312 players</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Back */}
-      <div className="w-full flex items-center mb-2 z-10">
+      <div className="w-full flex items-center px-5 mb-2 z-10">
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm">
           <ArrowLeft size={16} /> Back
         </button>
       </div>
 
-      <div className="text-center z-10">
-        <h1 className="text-2xl font-extrabold text-white mb-1">Spin the Wheel!</h1>
-        <p className="text-sm text-white/50">
+      <div className="text-center z-10 mb-3">
+        <h1 className="text-xl font-extrabold text-white">Spin the Wheel</h1>
+        <p className="text-sm text-white/50 mt-1">
           {state === 'spinning' ? 'Spinning…' : 'Tap SPIN to try your luck!'}
         </p>
       </div>

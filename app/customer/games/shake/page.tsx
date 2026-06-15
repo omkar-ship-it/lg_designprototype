@@ -66,21 +66,49 @@ export default function ShakeWinPage() {
         </motion.div>
       ))}
 
+      {/* Campaign Details Card */}
+      <div className="w-full px-5 mb-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(59,130,246,0.3)' }}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-bold text-white">☁️ Shake & Win</h2>
+              <p className="text-xs text-white/50 mt-0.5\">Shake your phone to reveal rewards</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div>
+              <p className="text-white/40 mb-1\">Win Probability</p>
+              <p className="text-white font-bold">65%</p>
+            </div>
+            <div>
+              <p className="text-white/40 mb-1\">Duration</p>
+              <p className="text-white font-medium text-sm\">Jun 13–Jul 15</p>
+            </div>
+            <div>
+              <p className="text-white/40 mb-1\">Plays Left</p>
+              <p className="text-white font-bold\">{playsLeft}</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Top row */}
-      <div className="w-full flex items-center justify-between z-10">
+      <div className="w-full flex items-center justify-between z-10 px-5 mb-2">
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-white/50 text-sm hover:text-white/70 transition-colors">
           <ArrowLeft size={16} /> Back
         </button>
-        <div className="px-3 py-1.5 rounded-full text-xs text-white/65 font-medium"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          {playsLeft} play{playsLeft !== 1 ? 's' : ''} left
-        </div>
       </div>
 
       {/* Title */}
-      <div className="text-center z-10">
-        <h1 className="text-2xl font-extrabold text-white mb-1">Scratch &amp; Win!</h1>
-        <p className="text-sm text-white/45">
+      <div className="text-center z-10 mb-4">
+        <h1 className="text-xl font-extrabold text-white\">Scratch & Win!</h1>
+        <p className="text-sm text-white/45 mt-1">
           {state === 'revealing' ? 'Revealing your reward…' : 'Tap the card to scratch and reveal'}
         </p>
       </div>

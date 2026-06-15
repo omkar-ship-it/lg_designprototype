@@ -5,14 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 
-const TOTAL              = 8
-const CURRENT_STAMPS     = 2
-const SURPRISE_POSITIONS = [3, 6]
-const BIG_REWARD_POS     = 8
+const TOTAL              = 10
+const CURRENT_STAMPS     = 3
+const REWARD_POSITIONS   = [4, 6, 8, 10]
+const BIG_REWARD_POS     = 10
 const REWARDS = {
-  3: { reward: 'Free Coffee',              emoji: '⭐' },
-  6: { reward: '20% Off Your Bill',        emoji: '⭐' },
-  8: { reward: 'Free Signature Breakfast', emoji: '🏆' },
+  4: { reward: 'Free Espresso',            emoji: '☕', type: 'surprise' },
+  6: { reward: '15% Off Next Visit',       emoji: '🏷️', type: 'surprise' },
+  8: { reward: 'Free Croissant',           emoji: '🥐', type: 'surprise' },
+  10: { reward: 'Free Breakfast Combo',    emoji: '🍳', type: 'grand' },
 } as const
 
 type State = 'card' | 'surprise' | 'big-win'
@@ -34,7 +35,7 @@ function StampCardInner() {
     setLastStamp(newCount)
     if (newCount === BIG_REWARD_POS) {
       setTimeout(() => setState('big-win'), 950)
-    } else if ((SURPRISE_POSITIONS as readonly number[]).includes(newCount)) {
+    } else if ((REWARD_POSITIONS as readonly number[]).includes(newCount)) {
       setSurpriseReward(REWARDS[newCount as keyof typeof REWARDS] ?? { reward: 'Mystery Treat', emoji: '🎁' })
       setTimeout(() => setState('surprise'), 950)
     }
@@ -66,10 +67,36 @@ function StampCardInner() {
         <ArrowLeft size={16} /> Back
       </button>
 
-      <div className="text-center mb-8 relative z-10">
-        <h1 className="text-2xl font-extrabold text-white mb-1">Stamp Card</h1>
+      {/* Campaign Details Card */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full mb-6 relative z-10 p-4 rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,158,11,0.2)' }}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-bold text-white">Loyalty Stamp Card</h2>
+            <p className="text-xs text-white/50 mt-0.5">Collect 10 stamps to unlock rewards</p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p className="text-white/40 mb-1">Duration</p>
+            <p className="text-white font-medium">Jun 1 – Jun 30</p>
+          </div>
+          <div>
+            <p className="text-white/40 mb-1">Participation</p>
+            <p className="text-white font-medium">187 customers joined</p>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="text-center mb-6 relative z-10">
+        <h1 className="text-2xl font-extrabold text-white mb-1">☕ Stamp Card</h1>
         <p className="text-sm text-white/40">
-          {justStamped ? '✓ Stamp collected! Visit again to earn more.' : 'Visit and collect stamps to unlock rewards'}
+          {justStamped ? '✓ Stamp collected! Keep collecting to unlock surprises.' : 'Visit and collect stamps to unlock rewards'}
         </p>
       </div>
 
@@ -104,14 +131,16 @@ function StampCardInner() {
 
         {/* Stamp grid */}
         <div className="bg-white px-5 pt-6 pb-5">
-          <div className="grid grid-cols-4 gap-3 mb-5">
+          <div className="grid grid-cols-5 gap-2.5 mb-5">
             {Array.from({ length: TOTAL }, (_, i) => {
               const n        = i + 1
               const isFilled = n <= stamps
               const isNew    = n === lastStamp
+              const isReward = (REWARD_POSITIONS as readonly number[]).includes(n)
+              const isBigReward = n === BIG_REWARD_POS
               return (
-                <div key={n} className="flex items-center justify-center">
-                  <div className="relative w-[58px] h-[58px]">
+                <div key={n} className="flex flex-col items-center justify-center relative">
+                  <div className="relative w-[48px] h-[48px] mb-1">
                     {isNew && (
                       <motion.div
                         className="absolute inset-0 rounded-full border-2 border-amber-400 pointer-events-none"
@@ -124,16 +153,17 @@ function StampCardInner() {
                       {isFilled ? (
                         <motion.div
                           key={`on-${n}`}
-                          className="absolute inset-0 rounded-full flex items-center justify-center text-2xl select-none"
+                          className="absolute inset-0 rounded-full flex items-center justify-center text-xl select-none"
                           style={{
-                            background: 'linear-gradient(145deg, #F59E0B, #B45309)',
-                            boxShadow: '0 4px 14px rgba(245,158,11,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
+                            background: isBigReward ? 'linear-gradient(145deg, #F59E0B, #D97706)' : 'linear-gradient(145deg, #F59E0B, #B45309)',
+                            boxShadow: isBigReward ? '0 6px 20px rgba(245,158,11,0.6)' : '0 4px 14px rgba(245,158,11,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
+                            border: isBigReward ? '2px solid #F59E0B' : 'none',
                           }}
                           initial={isNew ? { scale: 0, rotate: -18 } : false}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={isNew ? { type: 'spring', stiffness: 320, damping: 11 } : { duration: 0 }}
                         >
-                          ☕
+                          {isBigReward ? '🏆' : '☕'}
                         </motion.div>
                       ) : (
                         <motion.div
@@ -144,25 +174,54 @@ function StampCardInner() {
                       )}
                     </AnimatePresence>
                   </div>
+                  <div className="text-[10px] font-bold text-gray-700">{n}</div>
+                  {isReward && isFilled && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs"
+                      style={{ background: '#10B981' }}
+                    >
+                      ✓
+                    </motion.div>
+                  )}
                 </div>
               )
             })}
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, #F59E0B, #B45309)' }}
-              initial={{ width: `${(CURRENT_STAMPS / TOTAL) * 100}%` }}
-              animate={{ width: `${pct}%` }}
-              transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }}
-            />
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-700">Progress</p>
+              <p className="text-xs font-bold text-amber-600">{stamps}/{TOTAL}</p>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: 'linear-gradient(90deg, #F59E0B, #B45309)' }}
+                initial={{ width: `${(CURRENT_STAMPS / TOTAL) * 100}%` }}
+                animate={{ width: `${pct}%` }}
+                transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }}
+              />
+            </div>
           </div>
-          <p className="text-[11px] text-center text-gray-400">
+          
+          {/* Reward milestones */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 mb-3">
+            <p className="text-[11px] font-semibold text-gray-700 mb-2">🎁 Reward milestones:</p>
+            <div className="grid grid-cols-2 gap-2 text-[9px]">
+              <div><span className="font-bold text-amber-600">4 stamps:</span> Free Espresso</div>
+              <div><span className="font-bold text-amber-600">6 stamps:</span> 15% Off</div>
+              <div><span className="font-bold text-amber-600">8 stamps:</span> Free Croissant</div>
+              <div><span className="font-bold text-amber-600">10 stamps:</span> Full Breakfast 🏆</div>
+            </div>
+          </div>
+          
+          <p className="text-[11px] text-center text-gray-500">
             {stamps === TOTAL
-              ? 'Card complete! 🎉'
-              : `${TOTAL - stamps} more stamp${TOTAL - stamps !== 1 ? 's' : ''} to your next surprise`}
+              ? '🎉 Card complete! Redeem your breakfast combo!'
+              : `✓ ${stamps} collected • ${TOTAL - stamps} to unlock all rewards`}
           </p>
         </div>
 
