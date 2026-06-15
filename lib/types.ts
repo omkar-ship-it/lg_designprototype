@@ -161,6 +161,8 @@ export interface CustomerBusiness {
   reviews: number
   distance: string
   location: string
+  phone: string
+  openUntil: string
   coverFrom: string
   coverTo: string
   coverEmoji: string
