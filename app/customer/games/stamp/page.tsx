@@ -1,14 +1,14 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { Suspense, useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 
-const TOTAL            = 8
-const CURRENT_STAMPS   = 2
+const TOTAL              = 8
+const CURRENT_STAMPS     = 2
 const SURPRISE_POSITIONS = [3, 6]
-const BIG_REWARD_POS   = 8
+const BIG_REWARD_POS     = 8
 const REWARDS = {
   3: { reward: 'Free Coffee',              emoji: '⭐' },
   6: { reward: '20% Off Your Bill',        emoji: '⭐' },
@@ -17,16 +17,15 @@ const REWARDS = {
 
 type State = 'card' | 'surprise' | 'big-win'
 
-export default function StampCardPage() {
-  const router      = useRouter()
+function StampCardInner() {
+  const router       = useRouter()
   const searchParams = useSearchParams()
-  const [stamps, setStamps]       = useState(CURRENT_STAMPS)
-  const [state, setState]         = useState<State>('card')
-  const [lastStamp, setLastStamp] = useState<number | null>(null)
+  const [stamps, setStamps]               = useState(CURRENT_STAMPS)
+  const [state, setState]                 = useState<State>('card')
+  const [lastStamp, setLastStamp]         = useState<number | null>(null)
   const [surpriseReward, setSurpriseReward] = useState<{ reward: string; emoji: string } | null>(null)
   const didAutoStamp = useRef(false)
 
-  // Auto-stamp when arriving from business page with ?stamp=1
   useEffect(() => {
     if (searchParams.get('stamp') !== '1' || didAutoStamp.current || CURRENT_STAMPS >= TOTAL) return
     didAutoStamp.current = true
@@ -47,7 +46,7 @@ export default function StampCardPage() {
     return <WinCelebration reward={surpriseReward.reward} emoji={surpriseReward.emoji} onClose={() => setState('card')} />
   }
 
-  const pct = (stamps / TOTAL) * 100
+  const pct         = (stamps / TOTAL) * 100
   const justStamped = searchParams.get('stamp') === '1'
 
   return (
@@ -107,7 +106,7 @@ export default function StampCardPage() {
         <div className="bg-white px-5 pt-6 pb-5">
           <div className="grid grid-cols-4 gap-3 mb-5">
             {Array.from({ length: TOTAL }, (_, i) => {
-              const n = i + 1
+              const n        = i + 1
               const isFilled = n <= stamps
               const isNew    = n === lastStamp
               return (
@@ -161,7 +160,9 @@ export default function StampCardPage() {
             />
           </div>
           <p className="text-[11px] text-center text-gray-400">
-            {stamps === TOTAL ? 'Card complete! 🎉' : `${TOTAL - stamps} more stamp${TOTAL - stamps !== 1 ? 's' : ''} to your next surprise`}
+            {stamps === TOTAL
+              ? 'Card complete! 🎉'
+              : `${TOTAL - stamps} more stamp${TOTAL - stamps !== 1 ? 's' : ''} to your next surprise`}
           </p>
         </div>
 
@@ -183,5 +184,13 @@ export default function StampCardPage() {
         Visit the business and ask the staff for a code to earn stamps
       </motion.p>
     </div>
+  )
+}
+
+export default function StampCardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-900" />}>
+      <StampCardInner />
+    </Suspense>
   )
 }
