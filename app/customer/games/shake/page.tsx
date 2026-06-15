@@ -6,29 +6,31 @@ import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
 
 const WIN_PROBABILITY = 0.65
-const MAX_PLAYS = 2
-const REWARD = 'Free Coffee ☕'
+const MAX_PLAYS       = 2
+const REWARD          = 'Free Coffee'
+const REWARD_EMOJI    = '☕'
 
-type State = 'idle' | 'shaking' | 'result'
+type State = 'idle' | 'revealing' | 'result'
 
-const PARTICLE_COLORS = ['#7C3AED', '#F5C518', '#EC4899', '#06B6D4', '#22C55E', '#F59E0B', '#A78BFA', '#FDE68A']
+const SPARKLE_POS = [
+  { top: '12%', left: '8%' }, { top: '20%', right: '10%' },
+  { top: '45%', left: '4%' }, { top: '55%', right: '6%' },
+  { bottom: '28%', left: '9%' }, { bottom: '20%', right: '8%' },
+]
 
 export default function ShakeWinPage() {
   const router = useRouter()
-  const [state, setState] = useState<State>('idle')
-  const [won, setWon] = useState(false)
+  const [state, setState]       = useState<State>('idle')
+  const [won, setWon]           = useState(false)
   const [playsLeft, setPlaysLeft] = useState(MAX_PLAYS)
 
-  const handleShake = () => {
+  const scratch = () => {
     if (state !== 'idle' || playsLeft <= 0) return
-    setState('shaking')
-
-    setTimeout(() => {
-      const didWin = Math.random() < WIN_PROBABILITY
-      setWon(didWin)
-      setPlaysLeft(p => p - 1)
-      setState('result')
-    }, 3000)
+    const didWin = Math.random() < WIN_PROBABILITY
+    setWon(didWin)
+    setPlaysLeft(p => p - 1)
+    setState('revealing')
+    setTimeout(() => setState('result'), 1800)
   }
 
   const handlePlayAgain = () => {
@@ -37,175 +39,175 @@ export default function ShakeWinPage() {
     setWon(false)
   }
 
-  if (state === 'result' && won) {
-    return <WinCelebration reward={REWARD} emoji="☕" onClose={handlePlayAgain} />
-  }
-  if (state === 'result' && !won) {
-    return <NoWin onClose={handlePlayAgain} />
-  }
-
-  const isShaking = state === 'shaking'
+  if (state === 'result' && won)  return <WinCelebration reward={REWARD} emoji={REWARD_EMOJI} onClose={handlePlayAgain} />
+  if (state === 'result' && !won) return <NoWin />
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10"
-      style={{ background: 'linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%)' }}
+      className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10 relative overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #0F172A 0%, #1E1B4B 50%, #0C0A1E 100%)' }}
     >
-      {/* Back button */}
-      <div className="w-full flex items-center justify-between mb-2">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm"
+      {/* Ambient orbs */}
+      <div className="absolute top-16 -left-20 w-64 h-64 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.28) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+      <div className="absolute bottom-32 -right-20 w-56 h-56 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.22) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+
+      {/* Idle sparkles */}
+      {state === 'idle' && SPARKLE_POS.map((pos, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-blue-300/30 text-xs pointer-events-none select-none"
+          style={pos}
+          animate={{ opacity: [0.2, 0.7, 0.2], scale: [0.8, 1.2, 0.8] }}
+          transition={{ duration: 2 + i * 0.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}
         >
-          <ArrowLeft size={16} />
-          Back
+          ✦
+        </motion.div>
+      ))}
+
+      {/* Top row */}
+      <div className="w-full flex items-center justify-between z-10">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-white/50 text-sm hover:text-white/70 transition-colors">
+          <ArrowLeft size={16} /> Back
         </button>
-        <div className="glass rounded-full px-3 py-1.5">
-          <p className="text-xs text-white/70 font-medium">{playsLeft} play{playsLeft !== 1 ? 's' : ''} remaining</p>
+        <div className="px-3 py-1.5 rounded-full text-xs text-white/65 font-medium"
+          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          {playsLeft} play{playsLeft !== 1 ? 's' : ''} left
         </div>
       </div>
 
       {/* Title */}
-      <div className="text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-extrabold text-white mb-1"
-        >
-          Shake &amp; Win!
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="text-sm text-white/60"
-        >
-          {isShaking ? 'Keep shaking…' : 'Tap the phone to reveal your reward'}
-        </motion.p>
+      <div className="text-center z-10">
+        <h1 className="text-2xl font-extrabold text-white mb-1">Scratch &amp; Win!</h1>
+        <p className="text-sm text-white/45">
+          {state === 'revealing' ? 'Revealing your reward…' : 'Tap the card to scratch and reveal'}
+        </p>
       </div>
 
-      {/* Phone hero */}
-      <div className="relative flex items-center justify-center my-4">
-        {/* Ripple rings during shaking */}
-        {isShaking && [0, 0.35, 0.7, 1.05].map((delay, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-[2.5rem] border-2 border-purple-400/40 pointer-events-none"
-            style={{ width: '11rem', height: '18rem' }}
-            initial={{ scale: 1, opacity: 0.5 }}
-            animate={{ scale: 2.2, opacity: 0 }}
-            transition={{ duration: 1.1, delay, repeat: Infinity }}
-          />
-        ))}
+      {/* ── Scratch Card ───────────────────────────────────────── */}
+      <motion.div
+        onClick={scratch}
+        className="relative z-10 rounded-3xl overflow-hidden select-none"
+        style={{
+          width: '288px',
+          boxShadow: '0 28px 72px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08)',
+          cursor: state === 'idle' ? 'pointer' : 'default',
+        }}
+        whileTap={state === 'idle' ? { scale: 0.97 } : {}}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+      >
+        {/* Card header */}
+        <div style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          {/* Dot pattern */}
+          <div className="absolute inset-0 opacity-[0.07]"
+            style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '18px 18px' }} />
+          <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-0.5 relative">Lucky Scratch</p>
+          <div className="flex items-center justify-between relative">
+            <p className="text-[18px] font-extrabold text-white">🃏 Scratch &amp; Win</p>
+            <span className="text-[10px] font-bold text-white/40 bg-white/10 px-2 py-0.5 rounded-full">65% WIN</span>
+          </div>
+        </div>
 
-        {/* Floating particles during shaking */}
-        {isShaking && Array.from({ length: 8 }, (_, i) => (
-          <motion.div
-            key={`p-${i}`}
-            className="absolute w-2 h-2 rounded-full pointer-events-none"
-            style={{
-              background: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
-              left: `calc(50% + ${(Math.random() - 0.5) * 80}px)`,
-              bottom: '60%',
-            }}
-            initial={{ y: 0, opacity: 1, scale: 1 }}
-            animate={{ y: -120 - i * 10, opacity: 0, scale: 0.4, x: (i % 2 === 0 ? 1 : -1) * (20 + i * 8) }}
-            transition={{ duration: 1.2, delay: i * 0.15, repeat: Infinity, ease: 'easeOut' }}
-          />
-        ))}
+        {/* Scratch area */}
+        <div className="relative bg-white overflow-hidden" style={{ height: '210px' }}>
 
-        {/* Phone illustration */}
-        <motion.button
-          onClick={handleShake}
-          disabled={isShaking || playsLeft <= 0}
-          animate={
-            isShaking
-              ? {
-                  x: [0, -16, 18, -14, 16, -10, 12, -8, 10, 0],
-                  y: [0, 10, -8, 12, -10, 8, -6, 4, -4, 0],
-                  rotate: [0, -10, 12, -8, 10, -6, 8, -4, 6, 0],
-                }
-              : { y: [0, -8, 0] }
-          }
-          transition={
-            isShaking
-              ? { duration: 0.35, repeat: 8, ease: 'easeInOut' }
-              : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
-          }
-          whileTap={!isShaking ? { scale: 0.95 } : {}}
-          className="relative flex flex-col items-center justify-center"
-          style={{
-            width: '11rem',
-            height: '18rem',
-            borderRadius: '2.5rem',
-            background: 'linear-gradient(145deg, #2D1B69, #1A0545)',
-            border: '2px solid rgba(167,139,250,0.4)',
-            boxShadow: isShaking
-              ? '0 0 80px rgba(139,92,246,0.7), 0 30px 60px rgba(0,0,0,0.8)'
-              : '0 0 40px rgba(139,92,246,0.3), 0 20px 40px rgba(0,0,0,0.6)',
-          }}
-        >
-          {/* Notch */}
-          <div className="absolute top-4 w-20 h-1.5 rounded-full" style={{ background: 'rgba(0,0,0,0.4)' }} />
-          {/* Speaker */}
-          <div className="absolute bottom-5 w-12 h-1 rounded-full" style={{ background: 'rgba(0,0,0,0.4)' }} />
-
-          <AnimatePresence mode="wait">
-            {!isShaking ? (
-              <motion.div
-                key="idle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-3"
-              >
-                <span className="text-5xl select-none">🤳</span>
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-white/80">Tap to Shake</p>
-                  <p className="text-[10px] text-white/40 mt-0.5">Hold tight!</p>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="shaking"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-3"
-              >
-                <motion.span
-                  className="text-5xl select-none"
-                  animate={{ scale: [1, 1.3, 1], rotate: [0, 25, -25, 0] }}
-                  transition={{ duration: 0.35, repeat: Infinity }}
+          {/* Revealed content — always underneath */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6">
+            <AnimatePresence>
+              {state !== 'idle' && (
+                <motion.div
+                  key="revealed"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 20, delay: 0.9 }}
+                  className="flex flex-col items-center gap-2 text-center"
                 >
-                  🎁
+                  <motion.span
+                    className="text-7xl"
+                    animate={{ rotate: [0, -12, 12, -6, 6, 0] }}
+                    transition={{ duration: 0.5, delay: 1.1 }}
+                  >
+                    {won ? REWARD_EMOJI : '😔'}
+                  </motion.span>
+                  <p className="text-base font-extrabold text-gray-800">{won ? REWARD : 'Not this time!'}</p>
+                  {won && <p className="text-xs text-gray-400 font-medium">Show this to the staff to redeem</p>}
+                  {!won && <p className="text-xs text-gray-400">Better luck on your next visit</p>}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Metallic scratch overlay */}
+          <AnimatePresence>
+            {state === 'idle' && (
+              <motion.div
+                key="overlay"
+                className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden"
+                style={{ background: 'linear-gradient(145deg, #C8C8C8 0%, #E4E4E4 25%, #B0B0B0 50%, #CECECE 75%, #BEBEBE 100%)' }}
+                exit={{ y: '100%', transition: { duration: 0.65, ease: [0.4, 0, 0.2, 1] } }}
+              >
+                {/* Metallic sheen sweep */}
+                <motion.div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.45) 50%, transparent 65%)' }}
+                  animate={{ x: ['-120%', '220%'] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 0.8 }}
+                />
+                <motion.span
+                  className="text-5xl z-10 select-none"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  🪙
                 </motion.span>
-                <p className="text-xs font-semibold text-white/80">Shaking...</p>
-                <div className="flex gap-1.5">
-                  {[0, 1, 2].map(i => (
-                    <motion.div
-                      key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-purple-400"
-                      animate={{ scale: [1, 1.6, 1], opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 0.5, delay: i * 0.15, repeat: Infinity }}
-                    />
-                  ))}
+                <div className="z-10 text-center">
+                  <p className="text-sm font-bold text-gray-500">Tap to Scratch</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Your reward is waiting</p>
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
-        </motion.button>
-      </div>
 
-      {/* Bottom info */}
-      <motion.div
+            {/* Revealing shimmer */}
+            {state === 'revealing' && (
+              <motion.div
+                key="shimmer"
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.95)' }}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 0.6, repeat: 3, ease: 'linear' }}
+                  className="text-4xl"
+                >
+                  ✨
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Card footer */}
+        <div className="bg-white border-t border-gray-100 px-5 py-2.5 flex items-center justify-between">
+          <span className="font-mono text-[9px] text-gray-300 tracking-wider">LG-SCR-2026</span>
+          <span className="text-[9px] text-gray-300">{playsLeft} play{playsLeft !== 1 ? 's' : ''} remaining</span>
+        </div>
+      </motion.div>
+
+      {/* Bottom note */}
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="text-center"
+        transition={{ delay: 0.5 }}
+        className="text-xs text-white/20 text-center z-10"
       >
-        <p className="text-xs text-white/30">Win probability: 65% · Each visit qualifies</p>
-      </motion.div>
+        Each visit earns you one scratch · Results are instant
+      </motion.p>
     </div>
   )
 }

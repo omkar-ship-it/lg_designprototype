@@ -68,7 +68,9 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   const joinCampaign = () => {
     if (!activeCampaign || digits.some(d => !d)) return
     closeCampaign()
-    router.push(MECHANIC_GAME_LINKS[activeCampaign.type])
+    const base = MECHANIC_GAME_LINKS[activeCampaign.type]
+    // Stamp: code is the participation code — auto-apply on landing
+    router.push(activeCampaign.type === 'stamp' ? `${base}?stamp=1` : base)
   }
 
   const activeMeta = activeCampaign ? MECHANIC_META[activeCampaign.type] : null
