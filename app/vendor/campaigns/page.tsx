@@ -171,47 +171,22 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
                   )}
                 </div>
 
-                {/* Row 2: dates */}
-                <div className="flex items-center gap-1.5 text-xs text-v-text-3 mb-3">
-                  <CalendarDays className="w-3 h-3" />
-                  <span>{formatDate(c.startDate)} → {formatDate(c.endDate)}</span>
-                  {dl !== null && dl > 3 && (
-                    <span className="text-v-text-2 font-medium">· {dl} days left</span>
-                  )}
-                </div>
-
-                {/* Row 3: key rates */}
-                <div className="flex items-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-3 h-3 text-v-purple" />
-                    <span className="text-sm font-bold text-v-purple">{er}%</span>
-                    <span className="text-[10px] text-v-text-3">engagement</span>
+                <div className="grid grid-cols-2 gap-3 mb-4 text-xs text-v-text-3">
+                  <div className="rounded-2xl bg-v-surface-2 p-3">
+                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Status</p>
+                    <StatusBadge status={c.status} />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    <span className="text-sm font-bold text-emerald-600">{wr}%</span>
-                    <span className="text-[10px] text-v-text-3">win rate</span>
+                  <div className="rounded-2xl bg-v-surface-2 p-3">
+                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Duration</p>
+                    <p className="text-sm font-semibold text-v-text">{formatDate(c.startDate)} → {formatDate(c.endDate)}</p>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Trophy className="w-3 h-3 text-amber-500" />
-                    <span className="text-sm font-bold text-amber-600">{rr}%</span>
-                    <span className="text-[10px] text-v-text-3">redeemed</span>
+                  <div className="rounded-2xl bg-v-surface-2 p-3">
+                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Participants</p>
+                    <p className="text-sm font-semibold text-v-text">{c.currentUsers.toLocaleString()}</p>
                   </div>
-                  {/* Cap bar */}
-                  <div className="flex items-center gap-2 ml-auto hidden sm:flex">
-                    <div className="text-right">
-                      <div className="text-[10px] text-v-text-3 mb-1">
-                        {c.currentUsers.toLocaleString()} / {c.userCap.toLocaleString()} users
-                      </div>
-                      <div className="w-28">
-                        <ProgressBar
-                          value={c.currentUsers}
-                          max={c.userCap}
-                          color={capPercent(c.currentUsers, c.userCap) > 85 ? '#DC2626' : capPercent(c.currentUsers, c.userCap) > 60 ? '#D97706' : '#7C3AED'}
-                        />
-                      </div>
-                      <div className="text-[10px] text-v-text-3 mt-0.5 text-right">{capPercent(c.currentUsers, c.userCap)}% cap</div>
-                    </div>
+                  <div className="rounded-2xl bg-v-surface-2 p-3">
+                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Win probability</p>
+                    <p className="text-sm font-semibold text-v-text">{getWinProbability(c) ?? 0}%</p>
                   </div>
                 </div>
               </div>
@@ -266,54 +241,24 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
             </div>
           </div>
 
-          {/* Date + urgency */}
-          <div className="flex items-center gap-1.5 text-xs text-v-text-3">
-            <CalendarDays className="w-3 h-3 shrink-0" />
-            <span className="truncate">{formatDate(c.startDate)} → {formatDate(c.endDate)}</span>
-          </div>
-
-          {dl !== null && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold self-start ${urgent ? 'bg-red-50 text-v-danger border border-red-200' : 'bg-v-surface-3 text-v-text-2 border border-v-border'}`}>
-              {urgent ? '⚠' : '⏱'} {dl} days left
-            </span>
-          )}
-
           {/* Stats grid */}
-          <div className="grid grid-cols-4 gap-1 mt-auto">
-            {[
-              { label: 'Engage', value: `${er}%`, color: '#7C3AED', bg: 'bg-purple-50', border: 'border-purple-100' },
-              { label: 'Win',    value: `${wr}%`, color: '#16A34A', bg: 'bg-green-50',  border: 'border-green-100'  },
-              { label: 'Redeem', value: `${rr}%`, color: '#D97706', bg: 'bg-amber-50',  border: 'border-amber-100'  },
-              { label: 'Prob',   value: `${getWinProbability(c) || '—'}%`, color: '#0891B2', bg: 'bg-cyan-50',  border: 'border-cyan-100'  },
-            ].map(s => (
-              <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg p-1.5 text-center`}>
-                <div className="text-xs font-bold" style={{ color: s.color }}>{s.value}</div>
-                <div className="text-[8px] text-v-text-3 mt-0.5">{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Participation info */}
-          <div className="flex items-center gap-3 text-xs text-v-text-3">
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span className="font-medium">{c.currentUsers.toLocaleString()} joined</span>
+          <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-v-text-3">
+            <div className="rounded-2xl bg-v-surface-2 p-3">
+              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Status</p>
+              <StatusBadge status={c.status} />
             </div>
-            <span>•</span>
-            <span className="text-v-text-2">{c.participations.toLocaleString()} plays</span>
-          </div>
-
-          {/* Cap bar */}
-          <div>
-            <div className="flex justify-between text-[10px] text-v-text-3 mb-1">
-              <span>{c.currentUsers.toLocaleString()} / {c.userCap.toLocaleString()} users</span>
-              <span>{capPercent(c.currentUsers, c.userCap)}%</span>
+            <div className="rounded-2xl bg-v-surface-2 p-3">
+              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Duration</p>
+              <p className="text-sm font-semibold text-v-text">{formatDate(c.startDate)} → {formatDate(c.endDate)}</p>
             </div>
-            <ProgressBar
-              value={c.currentUsers}
-              max={c.userCap}
-              color={capPercent(c.currentUsers, c.userCap) > 85 ? '#DC2626' : capPercent(c.currentUsers, c.userCap) > 60 ? '#D97706' : '#7C3AED'}
-            />
+            <div className="rounded-2xl bg-v-surface-2 p-3">
+              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Participants</p>
+              <p className="text-sm font-semibold text-v-text">{c.currentUsers.toLocaleString()}</p>
+            </div>
+            <div className="rounded-2xl bg-v-surface-2 p-3">
+              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Win probability</p>
+              <p className="text-sm font-semibold text-v-text">{getWinProbability(c) ?? 0}%</p>
+            </div>
           </div>
         </div>
       </div>
