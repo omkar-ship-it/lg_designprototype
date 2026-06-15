@@ -11,27 +11,30 @@ const demo = customers[0]
 const firstName = demo.name.split(' ')[0]
 type Tab = 'active' | 'history'
 
-// Stamp grid visualiser (shows 10 cells, filled = earned)
+// Stamp grid visualiser — circular stamps
 function StampGrid({ filled }: { filled: number }) {
   return (
-    <div className="grid grid-cols-5 gap-1.5 px-1 py-2">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div
+    <div className="flex flex-wrap gap-1.5 py-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <motion.div
           key={i}
-          className={`h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+          initial={i < filled ? { scale: 0 } : {}}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 18, delay: i * 0.04 }}
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${
             i < filled
-              ? 'bg-amber-400 shadow-sm'
-              : 'bg-gray-100 border border-gray-200'
+              ? 'bg-amber-400 border-amber-500 shadow-sm shadow-amber-200'
+              : 'bg-gray-50 border-gray-200'
           }`}
         >
-          {i < filled ? '✓' : ''}
-        </div>
+          {i < filled ? '☕' : <span className="text-[10px] text-gray-300 font-bold">{i + 1}</span>}
+        </motion.div>
       ))}
     </div>
   )
 }
 
-function ActiveRewardCard({ reward }: { reward: CustomerReward }) {
+function ActiveRewardCard({ reward, index }: { reward: CustomerReward; index: number }) {
   const meta = MECHANIC_META[reward.mechanic]
   const isStamp = reward.mechanic === 'stamp'
   // Fake stamp count for demo
@@ -39,9 +42,11 @@ function ActiveRewardCard({ reward }: { reward: CustomerReward }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      key={reward.id}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 22, delay: index * 0.08 }}
+      whileTap={{ scale: 0.98 }}
       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
     >
       {/* Cover */}
@@ -68,13 +73,15 @@ function ActiveRewardCard({ reward }: { reward: CustomerReward }) {
   )
 }
 
-function HistoryRewardCard({ reward }: { reward: CustomerReward }) {
+function HistoryRewardCard({ reward, index }: { reward: CustomerReward; index: number }) {
   const meta = MECHANIC_META[reward.mechanic]
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      key={reward.id}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 22, delay: index * 0.08 }}
+      whileTap={{ scale: 0.98 }}
       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
     >
       <div className="flex gap-3 p-4">
@@ -137,23 +144,34 @@ export default function WalletPage() {
           </button>
         </div>
 
-        {/* White wallet summary card */}
+        {/* White wallet summary card — spring-in with animated numbers */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-5"
+          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 280, damping: 22 }}
+          className="mx-0 bg-white rounded-2xl shadow-lg shadow-purple-200/40 p-4 flex items-center divide-x divide-gray-100"
         >
-          <p className="text-xs text-gray-400 text-center mb-3 font-medium uppercase tracking-widest">Your Wallet</p>
-          <div className="flex items-center">
-            <div className="flex-1 text-center">
-              <p className="text-2xl font-black text-gray-900">{activeRewards.length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Active rewards</p>
-            </div>
-            <div className="w-px h-10 bg-gray-200" />
-            <div className="flex-1 text-center">
-              <p className="text-2xl font-black text-gray-900">{historyRewards.length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Redeemed</p>
-            </div>
+          <div className="flex-1 text-center pr-4">
+            <motion.div
+              className="text-2xl font-black text-purple-700"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.2 }}
+            >
+              {activeRewards.length}
+            </motion.div>
+            <div className="text-xs text-gray-400 mt-0.5">Active rewards</div>
+          </div>
+          <div className="flex-1 text-center pl-4">
+            <motion.div
+              className="text-2xl font-black text-gray-700"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.25 }}
+            >
+              {historyRewards.length}
+            </motion.div>
+            <div className="text-xs text-gray-400 mt-0.5">Redeemed</div>
           </div>
         </motion.div>
       </div>
@@ -188,11 +206,20 @@ export default function WalletPage() {
                 {tab === 'active' ? 'No active rewards. Play games to win!' : 'No redeemed rewards yet.'}
               </motion.div>
             ) : (
-              shown.map(r =>
-                tab === 'active'
-                  ? <ActiveRewardCard key={r.id} reward={r} />
-                  : <HistoryRewardCard key={r.id} reward={r} />
-              )
+              <motion.div
+                key={tab}
+                initial={{ opacity: 0, x: tab === 'active' ? -40 : 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: tab === 'active' ? 40 : -40 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="space-y-4"
+              >
+                {shown.map((r, i) =>
+                  tab === 'active'
+                    ? <ActiveRewardCard key={r.id} reward={r} index={i} />
+                    : <HistoryRewardCard key={r.id} reward={r} index={i} />
+                )}
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

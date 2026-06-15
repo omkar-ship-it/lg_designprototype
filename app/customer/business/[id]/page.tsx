@@ -30,10 +30,14 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
         className="relative h-[220px]"
         style={{ background: `linear-gradient(135deg, ${biz.coverFrom}, ${biz.coverTo})` }}
       >
-        {/* Big emoji bg */}
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl opacity-20 select-none">
+        {/* Floating emoji bg */}
+        <motion.span
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl opacity-20 select-none"
+          animate={{ y: [0, -10, 0], rotate: [0, 3, -3, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+        >
           {biz.coverEmoji}
-        </span>
+        </motion.span>
 
         {/* Back button */}
         <button
@@ -70,7 +74,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
           })}
         </div>
 
-        {/* Floating action buttons — left edge mid */}
+        {/* Floating action buttons — right edge bottom */}
         <div className="absolute right-4 bottom-3 flex flex-col gap-2 z-10">
           <button className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md">
             <Gift className="w-4 h-4 text-purple-700" />
@@ -120,13 +124,22 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Membership CTA */}
         <motion.button
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.01 }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="w-full py-3.5 rounded-full text-sm font-bold text-white mb-6"
-          style={{ background: 'linear-gradient(90deg, #5B21B6, #7C3AED)' }}
+          className="w-full py-3.5 rounded-full text-sm font-bold text-white mb-6 shadow-lg shadow-purple-200/60"
+          style={{ background: 'linear-gradient(90deg, #4C1D95, #7C3AED)' }}
         >
-          Checkout Membership Plans →
+          Checkout Membership Plans
+          <motion.span
+            className="inline-block ml-2"
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            →
+          </motion.span>
         </motion.button>
 
         {/* Mechanics section */}
@@ -146,39 +159,55 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             return (
               <motion.div
                 key={m.type}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.18 + i * 0.07, type: 'spring', stiffness: 280, damping: 22 }}
-                className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+                transition={{ delay: 0.18 + i * 0.08, type: 'spring', stiffness: 280, damping: 22 }}
               >
-                {/* Mechanic card cover */}
-                <div
-                  className="relative h-28 flex items-end p-3"
-                  style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                >
-                  {/* Badge top-left */}
-                  <span
-                    className="absolute top-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: meta.badgeBg, color: meta.badgeText }}
+                <Link href={gameLink}>
+                  <motion.div
+                    whileHover={{ y: -4, transition: { duration: 0.18 } }}
+                    whileTap={{ scale: 0.97 }}
+                    className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:shadow-purple-100/50 transition-shadow cursor-pointer"
                   >
-                    {meta.label}
-                  </span>
-                  {/* Icon circle bottom-right */}
-                  <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl">
-                    {meta.emoji}
-                  </div>
-                </div>
-                {/* Text */}
-                <div className="p-4">
-                  <h3 className="text-sm font-bold text-gray-900 mb-0.5">{m.label}</h3>
-                  <p className="text-xs text-gray-500 mb-3">{m.description}</p>
-                  <Link
-                    href={gameLink}
-                    className="text-xs font-bold text-purple-700 hover:text-purple-900 transition-colors"
-                  >
-                    Play now →
-                  </Link>
-                </div>
+                    {/* Cover */}
+                    <div
+                      className="relative h-32 overflow-hidden"
+                      style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                    >
+                      <motion.span
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-20 select-none"
+                        animate={{ y: [0, -6, 0], rotate: [0, 3, -3, 0] }}
+                        transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        {meta.emoji}
+                      </motion.span>
+                      <span
+                        className="absolute top-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: meta.badgeBg, color: meta.badgeText }}
+                      >
+                        {meta.label}
+                      </span>
+                      <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl">
+                        {meta.emoji}
+                      </div>
+                    </div>
+                    {/* Text + CTA */}
+                    <div className="p-4">
+                      <h3 className="text-sm font-bold text-gray-900 mb-1">{m.label}</h3>
+                      <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-purple-700">Play now</span>
+                        <motion.div
+                          animate={{ x: [0, 4, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                          className="text-purple-400 text-xs"
+                        >
+                          →
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
               </motion.div>
             )
           })}
