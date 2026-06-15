@@ -4,32 +4,15 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, LayoutList, LayoutGrid, ArrowUpDown,
-  CalendarDays, Users, Trophy, TrendingUp, MoreVertical,
+  Users, Trophy, TrendingUp, MoreVertical,
   Pause, Copy, StopCircle, Eye,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, ProgressBar } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { MechanicBadge, StatusBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
-import { getMechanicEmoji, getMechanicColor, formatDate, capPercent } from '@/lib/utils'
+import { getMechanicEmoji, getMechanicColor, formatDate } from '@/lib/utils'
 
-function engagementRate(c: typeof campaigns[0]) {
-  return c.userCap > 0 ? Math.round((c.currentUsers / c.userCap) * 100) : 0
-}
-function redemptionRate(c: typeof campaigns[0]) {
-  return c.rewardsClaimed > 0 ? Math.round((c.redeemedCount / c.rewardsClaimed) * 100) : 0
-}
-function getWinProbability(c: typeof campaigns[0]): number | null {
-  const config = c.config as any
-  if (config.winProbability) return Math.round(config.winProbability * 100)
-  if (c.mechanic === 'spin') return 55
-  if (c.mechanic === 'shake') return 65
-  if (c.mechanic === 'stamp') return 100
-  if (c.mechanic === 'dice') return 50
-  if (c.mechanic === 'lottery') return 70
-  if (c.mechanic === 'checkin') return 100
-  return null
-}
 import type { CampaignStatus } from '@/lib/types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -39,9 +22,7 @@ const TODAY_DATE = new Date(TODAY)
 function daysLeft(endDate: string) {
   return Math.ceil((new Date(endDate).getTime() - TODAY_DATE.getTime()) / 86400000)
 }
-function winRate(c: typeof campaigns[0]) {
-  return c.participations > 0 ? Math.round((c.rewardsClaimed / c.participations) * 100) : 0
-}
+
 
 // ── Date-window filter ────────────────────────────────────────────────────────
 type DateWindow = 'all' | '7d' | '30d' | '90d' | '1y'
@@ -131,9 +112,6 @@ function QuickMenu({ id }: { id: string }) {
 
 // ── List card ─────────────────────────────────────────────────────────────────
 function ListCard({ c }: { c: typeof campaigns[0] }) {
-  const wr    = winRate(c)
-  const er    = engagementRate(c)
-  const rr    = redemptionRate(c)
   const dl    = c.status === 'active' ? daysLeft(c.endDate) : null
   const urgent = dl !== null && dl <= 3
   const muted  = c.status === 'ended'
@@ -185,8 +163,8 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
                     <p className="text-sm font-semibold text-v-text">{c.currentUsers.toLocaleString()}</p>
                   </div>
                   <div className="rounded-2xl bg-v-surface-2 p-3">
-                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Win probability</p>
-                    <p className="text-sm font-semibold text-v-text">{getWinProbability(c) ?? 0}%</p>
+                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Total Rewards</p>
+                    <p className="text-sm font-semibold text-v-text">{c.rewardsClaimed.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -203,11 +181,7 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
 
 // ── Grid card ─────────────────────────────────────────────────────────────────
 function GridCard({ c }: { c: typeof campaigns[0] }) {
-  const wr    = winRate(c)
-  const er    = engagementRate(c)
-  const rr    = redemptionRate(c)
   const dl    = c.status === 'active' ? daysLeft(c.endDate) : null
-  const urgent = dl !== null && dl <= 3
   const muted  = c.status === 'ended'
   const color  = getMechanicColor(c.mechanic)
 
@@ -256,8 +230,8 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
               <p className="text-sm font-semibold text-v-text">{c.currentUsers.toLocaleString()}</p>
             </div>
             <div className="rounded-2xl bg-v-surface-2 p-3">
-              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Win probability</p>
-              <p className="text-sm font-semibold text-v-text">{getWinProbability(c) ?? 0}%</p>
+              <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Total Rewards</p>
+              <p className="text-sm font-semibold text-v-text">{c.rewardsClaimed.toLocaleString()}</p>
             </div>
           </div>
         </div>
