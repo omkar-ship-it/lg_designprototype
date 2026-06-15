@@ -72,8 +72,8 @@ export default function DicePage() {
     }, 120)
   }
 
-  if (state === 'result' && won)  return <WinCelebration reward={wonReward} emoji="🎲" />
-  if (state === 'result' && !won) return <NoWin />
+  if (state === 'result' && won)  return <WinCelebration reward={wonReward} emoji="🎲" onClose={() => setState('idle')} />
+  if (state === 'result' && !won) return <NoWin onClose={() => setState('idle')} />
 
   return (
     <div

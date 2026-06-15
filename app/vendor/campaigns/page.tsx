@@ -19,6 +19,16 @@ function engagementRate(c: typeof campaigns[0]) {
 function redemptionRate(c: typeof campaigns[0]) {
   return c.rewardsClaimed > 0 ? Math.round((c.redeemedCount / c.rewardsClaimed) * 100) : 0
 }
+function getWinProbability(c: typeof campaigns[0]): number | null {
+  const config = c.config as any
+  if (config.winProbability) return Math.round(config.winProbability * 100)
+  if (c.mechanic === 'spin') return 55
+  if (c.mechanic === 'shake') return 65
+  if (c.mechanic === 'stamp') return 100
+  if (c.mechanic === 'dice') return 50
+  if (c.mechanic === 'lottery') return 70
+  return null
+}
 import type { CampaignStatus } from '@/lib/types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -268,17 +278,28 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
           )}
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-1.5 mt-auto">
+          <div className="grid grid-cols-4 gap-1 mt-auto">
             {[
               { label: 'Engage', value: `${er}%`, color: '#7C3AED', bg: 'bg-purple-50', border: 'border-purple-100' },
               { label: 'Win',    value: `${wr}%`, color: '#16A34A', bg: 'bg-green-50',  border: 'border-green-100'  },
               { label: 'Redeem', value: `${rr}%`, color: '#D97706', bg: 'bg-amber-50',  border: 'border-amber-100'  },
+              { label: 'Prob',   value: `${getWinProbability(c) || '—'}%`, color: '#0891B2', bg: 'bg-cyan-50',  border: 'border-cyan-100'  },
             ].map(s => (
-              <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg p-2 text-center`}>
-                <div className="text-sm font-bold" style={{ color: s.color }}>{s.value}</div>
-                <div className="text-[9px] text-v-text-3 mt-0.5">{s.label}</div>
+              <div key={s.label} className={`${s.bg} border ${s.border} rounded-lg p-1.5 text-center`}>
+                <div className="text-xs font-bold" style={{ color: s.color }}>{s.value}</div>
+                <div className="text-[8px] text-v-text-3 mt-0.5\">{s.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Participation info */}
+          <div className="flex items-center gap-3 text-xs text-v-text-3\">
+            <div className="flex items-center gap-1">
+              <Users className="w-3 h-3\" />
+              <span className=\"font-medium\">{c.currentUsers.toLocaleString()} joined</span>
+            </div>
+            <span>•</span>
+            <span className="text-v-text-2\">{c.participations.toLocaleString()} plays</span>
           </div>
 
           {/* Cap bar */}

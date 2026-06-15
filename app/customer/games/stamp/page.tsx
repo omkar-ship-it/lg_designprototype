@@ -42,7 +42,7 @@ function StampCardInner() {
     setTimeout(() => setLastStamp(null), 1400)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (state === 'big-win') return <WinCelebration reward={REWARDS[8].reward} emoji={REWARDS[8].emoji} />
+  if (state === 'big-win') return <WinCelebration reward={REWARDS[8].reward} emoji={REWARDS[8].emoji} onClose={() => setState('card')} />
   if (state === 'surprise' && surpriseReward) {
     return <WinCelebration reward={surpriseReward.reward} emoji={surpriseReward.emoji} onClose={() => setState('card')} />
   }

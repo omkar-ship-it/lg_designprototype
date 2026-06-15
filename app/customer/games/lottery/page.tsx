@@ -169,8 +169,16 @@ export default function LotteryPage() {
     }, TOTAL * 150 + 50)
   }
 
-  if (state === 'done' && won)  return <WinCelebration reward={wonReward} emoji={wonEmoji} />
-  if (state === 'done' && !won) return <NoWin />
+  if (state === 'done' && won)  return <WinCelebration reward={wonReward} emoji={wonEmoji} onClose={() => {
+    setRevealed(Array(TOTAL).fill(false))
+    setCells([])
+    setState('idle')
+  }} />
+  if (state === 'done' && !won) return <NoWin onClose={() => {
+    setRevealed(Array(TOTAL).fill(false))
+    setCells([])
+    setState('idle')
+  }} />
 
   const revealedCount = revealed.filter(Boolean).length
 

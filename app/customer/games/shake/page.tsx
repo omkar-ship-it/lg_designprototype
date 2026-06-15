@@ -40,7 +40,7 @@ export default function ShakeWinPage() {
   }
 
   if (state === 'result' && won)  return <WinCelebration reward={REWARD} emoji={REWARD_EMOJI} onClose={handlePlayAgain} />
-  if (state === 'result' && !won) return <NoWin />
+  if (state === 'result' && !won) return <NoWin onClose={handlePlayAgain} />
 
   return (
     <div

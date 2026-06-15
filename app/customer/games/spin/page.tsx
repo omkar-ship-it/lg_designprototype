@@ -51,8 +51,8 @@ export default function SpinWheelPage() {
     }, 4500)
   }
 
-  if (state === 'result' && won)  return <WinCelebration reward={wonReward} emoji="🎡" />
-  if (state === 'result' && !won) return <NoWin />
+  if (state === 'result' && won)  return <WinCelebration reward={wonReward} emoji="🎡" onClose={() => setState('idle')} />
+  if (state === 'result' && !won) return <NoWin onClose={() => setState('idle')} />
 
   const cx = 150, cy = 150, r = 140
 
