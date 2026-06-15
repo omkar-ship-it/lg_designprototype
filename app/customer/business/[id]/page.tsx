@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Users, Gift } from 'lucide-react'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
@@ -15,6 +15,17 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
+}
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  active: { bg: '#D1FAE5', text: '#065F46', label: 'Active'  },
+  paused: { bg: '#FEF3C7', text: '#92400E', label: 'Paused'  },
+  draft:  { bg: '#E5E7EB', text: '#374151', label: 'Draft'   },
+  ended:  { bg: '#EDE9FE', text: '#5B21B6', label: 'Ended'   },
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -251,6 +262,35 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                   <div className="p-4">
                     <h3 className="text-sm font-bold text-gray-900 mb-1">{m.label}</h3>
                     <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
+
+                    {/* Campaign details */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {/* Status */}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                        >
+                          {STATUS_STYLES[m.status]?.label}
+                        </span>
+                      </div>
+                      {/* Duration */}
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <CalendarDays className="w-3 h-3 shrink-0 text-gray-400" />
+                        <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                      </div>
+                      {/* Participants */}
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <Users className="w-3 h-3 shrink-0 text-gray-400" />
+                        <span>{m.participants.toLocaleString()} participants</span>
+                      </div>
+                      {/* Total rewards */}
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <Gift className="w-3 h-3 shrink-0 text-gray-400" />
+                        <span>{m.totalRewards.toLocaleString()} rewards</span>
+                      </div>
+                    </div>
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 tracking-wide">CODE</span>
