@@ -116,9 +116,15 @@ export interface CustomerReward {
   mechanic: MechanicType
   reward: string
   earnedAt: string
+  expiresAt?: string
   status: 'pending' | 'redeemed'
   redeemedAt?: string
   code: string
+  businessId?: string
+  businessName?: string
+  businessEmoji?: string
+  businessCoverFrom?: string
+  businessCoverTo?: string
 }
 
 export interface GameHistoryItem {
