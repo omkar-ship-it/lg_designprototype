@@ -195,13 +195,10 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                             </div>
                           ) : (
                             <div
-                              className="absolute inset-0 rounded-full"
-                              style={{ background: '#F9FAFB', border: '2px dashed #E5E7EB' }}
-                            />
-                          )}
-                          {isFinalPos && !isFilled && (
-                            <div className="absolute inset-0 rounded-full flex items-center justify-center text-lg opacity-30">
-                              🏆
+                              className="absolute inset-0 rounded-full flex items-center justify-center"
+                              style={{ background: '#E5E7EB' }}
+                            >
+                              <span className="text-[11px] font-bold text-gray-400 select-none">?</span>
                             </div>
                           )}
                         </div>
@@ -211,33 +208,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   })}
                 </div>
 
-                {/* Progress bar */}
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
-                  <span>{mechanic.stampsCollected} collected</span>
-                  <span>{mechanic.totalStamps - mechanic.stampsCollected} more to go</span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(mechanic.stampsCollected / mechanic.totalStamps) * 100}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                  />
-                </div>
+                {/* Stamp count row */}
+                <p className="text-xs text-gray-400 text-center">
+                  <span className="font-bold" style={{ color: meta.cardFrom }}>{mechanic.stampsCollected}</span> collected · {mechanic.totalStamps - mechanic.stampsCollected!} more surprises await
+                </p>
               </div>
             </div>
-
-            {/* Grand reward reveal */}
-            {mechanic.finalReward && (
-              <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 mb-4">
-                <span className="text-2xl">🏆</span>
-                <div>
-                  <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wide">Complete for</p>
-                  <p className="text-sm font-bold text-gray-800">{mechanic.finalReward}</p>
-                </div>
-              </div>
-            )}
 
             {/* Compact stats row */}
             <div className="flex items-center gap-3 text-[11px] text-gray-400 mb-4">

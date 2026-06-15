@@ -296,25 +296,30 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       </div>
                       <p className="text-xs text-gray-500 mb-2.5 leading-relaxed">{m.description}</p>
 
-                      {/* Stamp: progress + final reward */}
+                      {/* Stamp: sealed mini dot grid */}
                       {m.type === 'stamp' && m.stampsCollected !== undefined && m.totalStamps && (
                         <div className="mb-2.5">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] text-gray-400 font-medium">Your progress</span>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] text-gray-400 font-medium">Stamps</span>
                             <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
-                              {m.stampsCollected}/{m.totalStamps} stamps
+                              {m.stampsCollected}/{m.totalStamps}
                             </span>
                           </div>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                            <div className="h-full rounded-full transition-all duration-500"
-                              style={{ width: `${(m.stampsCollected / m.totalStamps) * 100}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
+                          <div className="flex gap-1.5 flex-wrap">
+                            {Array.from({ length: m.totalStamps }, (_, i) => {
+                              const filled = i < m.stampsCollected!
+                              return (
+                                <div
+                                  key={i}
+                                  className="w-4 h-4 rounded-full"
+                                  style={filled
+                                    ? { background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }
+                                    : { background: '#D1D5DB' }
+                                  }
+                                />
+                              )
+                            })}
                           </div>
-                          {m.finalReward && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">🏆</span>
-                              <span className="text-[11px] font-semibold text-gray-700">Complete for: <span style={{ color: meta.cardFrom }}>{m.finalReward}</span></span>
-                            </div>
-                          )}
                         </div>
                       )}
 

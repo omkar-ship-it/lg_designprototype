@@ -1,11 +1,11 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
 
-type State = 'idle' | 'rolling' | 'result'
+type State = 'idle' | 'rolling' | 'announcing' | 'result'
 
 const OUTCOMES: Record<number, string | null> = {
   1: null, 2: null, 3: 'Free Dessert 🍰', 4: '₹50 Off 🏷️', 5: null, 6: 'Free Dessert 🍰',
@@ -18,7 +18,6 @@ const SPARKLE_POS = [
   { top: '72%', left: '13%' }, { top: '62%', right: '12%' },
 ]
 
-// Ghost dice floating in background
 const GHOST_DICE = [
   { top: '8%',  left: '5%',  size: 48, rotate: 15,  opacity: 0.06 },
   { top: '14%', right: '6%', size: 56, rotate: -20, opacity: 0.05 },
@@ -48,10 +47,11 @@ function DiceFaceSVG({ value, fillColor = '#0D0B1E' }: { value: number; fillColo
 
 export default function DicePage() {
   const router = useRouter()
-  const [state, setState]         = useState<State>('idle')
+  const [state, setState]             = useState<State>('idle')
   const [displayValue, setDisplayValue] = useState(1)
-  const [won, setWon]             = useState(false)
-  const [wonReward, setWonReward] = useState('')
+  const [finalValue, setFinalValue]   = useState<number | null>(null)
+  const [won, setWon]                 = useState(false)
+  const [wonReward, setWonReward]     = useState('')
 
   const roll = () => {
     if (state !== 'idle') return
@@ -64,16 +64,21 @@ export default function DicePage() {
         clearInterval(interval)
         const final = Math.floor(1 + Math.random() * 6)
         setDisplayValue(final)
+        setFinalValue(final)
         const reward = OUTCOMES[final]
         setWon(!!reward)
         setWonReward(reward || '')
-        setTimeout(() => setState('result'), 800)
+        // Brief announce before full-screen result
+        setTimeout(() => setState('announcing'), 600)
+        setTimeout(() => setState('result'), 2000)
       }
     }, 120)
   }
 
-  if (state === 'result' && won)  return <WinCelebration reward={wonReward} emoji="🎲" onClose={() => setState('idle')} />
-  if (state === 'result' && !won) return <NoWin onClose={() => setState('idle')} />
+  if (state === 'result' && won)
+    return <WinCelebration reward={wonReward} emoji="🎲" hidePlayAgain onClose={() => { setFinalValue(null); setState('idle') }} />
+  if (state === 'result' && !won)
+    return <NoWin onClose={() => { setFinalValue(null); setState('idle') }} />
 
   return (
     <div
@@ -85,10 +90,8 @@ export default function DicePage() {
         style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%)', filter: 'blur(56px)' }} />
       <div className="absolute bottom-32 -left-20 w-64 h-64 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(48px)' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
-      {/* Ghost dice in background */}
+      {/* Ghost dice */}
       {GHOST_DICE.map((g, i) => (
         <motion.div
           key={i}
@@ -112,141 +115,114 @@ export default function DicePage() {
         </motion.div>
       ))}
 
-      {/* Campaign Details Card — At Top */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full px-5 mb-8 p-4 rounded-2xl relative z-10"
-        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(34,197,94,0.3)' }}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h2 className="text-xl font-bold text-white">🎲 Lucky Dice</h2>
-              <p className="text-xs text-white/60 mt-1">Roll and match to win</p>
-            </div>
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>LIVE</span>
-          </div>
-          <div className="grid grid-cols-3 gap-4 text-xs">
-            <div>
-              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Win Rate</p>
-              <p className="text-white font-bold text-sm">50%</p>
-            </div>
-            <div>
-              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Duration</p>
-              <p className="text-white font-bold text-sm">Jul 1–31</p>
-            </div>
-            <div>
-              <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Players</p>
-              <p className="text-white font-bold text-sm">328 joined</p>
-            </div>
-          </div>
-        </motion.div>
-
       {/* Back */}
-      <button onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-white/50 hover:text-white/70 transition-colors text-sm mb-6 self-start relative z-10 px-5">
-        <ArrowLeft size={16} /> Back
+      <button
+        onClick={() => router.back()}
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center z-20"
+      >
+        <ArrowLeft className="w-4 h-4 text-white" />
       </button>
+      <p className="absolute top-14 right-4 text-[10px] text-white/30 z-20">Roll the Dice</p>
 
-      <div className="text-center z-10 mb-4">
-        <h1 className="text-xl font-extrabold text-white">Roll the Dice</h1>
-        <p className="text-sm text-white/50 mt-1">
-          {state === 'rolling' ? '🎲 Rolling…' : 'Roll 3, 4, or 6 to win a reward'}
-        </p>
-      </div>
+      <div className="flex-1 flex flex-col items-center justify-center w-full z-10 gap-6">
+        <div className="text-center">
+          <h1 className="text-xl font-extrabold text-white">Roll the Dice</h1>
+          <p className="text-sm text-white/50 mt-1">
+            {state === 'rolling' || state === 'announcing' ? '🎲 Rolling…' : 'Tap the dice to roll'}
+          </p>
+        </div>
 
-      {/* Dice */}
-      <div className="relative flex flex-col items-center justify-center z-10" style={{ perspective: 600 }}>
-        {/* Floor shadow */}
-        <motion.div
-          className="absolute -bottom-6 rounded-full pointer-events-none"
-          style={{ background: 'rgba(34,197,94,0.12)', filter: 'blur(20px)' }}
-          animate={state === 'rolling'
-            ? { width: ['8rem', '5rem', '8rem'], height: ['1.5rem', '0.8rem', '1.5rem'] }
-            : { width: '8rem', height: '1.5rem' }}
-          transition={state === 'rolling' ? { duration: 0.4, repeat: 4, ease: 'easeInOut' } : {}}
-        />
-
-        {/* Glow ring around dice */}
-        {state === 'rolling' && (
+        {/* Dice — tap to roll */}
+        <div className="relative flex flex-col items-center justify-center" style={{ perspective: 600 }}>
+          {/* Floor shadow */}
           <motion.div
-            className="absolute rounded-3xl pointer-events-none"
-            style={{ width: 204, height: 204 }}
-            animate={{ boxShadow: ['0 0 30px rgba(34,197,94,0.25)', '0 0 70px rgba(34,197,94,0.55)', '0 0 30px rgba(34,197,94,0.25)'] }}
-            transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute -bottom-6 rounded-full pointer-events-none"
+            style={{ background: 'rgba(34,197,94,0.12)', filter: 'blur(20px)' }}
+            animate={state === 'rolling'
+              ? { width: ['8rem', '5rem', '8rem'], height: ['1.5rem', '0.8rem', '1.5rem'] }
+              : { width: '8rem', height: '1.5rem' }}
+            transition={state === 'rolling' ? { duration: 0.4, repeat: 4, ease: 'easeInOut' } : {}}
           />
-        )}
 
-        <motion.button
-          onClick={roll}
-          disabled={state === 'rolling'}
-          animate={state === 'rolling'
-            ? { rotateX: [0, 360, 720, 1080], rotateY: [0, 270, 540, 810] }
-            : {}}
-          transition={state === 'rolling' ? { duration: 1.8, ease: 'easeOut' } : {}}
-          whileTap={state === 'idle' ? { scale: 0.92 } : {}}
-          className="w-48 h-48 rounded-3xl bg-white flex items-center justify-center cursor-pointer select-none"
-          style={{
-            transformStyle: 'preserve-3d',
-            boxShadow: state === 'rolling'
-              ? '0 24px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 40px rgba(34,197,94,0.4)'
-              : '0 16px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 20px rgba(34,197,94,0.15)',
-          }}
-        >
-          <div className="w-32 h-32">
-            <DiceFaceSVG value={displayValue} />
-          </div>
-        </motion.button>
+          {state === 'rolling' && (
+            <motion.div
+              className="absolute rounded-3xl pointer-events-none"
+              style={{ width: 204, height: 204 }}
+              animate={{ boxShadow: ['0 0 30px rgba(34,197,94,0.25)', '0 0 70px rgba(34,197,94,0.55)', '0 0 30px rgba(34,197,94,0.25)'] }}
+              transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+
+          <motion.button
+            onClick={roll}
+            disabled={state !== 'idle'}
+            animate={state === 'rolling'
+              ? { rotateX: [0, 360, 720, 1080], rotateY: [0, 270, 540, 810] }
+              : {}}
+            transition={state === 'rolling' ? { duration: 1.8, ease: 'easeOut' } : {}}
+            whileTap={state === 'idle' ? { scale: 0.92 } : {}}
+            className="w-48 h-48 rounded-3xl bg-white flex items-center justify-center cursor-pointer select-none"
+            style={{
+              transformStyle: 'preserve-3d',
+              boxShadow: state === 'rolling'
+                ? '0 24px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 40px rgba(34,197,94,0.4)'
+                : '0 16px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 20px rgba(34,197,94,0.15)',
+            }}
+          >
+            <div className="w-32 h-32">
+              <DiceFaceSVG value={displayValue} />
+            </div>
+          </motion.button>
+        </div>
+
+        {/* Roll result announcement */}
+        <AnimatePresence>
+          {state === 'announcing' && finalValue !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <p className="text-5xl font-black text-white mb-1">{finalValue}</p>
+              <p className="text-base font-bold" style={{ color: OUTCOMES[finalValue] ? '#22C55E' : 'rgba(255,255,255,0.4)' }}>
+                {OUTCOMES[finalValue] ? `${OUTCOMES[finalValue]}! 🎉` : 'Not this time…'}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {state === 'idle' && (
+          <p className="text-xs text-white/25 text-center">Tap the dice to roll</p>
+        )}
       </div>
 
-      {/* Prize chart */}
+      {/* Per-face prize chart */}
       <div className="w-full rounded-2xl p-4 z-10"
         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
-        <p className="text-xs text-white/40 font-semibold mb-3 text-center uppercase tracking-wide">Prize Chart</p>
+        <p className="text-xs text-white/40 font-semibold mb-3 text-center uppercase tracking-wide">What each face wins</p>
         <div className="grid grid-cols-3 gap-2">
-          {[
-            { faces: [1, 2, 5], label: 'No win', isWin: false },
-            { faces: [3, 4],    label: '3 & 4 Win!', isWin: true },
-            { faces: [6],       label: '6 Wins!',  isWin: true },
-          ].map((group, gi) => (
-            <div key={gi}
-              className="rounded-xl p-3 text-center"
-              style={{ background: group.isWin ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
-                       border: group.isWin ? '1px solid rgba(34,197,94,0.3)' : '1px solid transparent' }}>
-              <div className="flex gap-1 justify-center mb-2 flex-wrap">
-                {group.faces.map(n => (
-                  <div key={n} className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
-                    <div className="w-6 h-6"><DiceFaceSVG value={n} /></div>
-                  </div>
-                ))}
+          {[1, 2, 3, 4, 5, 6].map(n => {
+            const reward = OUTCOMES[n]
+            return (
+              <div key={n}
+                className="rounded-xl p-2.5 flex flex-col items-center gap-1.5"
+                style={{
+                  background: reward ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
+                  border: reward ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                }}>
+                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                  <div className="w-6 h-6"><DiceFaceSVG value={n} /></div>
+                </div>
+                <p className="text-[9px] font-bold text-center leading-tight"
+                  style={{ color: reward ? '#22C55E' : 'rgba(255,255,255,0.25)' }}>
+                  {reward ? reward.split(' ')[0] : 'No win'}
+                </p>
               </div>
-              <p className="text-[9px] font-bold leading-tight"
-                style={{ color: group.isWin ? '#22C55E' : 'rgba(255,255,255,0.3)' }}>
-                {group.label}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
-
-      {/* CTA */}
-      <motion.button
-        whileTap={{ scale: 0.94 }}
-        onClick={roll}
-        disabled={state === 'rolling'}
-        className="w-full py-5 rounded-2xl text-xl font-extrabold transition-all disabled:opacity-50 z-10"
-        style={{
-          background: state === 'rolling' ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #22C55E, #16A34A)',
-          color: state === 'rolling' ? 'white' : '#071A0D',
-          boxShadow: state !== 'rolling' ? '0 8px 32px rgba(34,197,94,0.4)' : 'none',
-        }}
-        animate={state === 'idle'
-          ? { boxShadow: ['0 8px 32px rgba(34,197,94,0.3)', '0 8px 52px rgba(34,197,94,0.6)', '0 8px 32px rgba(34,197,94,0.3)'] }
-          : {}}
-        transition={{ duration: 1.8, repeat: state === 'idle' ? Infinity : 0, ease: 'easeInOut' }}
-      >
-        {state === 'rolling' ? '🎲 Rolling…' : '🎲 Roll the Dice'}
-      </motion.button>
     </div>
   )
 }

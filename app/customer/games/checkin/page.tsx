@@ -1,144 +1,223 @@
 'use client'
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import { WinCelebration } from '@/components/customer/win-celebration'
-import { campaigns } from '@/lib/mock-data'
 
 const POINTS_PER_CHECKIN = 100
-const MAX_CHECKINS_PER_DAY = 1
+const INITIAL_STREAK     = 5
+const INITIAL_POINTS     = 500
+const BUSINESS_NAME      = 'Amber Cafe'
+const BUSINESS_EMOJI     = '☕'
+const ACTIVE_TODAY       = 67
 
-type State = 'idle' | 'checking' | 'won'
+type State = 'idle' | 'checking' | 'confirmed'
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning!'
+  if (h < 17) return 'Good afternoon!'
+  return 'Good evening!'
+}
 
 function CheckInInner() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const campaignId = searchParams.get('campaign')
-  const campaign = campaigns.find(c => c.id === campaignId)
-  const config = campaign?.config as any
-  const color = '#1F2937'
-
-  const [state, setState] = useState<State>('idle')
-  const [checkInCount, setCheckInCount] = useState(0)
-  const [streak] = useState((config as any)?.currentStreak ?? 5)
-  const [totalPoints] = useState((config as any)?.totalPoints ?? 500)
+  const [state, setState]       = useState<State>('idle')
+  const [streak, setStreak]     = useState(INITIAL_STREAK)
+  const [points, setPoints]     = useState(INITIAL_POINTS)
 
   const handleCheckIn = () => {
-    if (state === 'checking') return
+    if (state !== 'idle') return
     setState('checking')
-    setTimeout(() => setState('won'), 800)
+    setTimeout(() => {
+      setStreak(s => s + 1)
+      setPoints(p => p + POINTS_PER_CHECKIN)
+      setState('confirmed')
+    }, 900)
   }
 
-  if (state === 'won') {
-    return (
-      <WinCelebration
-        reward={`+${POINTS_PER_CHECKIN} Points`}
-        emoji="📍"
-        hidePlayAgain
-        onClose={() => {
-          setCheckInCount(c => c + 1)
-          setState('idle')
-        }}
-      />
-    )
-  }
+  const today = new Date('2026-06-15').toLocaleDateString('en-IN', {
+    weekday: 'short', day: 'numeric', month: 'short',
+  })
 
   return (
     <div
-      className="min-h-screen flex flex-col px-5 pt-12 pb-8 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1F2937 0%, #111827 40%, #0F172A 100%)' }}
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #92400E 0%, #B45309 35%, #D97706 65%, #F59E0B 100%)' }}
     >
       {/* Ambient glow */}
-      <div
-        className="absolute top-20 -left-20 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(31,41,55,0.3) 0%, transparent 70%)', filter: 'blur(60px)' }}
-      />
+      <div className="absolute top-0 left-0 right-0 h-64 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 100%)' }} />
 
-      {/* Campaign Details Card — At Top */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full px-5 mb-8 p-4 rounded-2xl relative z-10"
-        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(31,41,55,0.5)' }}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="text-xl font-bold text-white">📍 Daily Check-in</h2>
-            <p className="text-xs text-white/60 mt-1">Earn 100 points each day</p>
-          </div>
-          <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: '#10B981', color: '#fff' }}>
-            LIVE
-          </span>
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-xs">
-          <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">Today</p>
-            <p className="text-white font-bold text-sm">+{POINTS_PER_CHECKIN} pts</p>
-          </div>
-          <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">🔥 Streak</p>
-            <p className="text-white font-bold text-sm">{streak} days</p>
-          </div>
-          <div>
-            <p className="text-white/40 mb-1 uppercase tracking-wide text-[10px]">⭐ Total</p>
-            <p className="text-white font-bold text-sm">{totalPoints + checkInCount * POINTS_PER_CHECKIN} pts</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Back */}
+      {/* Back button */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-white/50 text-sm hover:text-white/70 transition-colors mb-6 self-start relative z-10 px-5"
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center z-20"
       >
-        <ArrowLeft size={16} /> Back
+        <ArrowLeft className="w-4 h-4 text-white" />
       </button>
 
-      {/* Title */}
-      <div className="text-center z-10 mb-8">
-        <h1 className="text-xl font-extrabold text-white">Check In Today!</h1>
-        <p className="text-sm text-white/45 mt-1">Tap below to check in and earn {POINTS_PER_CHECKIN} points</p>
-      </div>
+      {/* Date */}
+      <p className="absolute top-14 right-4 text-[11px] font-semibold text-white/60 z-20">{today}</p>
 
-      {/* Check-in Card */}
-      <div className="flex-1 flex items-center justify-center z-10 px-5 mb-8">
-        <motion.button
-          onClick={handleCheckIn}
-          disabled={state === 'checking'}
-          whileHover={state === 'idle' ? { scale: 1.05 } : {}}
-          whileTap={state === 'idle' ? { scale: 0.98 } : {}}
-          animate={
-            state === 'checking'
-              ? {
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+
+        <AnimatePresence mode="wait">
+          {state !== 'confirmed' ? (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full flex flex-col items-center"
+            >
+              {/* Greeting */}
+              <p className="text-white/70 text-base font-semibold mb-1">{getGreeting()}</p>
+
+              {/* Business name */}
+              <h1 className="text-3xl font-extrabold text-white mb-6 text-center drop-shadow-lg">
+                {BUSINESS_NAME} {BUSINESS_EMOJI}
+              </h1>
+
+              {/* Streak */}
+              <div className="flex flex-col items-center mb-10">
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-7xl font-black text-white leading-none drop-shadow-xl"
+                >
+                  {streak}
+                </motion.div>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-xl">🔥</span>
+                  <span className="text-sm font-bold text-white/80">day streak</span>
+                </div>
+                <p className="text-xs text-white/50 mt-1">Keep it going — don't break it!</p>
+              </div>
+
+              {/* Check-in stamp button */}
+              <motion.button
+                onClick={handleCheckIn}
+                disabled={state === 'checking'}
+                whileTap={{ scale: 0.94 }}
+                className="relative w-36 h-36 rounded-full flex items-center justify-center mb-8 select-none"
+                style={{
+                  background: 'rgba(0,0,0,0.25)',
+                  border: '3px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
+                }}
+                animate={state === 'idle' ? {
                   boxShadow: [
-                    '0 0 0 0 rgba(16, 185, 129, 0.4)',
-                    '0 0 0 40px rgba(16, 185, 129, 0)',
+                    '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
+                    '0 0 0 16px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.3)',
+                    '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
                   ],
-                }
-              : {}
-          }
-          transition={{ duration: 0.6 }}
-          className="w-48 h-48 rounded-3xl flex flex-col items-center justify-center text-6xl font-black transition-all cursor-pointer relative"
-          style={{
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            boxShadow: '0 20px 60px rgba(16, 185, 129, 0.3)',
-          }}
-        >
-          {state === 'checking' ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-              ✓
+                } : {}}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                {state === 'checking' ? (
+                  <motion.span
+                    className="text-5xl"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                  >
+                    ✓
+                  </motion.span>
+                ) : (
+                  <span className="text-6xl">{BUSINESS_EMOJI}</span>
+                )}
+              </motion.button>
+
+              {/* Points + social */}
+              <p className="text-sm font-semibold text-white/70 mb-1">
+                Tap to earn <span className="text-white font-bold">+{POINTS_PER_CHECKIN} pts</span>
+              </p>
+              <p className="text-xs text-white/40">{ACTIVE_TODAY} others checked in today</p>
             </motion.div>
           ) : (
-            '📍'
-          )}
-        </motion.button>
-      </div>
+            /* Confirmed state */
+            <motion.div
+              key="confirmed"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+              className="w-full flex flex-col items-center"
+            >
+              {/* Big checkmark */}
+              <motion.div
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 16, delay: 0.1 }}
+                className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+                style={{ background: 'rgba(255,255,255,0.25)', border: '3px solid rgba(255,255,255,0.6)' }}
+              >
+                <span className="text-5xl">✓</span>
+              </motion.div>
 
-      {/* Instructions */}
-      <div className="text-center z-10 text-xs text-white/40 px-5">
-        <p>You can check in once per day</p>
-        <p className="mt-1">Come back tomorrow for more points!</p>
+              <p className="text-white/70 text-sm font-semibold mb-1">Checked in at</p>
+              <h2 className="text-2xl font-extrabold text-white mb-6">{BUSINESS_NAME} {BUSINESS_EMOJI}</h2>
+
+              {/* Updated streak */}
+              <div className="flex flex-col items-center mb-6">
+                <motion.div
+                  initial={{ scale: 0.5 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.2 }}
+                  className="text-7xl font-black text-white leading-none"
+                >
+                  {streak}
+                </motion.div>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-xl">🔥</span>
+                  <span className="text-sm font-bold text-white/80">day streak!</span>
+                </div>
+              </div>
+
+              {/* Points earned */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="flex items-center gap-3 rounded-2xl px-6 py-3 mb-4"
+                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.2)' }}
+              >
+                <div className="text-center">
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Earned today</p>
+                  <p className="text-xl font-black text-white">+{POINTS_PER_CHECKIN} pts</p>
+                </div>
+                <div className="w-px h-8 bg-white/20" />
+                <div className="text-center">
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Total</p>
+                  <p className="text-xl font-black text-white">⭐ {points}</p>
+                </div>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-sm text-white/60 mb-8 text-center"
+              >
+                See you tomorrow for Day {streak + 1}! 🌟
+              </motion.p>
+
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.55 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => router.back()}
+                className="w-full py-4 rounded-2xl font-bold text-sm"
+                style={{ background: 'rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)', color: 'white' }}
+              >
+                ← Back to {BUSINESS_NAME}
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
@@ -146,7 +225,7 @@ function CheckInInner() {
 
 export default function CheckInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-900" />}>
+    <Suspense fallback={<div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #92400E, #F59E0B)' }} />}>
       <CheckInInner />
     </Suspense>
   )
