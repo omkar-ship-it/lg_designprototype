@@ -141,7 +141,6 @@ export default function DicePage() {
             </div>
           </div>
         </motion.div>
-      </motion.div>
 
       {/* Back */}
       <button onClick={() => router.back()}
