@@ -253,6 +253,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       style={{ background: meta.badgeBg, color: meta.badgeText }}>
                       {meta.label}
                     </span>
+                    <span
+                      className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                      style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                    >
+                      {STATUS_STYLES[m.status]?.label}
+                    </span>
                     <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
                       {meta.emoji}
                     </div>
@@ -264,27 +270,17 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     <p className="text-xs text-gray-500 mb-3 leading-relaxed">{m.description}</p>
 
                     {/* Campaign details */}
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      {/* Status */}
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
-                        >
-                          {STATUS_STYLES[m.status]?.label}
-                        </span>
-                      </div>
-                      {/* Duration */}
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <div className="flex items-center gap-1 text-[10px] text-gray-500">
                         <CalendarDays className="w-3 h-3 shrink-0 text-gray-400" />
                         <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
                       </div>
-                      {/* Participants */}
+                      <span className="text-gray-200">|</span>
                       <div className="flex items-center gap-1 text-[10px] text-gray-500">
                         <Users className="w-3 h-3 shrink-0 text-gray-400" />
                         <span>{m.participants.toLocaleString()} participants</span>
                       </div>
-                      {/* Total rewards */}
+                      <span className="text-gray-200">|</span>
                       <div className="flex items-center gap-1 text-[10px] text-gray-500">
                         <Gift className="w-3 h-3 shrink-0 text-gray-400" />
                         <span>{m.totalRewards.toLocaleString()} rewards</span>
