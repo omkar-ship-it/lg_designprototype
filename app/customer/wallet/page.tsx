@@ -355,27 +355,53 @@ function HistoryCard({ reward, index }: { reward: CustomerReward; index: number 
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 260, damping: 22, delay: index * 0.06 }}
     >
-      <div className="flex gap-3 p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm items-center">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
-          style={{ background: `linear-gradient(135deg, ${bgFrom}, ${bgTo})` }}>
-          {reward.businessEmoji ?? meta.emoji}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full"
-              style={{ background: meta.badgeBg, color: meta.badgeText }}>
-              {meta.label}
-            </span>
-            <span className="text-[9px] text-gray-400 truncate">{reward.businessName}</span>
+      <div className="rounded-3xl overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.09)' }}>
+        {/* Gradient header — same as active redeemed state */}
+        <div
+          className="relative px-4 pt-4 pb-4 overflow-hidden"
+          style={{ background: `linear-gradient(145deg, ${bgFrom}, ${bgTo})` }}
+        >
+          <div className="absolute inset-0 opacity-[0.06]"
+            style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+
+          {/* Top row */}
+          <div className="relative flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0 pr-2">
+              <p className="text-white/55 text-[10px] font-semibold uppercase tracking-widest truncate">
+                {reward.businessName ?? reward.campaignName}
+              </p>
+              <p className="text-white/50 text-[10px] mt-0.5 truncate">{reward.campaignName}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.28)', color: 'rgba(255,255,255,0.85)' }}>
+                {meta.label}
+              </span>
+              <span className="text-lg leading-none">{reward.businessEmoji ?? meta.emoji}</span>
+            </div>
           </div>
-          <p className="text-[13px] font-extrabold text-gray-900 truncate">{reward.reward}</p>
+
+          {/* Reward text */}
+          <p className="relative text-white text-lg font-extrabold leading-tight mb-3">{reward.reward}</p>
+
+          {/* Redeemed row */}
+          <div className="relative flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center shrink-0">
+              <span className="text-white font-black text-xs">✓</span>
+            </div>
+            <div>
+              <p className="text-green-300 text-xs font-extrabold">Redeemed</p>
+              <p className="text-green-400/60 text-[10px]">
+                {reward.redeemedAt ? fmtDateTime(reward.redeemedAt) : ''}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full block mb-1">
-            Redeemed ✓
-          </span>
-          <p className="text-[9px] text-gray-400">
-            {reward.redeemedAt ? timeAgo(reward.redeemedAt) : ''}
+
+        {/* Footer */}
+        <div className="bg-green-50 px-4 py-2">
+          <p className="text-[10px] text-green-600 font-medium">
+            Thanks for visiting {reward.businessName ?? 'the business'}! 🎉
           </p>
         </div>
       </div>
