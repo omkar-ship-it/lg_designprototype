@@ -47,40 +47,44 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-white pb-24">
 
       {/* ── Cover ─────────────────────────────────────────────── */}
-      <div className="relative h-[260px]" style={{ background: `linear-gradient(135deg, ${biz.coverFrom}, ${biz.coverTo})` }}>
+      <div className="relative h-[300px] overflow-hidden">
 
-        {/* Dot pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.08]"
-          style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }}
+        {/* Real photo */}
+        <img
+          src={biz.coverImage}
+          alt={biz.name}
+          className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Floating emoji */}
-        <motion.span
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[100px] opacity-20 select-none pointer-events-none"
-          animate={{ y: [0, -12, 0], rotate: [0, 3, -3, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          {biz.coverEmoji}
-        </motion.span>
+        {/* Brand gradient overlay — light at top, darker brand colour at bottom */}
+        <div
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.12) 0%, ${biz.coverFrom}CC 55%, ${biz.coverTo}F0 100%)` }}
+        />
 
         {/* Back */}
         <button
           onClick={() => router.back()}
-          className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center z-10"
+          className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center z-10"
         >
           <ArrowLeft className="w-4 h-4 text-white" />
         </button>
 
-        {/* Mechanic pills — bottom-left */}
-        <div className="absolute bottom-10 left-4 flex flex-wrap gap-1.5 z-10">
+        {/* Business name over photo */}
+        <div className="absolute bottom-14 left-4 right-4 z-10">
+          <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">{biz.category}</p>
+          <h2 className="text-white text-2xl font-extrabold drop-shadow-lg leading-tight">{biz.name}</h2>
+        </div>
+
+        {/* Mechanic pills */}
+        <div className="absolute bottom-5 left-4 flex flex-wrap gap-1.5 z-10">
           {biz.mechanics.map(m => {
             const meta = MECHANIC_META[m.type]
             return (
               <span
                 key={m.type}
-                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm"
-                style={{ background: 'rgba(0,0,0,0.40)', color: 'rgba(255,255,255,0.9)' }}
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.45)', color: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)' }}
               >
                 {meta.label}
               </span>
@@ -88,31 +92,32 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
           })}
         </div>
 
-        {/* White scallop edge — transitions cover into body */}
+        {/* Rating top-right */}
+        <div className="absolute top-12 right-4 bg-black/40 backdrop-blur-md rounded-full px-2.5 py-1 flex items-center gap-1 z-10">
+          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+          <span className="text-xs font-bold text-white">{biz.rating.toFixed(1)}</span>
+        </div>
+
+        {/* White scallop into body */}
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-white rounded-t-[2rem] z-10" />
       </div>
 
       {/* ── Body ──────────────────────────────────────────────── */}
       <div className="px-5 pt-3">
 
-        {/* Name + distance + category */}
+        {/* Category badge + distance */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between gap-2 mb-1"
+          className="flex items-center justify-between gap-2 mb-1"
         >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h1 className="text-xl font-extrabold text-gray-900">{biz.name}</h1>
-              <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                style={{ background: catColor.bg, color: catColor.text }}
-              >
-                {biz.category}
-              </span>
-            </div>
-          </div>
-          <span className="text-sm text-gray-400 shrink-0 mt-1">{biz.distance}</span>
+          <span
+            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+            style={{ background: catColor.bg, color: catColor.text }}
+          >
+            {biz.category}
+          </span>
+          <span className="text-sm text-gray-400 font-medium">{biz.distance}</span>
         </motion.div>
 
         {/* Location row */}

@@ -163,6 +163,7 @@ export interface CustomerBusiness {
   location: string
   phone: string
   openUntil: string
+  coverImage: string
   coverFrom: string
   coverTo: string
   coverEmoji: string
