@@ -15,7 +15,7 @@ export function BottomNav() {
   const path = usePathname()
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm z-50">
-      <div className="px-5 pb-5 pt-1">
+      <div className="px-5 pb-5 pt-6">
         <div
           className="flex justify-around rounded-2xl py-3 px-2"
           style={{
@@ -40,7 +40,7 @@ export function BottomNav() {
                         layoutId="nav-pill"
                         className="absolute left-1/2 w-14 h-14 rounded-full flex items-center justify-center"
                         style={{
-                          top: '-44px',
+                          top: '-32px',
                           transform: 'translateX(-50%)',
                           background: 'linear-gradient(145deg, #8B5CF6, #6D28D9)',
                           boxShadow: '0 8px 28px rgba(109,40,217,0.55), 0 2px 8px rgba(0,0,0,0.12)',
