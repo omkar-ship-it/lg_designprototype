@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
@@ -15,6 +15,15 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
 }
+
+const MECHANIC_ICONS = {
+  stamp:   Gift,
+  shake:   Smartphone,
+  checkin: Target,
+  spin:    Sparkles,
+  dice:    Dices,
+  lottery: Ticket,
+} as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: '#D1FAE5', text: '#065F46', label: 'Active'  },
@@ -139,95 +148,131 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Stamp card layout */}
         {mechanic.type === 'stamp' && mechanic.stampsCollected !== undefined && mechanic.totalStamps ? (
-          <div className="mb-6">
-            {/* Physical card */}
-            <div
-              className="rounded-3xl overflow-hidden mb-4"
-              style={{ boxShadow: `0 16px 48px ${meta.cardFrom}33, 0 0 0 1px ${meta.cardFrom}30` }}
-            >
-              {/* Card header */}
-              <div
-                className="relative px-5 py-4 overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-              >
-                <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">
-                  {meta.emoji}
-                </span>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-[9px] font-black text-black/40 uppercase tracking-[0.2em] mb-0.5">Loyalty Card</p>
-                    <p className="text-lg font-extrabold text-black/70">{biz.name}</p>
+          (() => {
+            const collected   = mechanic.stampsCollected!
+            const total       = mechanic.totalStamps
+            const rewardPos   = [4, 6, 8, 10]
+            const pct         = Math.round((collected / total) * 100)
+            const stampHistory = [
+              { n: collected,     date: 'Today',   item: 'Latte at ' + biz.name },
+              { n: collected - 2, date: '16th Jun', item: 'Cappuccino' },
+            ].filter(h => h.n > 0)
+
+            return (
+              <div className="mb-6">
+                {/* Loyalty card */}
+                <div
+                  className="rounded-3xl overflow-hidden mb-4"
+                  style={{ boxShadow: '0 16px 48px rgba(91,33,182,0.2), 0 0 0 1px rgba(109,40,217,0.2)' }}
+                >
+                  {/* Purple header */}
+                  <div
+                    className="relative px-5 py-4 overflow-hidden"
+                    style={{ background: 'linear-gradient(135deg, #6D28D9, #4C1D95)' }}
+                  >
+                    <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">🎁</span>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-0.5">Loyalty Card</p>
+                        <p className="text-lg font-extrabold text-white/90">{biz.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-white/40 font-bold uppercase tracking-wide mb-0.5">Stamps</p>
+                        <p className="text-4xl font-black text-white leading-none">
+                          {collected}
+                          <span className="text-base font-semibold text-white/40">/{total}</span>
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[9px] text-black/35 font-bold uppercase tracking-wide mb-0.5">Stamps</p>
-                    <p className="text-4xl font-black text-black/65 leading-none">
-                      {mechanic.stampsCollected}
-                      <span className="text-base font-semibold text-black/30">/{mechanic.totalStamps}</span>
+
+                  <div className="h-0" style={{ borderTop: '2px dashed rgba(109,40,217,0.25)' }} />
+
+                  {/* Stamp grid */}
+                  <div className="bg-white px-5 pt-5 pb-4">
+                    <div className="grid grid-cols-5 gap-2.5 mb-3">
+                      {Array.from({ length: total }, (_, i) => {
+                        const n         = i + 1
+                        const isFilled  = n <= collected
+                        const isReward  = rewardPos.includes(n)
+                        const isFinal   = n === total
+                        const isLatest  = n === collected
+                        return (
+                          <div key={n} className="flex flex-col items-center relative">
+                            <div className="relative w-12 h-12 mb-1">
+                              {isLatest && isFilled && (
+                                <motion.div
+                                  className="absolute inset-0 rounded-full pointer-events-none"
+                                  style={{ boxShadow: '0 0 0 3px rgba(109,40,217,0.5), 0 0 0 6px rgba(109,40,217,0.15)' }}
+                                  animate={{ opacity: [0.6, 1, 0.6] }}
+                                  transition={{ duration: 2, repeat: Infinity }}
+                                />
+                              )}
+                              {isFilled ? (
+                                <div
+                                  className="absolute inset-0 rounded-full flex items-center justify-center text-lg"
+                                  style={
+                                    isFinal
+                                      ? { background: 'linear-gradient(145deg, #F59E0B, #D97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.5)' }
+                                      : isReward
+                                        ? { background: 'linear-gradient(145deg, #7C3AED, #5B21B6)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }
+                                        : { background: 'linear-gradient(145deg, #6B7280, #4B5563)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+                                  }
+                                >
+                                  {isFinal ? '🏆' : isReward ? '🎁' : '✓'}
+                                </div>
+                              ) : (
+                                <div className="absolute inset-0 rounded-full flex items-center justify-center" style={{ background: '#E5E7EB' }}>
+                                  <span className="text-[13px] font-bold text-gray-400 select-none">{n}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <p className="text-[11px] text-center text-gray-500 mb-1">
+                      <span className="font-bold text-purple-700">{collected}</span> collected · {total - collected} more surprises await 🎁
                     </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Perforated line */}
-              <div className="h-0" style={{ borderTop: `2px dashed ${meta.cardFrom}55` }} />
-
-              {/* Stamp grid */}
-              <div className="bg-white px-5 pt-5 pb-4">
-                <div className="grid grid-cols-5 gap-2.5 mb-4">
-                  {Array.from({ length: mechanic.totalStamps }, (_, i) => {
-                    const n          = i + 1
-                    const isFilled   = n <= mechanic.stampsCollected!
-                    const isFinalPos = n === mechanic.totalStamps
-                    return (
-                      <div key={n} className="flex flex-col items-center relative">
-                        <div className="relative w-12 h-12 mb-1">
-                          {isFilled ? (
-                            <div
-                              className="absolute inset-0 rounded-full flex items-center justify-center text-xl"
-                              style={{
-                                background: isFinalPos
-                                  ? `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})`
-                                  : `linear-gradient(145deg, ${meta.cardFrom}CC, ${meta.cardTo})`,
-                                boxShadow: `0 4px 14px ${meta.cardFrom}55`,
-                              }}
-                            >
-                              {isFinalPos ? '🏆' : meta.emoji}
-                            </div>
-                          ) : (
-                            <div
-                              className="absolute inset-0 rounded-full flex items-center justify-center"
-                              style={{ background: '#E5E7EB' }}
-                            >
-                              <span className="text-[11px] font-bold text-gray-400 select-none">?</span>
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-600">{n}</span>
-                      </div>
-                    )
-                  })}
+                {/* Progress bar */}
+                <div className="flex items-center gap-3 mb-4">
+                  <p className="text-xs font-semibold text-gray-500 shrink-0">Progress</p>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: 'linear-gradient(90deg, #7C3AED, #5B21B6)' }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                    />
+                  </div>
+                  <p className="text-xs font-bold text-purple-700 shrink-0">{pct}% complete</p>
                 </div>
 
-                {/* Stamp count row */}
-                <p className="text-xs text-gray-400 text-center">
-                  <span className="font-bold" style={{ color: meta.cardFrom }}>{mechanic.stampsCollected}</span> collected · {mechanic.totalStamps - mechanic.stampsCollected!} more surprises await
-                </p>
+                {/* Activity log */}
+                <div className="space-y-3 mb-4">
+                  {stampHistory.map((h, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
+                        style={{ background: 'linear-gradient(145deg, #7C3AED, #5B21B6)' }}
+                      >
+                        ✓
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-800">Stamp #{h.n} earned</p>
+                        <p className="text-[11px] text-gray-400">{h.date} · {h.item}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Compact stats row */}
-            <div className="flex items-center gap-3 text-[11px] text-gray-400 mb-4">
-              <div className="flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span>{fmtDate(mechanic.startDate)} – {fmtDate(mechanic.endDate)}</span>
-              </div>
-              <span className="text-gray-200">|</span>
-              <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                <span>{mechanic.participants.toLocaleString()} players</span>
-              </div>
-            </div>
-          </div>
+            )
+          })()
         ) : (
           <>
             {/* Prizes — spin / dice / shake */}
@@ -356,14 +401,17 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 320, damping: 22, delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg"
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
                     style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                   >
-                    {meta.emoji}
+                    {(() => {
+                      const Icon = MECHANIC_ICONS[mechanic.type as keyof typeof MECHANIC_ICONS]
+                      return <Icon className="w-7 h-7 text-white" strokeWidth={1.8} />
+                    })()}
                   </motion.div>
                   <h3 className="text-lg font-extrabold text-white mb-1">{mechanic.label}</h3>
                   <p className="text-sm text-white/40 leading-snug">
-                    Enter the 3-digit code<br />from the staff to participate
+                    Enter the 3-digit code<br />from the Staff to Participate
                   </p>
                 </div>
 
@@ -401,7 +449,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     boxShadow: codeComplete ? `0 8px 28px ${meta.cardFrom}55` : 'none',
                   }}
                 >
-                  {codeComplete ? `Join ${mechanic.label} →` : 'Enter code above'}
+                  {codeComplete ? 'Verify' : 'Enter 3 Digit Pin'}
                 </motion.button>
 
                 <button
@@ -410,6 +458,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 >
                   Cancel
                 </button>
+
+                <p className="text-center text-[11px] text-white/20 mt-3">PIN Expires in 2 mins</p>
               </div>
             </motion.div>
           </>

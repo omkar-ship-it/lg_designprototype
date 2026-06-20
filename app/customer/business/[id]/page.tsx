@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Users, Gift, Flame, Ticket } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -17,6 +17,15 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
 }
+
+const MECHANIC_ICONS = {
+  stamp:   Gift,
+  shake:   Smartphone,
+  checkin: Target,
+  spin:    Sparkles,
+  dice:    Dices,
+  lottery: Ticket,
+} as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: '#D1FAE5', text: '#065F46', label: 'Active'  },
@@ -96,11 +105,11 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-white pb-24">
 
       {/* ── Cover ───────────────────────────────────────────────── */}
-      <div className="relative h-[300px] overflow-hidden">
+      <div className="relative h-[280px] overflow-hidden">
         <img src={biz.coverImage} alt={biz.name} className="absolute inset-0 w-full h-full object-cover" />
         <div
           className="absolute inset-0"
-          style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.12) 0%, ${biz.coverFrom}CC 55%, ${biz.coverTo}F0 100%)` }}
+          style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.18) 0%, transparent 40%, rgba(0,0,0,0.15) 100%)' }}
         />
 
         {/* Back */}
@@ -117,23 +126,11 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
           <span className="text-xs font-bold text-white">{biz.rating.toFixed(1)}</span>
         </div>
 
-        {/* Business name */}
-        <div className="absolute bottom-14 left-4 right-4 z-10">
-          <p className="text-white/65 text-[10px] font-bold uppercase tracking-widest mb-1">{biz.category}</p>
-          <h2 className="text-white text-[22px] font-extrabold drop-shadow-lg leading-tight">{biz.name}</h2>
-        </div>
-
-        {/* Mechanic pills */}
-        <div className="absolute bottom-5 left-4 flex flex-wrap gap-1.5 z-10">
-          {biz.mechanics.map(m => (
-            <span
-              key={m.type}
-              className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-              style={{ background: 'rgba(0,0,0,0.45)', color: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)' }}
-            >
-              {MECHANIC_META[m.type].label}
-            </span>
-          ))}
+        {/* Carousel dots */}
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+          <div className="w-4 h-1.5 rounded-full bg-white" />
+          <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+          <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
         </div>
 
         {/* Scallop */}
@@ -141,32 +138,62 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* ── Body ────────────────────────────────────────────────── */}
-      <div className="px-5 pt-3">
+      <div className="px-5 pt-4">
 
-        {/* Category + distance */}
+        {/* Category pill */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between gap-2 mb-1"
+          className="mb-2"
         >
           <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: catColor.bg, color: catColor.text }}>
             {biz.category}
           </span>
-          <span className="text-sm text-gray-400 font-medium">{biz.distance}</span>
         </motion.div>
 
-        {/* Location */}
+        {/* Business name — hero in the white card */}
+        <motion.h1
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 }}
+          className="text-2xl font-black text-gray-900 leading-tight mb-3"
+        >
+          {biz.name}
+        </motion.h1>
+
+        {/* Mechanic filter pills — horizontal scroll */}
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}
-          className="flex items-center gap-2 mb-1.5 text-xs text-gray-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.06 }}
+          className="flex gap-2 overflow-x-auto mb-3 pb-1 -mx-5 px-5"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {biz.mechanics.map(m => (
+            <span
+              key={m.type}
+              className="flex-shrink-0 text-[10px] font-bold px-3 py-1 rounded-full border"
+              style={{ background: '#F8F4FF', color: '#6D28D9', borderColor: '#E9D5FF' }}
+            >
+              {MECHANIC_META[m.type].label.toUpperCase()}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Location + distance */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
+          className="flex items-center gap-2 mb-2 text-xs text-gray-500"
         >
           <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <span>{biz.location}</span>
+          <span className="text-gray-300">·</span>
+          <span className="font-medium text-gray-400">{biz.distance}</span>
         </motion.div>
 
         {/* Open + phone */}
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.07 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
           className="flex items-center gap-3 mb-3 text-xs"
         >
           <div className="flex items-center gap-1.5">
@@ -178,23 +205,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             <Phone className="w-3 h-3" />
             <span>{biz.phone}</span>
           </div>
-        </motion.div>
-
-        {/* Stars + Google Reviews */}
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.09 }}
-          className="flex items-center gap-2 mb-4"
-        >
-          <div className="flex items-center gap-0.5">
-            {[1,2,3,4,5].map(n => (
-              <Star key={n} className="w-3.5 h-3.5"
-                fill={n <= Math.round(biz.rating) ? '#FBBF24' : 'none'}
-                color={n <= Math.round(biz.rating) ? '#FBBF24' : '#D1D5DB'} />
-            ))}
-          </div>
-          <span className="text-sm font-bold text-gray-800">{biz.rating.toFixed(1)}</span>
-          <span className="text-xs text-gray-400">({biz.reviews})</span>
-          <a href="#" className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+          <a href="#" className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-blue-600">
             <span className="w-4 h-4 rounded-sm flex items-center justify-center text-white text-[9px] font-black"
               style={{ background: 'linear-gradient(135deg, #4285F4, #0F9D58)' }}>G</span>
             Google Reviews
@@ -204,8 +215,8 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Tagline */}
         <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.11 }}
-          className="text-sm text-gray-500 mb-6 leading-relaxed"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }}
+          className="text-sm text-gray-400 mb-6 leading-relaxed italic"
         >
           {biz.tagline}
         </motion.p>
@@ -428,14 +439,17 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 320, damping: 22, delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg"
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
                     style={{ background: `linear-gradient(135deg, ${activeMeta.cardFrom}, ${activeMeta.cardTo})` }}
                   >
-                    {activeMeta.emoji}
+                    {(() => {
+                      const Icon = MECHANIC_ICONS[activeCampaign.type]
+                      return <Icon className="w-7 h-7 text-white" strokeWidth={1.8} />
+                    })()}
                   </motion.div>
                   <h3 className="text-lg font-extrabold text-white mb-1">{activeCampaign.label}</h3>
                   <p className="text-sm text-white/40 leading-snug">
-                    Enter the 3-digit code<br />from the staff to participate
+                    Enter the 3-digit code<br />from the Staff to Participate
                   </p>
                 </div>
 
@@ -477,7 +491,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     boxShadow: codeComplete ? `0 8px 28px ${activeMeta.cardFrom}55` : 'none',
                   }}
                 >
-                  {codeComplete ? `Join ${activeCampaign.label} →` : 'Enter code above'}
+                  {codeComplete ? 'Verify' : 'Enter 3 Digit Pin'}
                 </motion.button>
 
                 <button
@@ -486,6 +500,8 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 >
                   Cancel
                 </button>
+
+                <p className="text-center text-[11px] text-white/20 mt-3">PIN Expires in 2 mins</p>
               </div>
             </motion.div>
           </>

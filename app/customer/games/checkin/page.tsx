@@ -43,13 +43,13 @@ function CheckInInner() {
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #92400E 0%, #B45309 35%, #D97706 65%, #F59E0B 100%)' }}
+      style={{ background: 'linear-gradient(145deg, #0F0520 0%, #1E0A5C 50%, #0D0B1E 100%)' }}
     >
-      {/* Ambient glow */}
+      {/* Ambient orbs */}
       <div className="absolute top-0 left-0 right-0 h-64 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)' }} />
-      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 100%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(109,40,217,0.25) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-0 -left-20 w-72 h-72 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(48px)' }} />
 
       {/* Back button */}
       <button
@@ -201,7 +201,7 @@ function CheckInInner() {
                 transition={{ delay: 0.5 }}
                 className="text-sm text-white/60 mb-8 text-center"
               >
-                See you tomorrow for Day {streak + 1}! 🌟
+                See you tomorrow for Day {streak + 1}! ⭐
               </motion.p>
 
               <motion.button

@@ -1,70 +1,168 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
 
-const MAX_PLAYS = 2
-const PRIZES    = ['Free Coffee ☕', 'Free Pastry 🥐', '₹50 Off 🏷️']
+const WIN_RATE    = 0.8
+const MAX_PLAYS   = 10
+const PLAYS_DONE  = 7
+const MIN_DELTA   = 5    // m/s² acceleration threshold
+const CHARGE_RATE = 2.4  // % per animation frame while shaking
+const DRAIN_RATE  = 1.5  // % per animation frame while still
 
-type State = 'idle' | 'revealing' | 'result'
+const PRIZES = ['Free Coffee ☕', 'Free Pastry 🥐', '₹50 Off 🏷️', 'Free Latte ☕']
 
-const SPARKLE_POS = [
-  { top: '12%', left: '8%' }, { top: '20%', right: '10%' },
-  { top: '45%', left: '4%' }, { top: '55%', right: '6%' },
-  { bottom: '28%', left: '9%' }, { bottom: '20%', right: '8%' },
-]
+type State = 'idle' | 'result'
 
-export default function ScratchCardPage() {
+// Inline shake phone SVG
+function ShakeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="7" y="2" width="10" height="20" rx="2.5" />
+      <path d="M2 7.5l2 2-2 2" />
+      <path d="M22 7.5l-2 2 2 2" />
+    </svg>
+  )
+}
+
+export default function ShakeWinPage() {
   const router = useRouter()
-  const [state, setState]         = useState<State>('idle')
+  const [gameState, setGameState] = useState<State>('idle')
   const [won, setWon]             = useState(false)
-  const [wonPrize, setWonPrize]   = useState('')
-  const [playsLeft, setPlaysLeft] = useState(MAX_PLAYS)
+  const [prize, setPrize]         = useState('')
+  const [charge, setCharge]       = useState(0)
+  const [isActive, setIsActive]   = useState(false)
+  const [needsPermission, setNeedsPermission] = useState(false)
 
-  const scratch = () => {
-    if (state !== 'idle' || playsLeft <= 0) return
-    const didWin = Math.random() < 0.65
-    const prize  = didWin ? PRIZES[Math.floor(Math.random() * PRIZES.length)] : ''
+  // Refs (survive re-renders without causing them)
+  const chargeRef       = useRef(0)
+  const firedRef        = useRef(false)
+  const isHoldingRef    = useRef(false)
+  const lastMotionAtRef = useRef(0)
+  const prevAccRef      = useRef({ x: 0, y: 0, z: 0 })
+  const rafRef          = useRef<number>(0)
+  const motionCleanup   = useRef<(() => void) | null>(null)
+
+  const triggerResult = useCallback(() => {
+    firedRef.current = true
+    const didWin = Math.random() < WIN_RATE
+    setPrize(didWin ? PRIZES[Math.floor(Math.random() * PRIZES.length)] : '')
     setWon(didWin)
-    setWonPrize(prize)
-    setPlaysLeft(p => p - 1)
-    setState('revealing')
-    setTimeout(() => setState('result'), 1800)
+    setCharge(100)
+    setTimeout(() => setGameState('result'), 500)
+  }, [])
+
+  // rAF charge loop
+  useEffect(() => {
+    let running = true
+
+    const loop = () => {
+      if (!running) return
+
+      if (!firedRef.current) {
+        const shaking = isHoldingRef.current || (Date.now() - lastMotionAtRef.current) < 160
+
+        chargeRef.current = shaking
+          ? Math.min(100, chargeRef.current + CHARGE_RATE)
+          : Math.max(0, chargeRef.current - DRAIN_RATE)
+
+        setCharge(Math.round(chargeRef.current))
+        setIsActive(shaking)
+
+        if (chargeRef.current >= 100) {
+          triggerResult()
+          return
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(loop)
+    }
+
+    rafRef.current = requestAnimationFrame(loop)
+    return () => {
+      running = false
+      cancelAnimationFrame(rafRef.current)
+    }
+  }, [triggerResult])
+
+  // Wire up DeviceMotion
+  function attachMotionListener() {
+    const handler = (e: DeviceMotionEvent) => {
+      const acc = e.accelerationIncludingGravity
+      if (!acc) return
+      const x = acc.x ?? 0, y = acc.y ?? 0, z = acc.z ?? 0
+      const delta = Math.abs(x - prevAccRef.current.x)
+                  + Math.abs(y - prevAccRef.current.y)
+                  + Math.abs(z - prevAccRef.current.z)
+      prevAccRef.current = { x, y, z }
+      if (delta > MIN_DELTA) lastMotionAtRef.current = Date.now()
+    }
+    window.addEventListener('devicemotion', handler)
+    motionCleanup.current = () => window.removeEventListener('devicemotion', handler)
   }
+
+  useEffect(() => {
+    // iOS 13+ requires explicit permission
+    if (
+      typeof DeviceMotionEvent !== 'undefined' &&
+      typeof (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission === 'function'
+    ) {
+      setNeedsPermission(true)
+      return
+    }
+    // Android / desktop: auto-granted
+    attachMotionListener()
+    return () => motionCleanup.current?.()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const requestPermission = async () => {
+    try {
+      const req = (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission
+      const result = await req?.()
+      if (result === 'granted') {
+        setNeedsPermission(false)
+        attachMotionListener()
+      }
+    } catch {
+      // denied — tap fallback still works
+      setNeedsPermission(false)
+    }
+  }
+
+  // Pointer hold (desktop / touch fallback)
+  const startHold = () => { isHoldingRef.current = true }
+  const stopHold  = () => { isHoldingRef.current = false }
 
   const handlePlayAgain = () => {
-    if (playsLeft <= 0) return
-    setState('idle')
+    chargeRef.current    = 0
+    firedRef.current     = false
+    isHoldingRef.current = false
+    lastMotionAtRef.current = 0
+    setCharge(0)
+    setIsActive(false)
     setWon(false)
-    setWonPrize('')
+    setPrize('')
+    setGameState('idle')
   }
 
-  if (state === 'result' && won)
-    return <WinCelebration reward={wonPrize} emoji="🃏" onClose={handlePlayAgain} hidePlayAgain={playsLeft <= 0} />
-  if (state === 'result' && !won)
-    return <NoWin onClose={handlePlayAgain} />
+  if (gameState === 'result' && won)  return <WinCelebration reward={prize} emoji="🎰" onClose={handlePlayAgain} />
+  if (gameState === 'result' && !won) return <NoWin onClose={handlePlayAgain} />
+
+  // Circumference of the SVG ring (r=47): 2π×47 ≈ 295.3
+  const CIRC = 295.3
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #0F172A 0%, #1E1B4B 50%, #0C0A1E 100%)' }}
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #0F0520 0%, #1A0845 50%, #0D0B1E 100%)' }}
     >
       {/* Ambient orbs */}
-      <div className="absolute top-16 -left-20 w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.28) 0%, transparent 70%)', filter: 'blur(48px)' }} />
-      <div className="absolute bottom-32 -right-20 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.22) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-
-      {/* Idle sparkles */}
-      {state === 'idle' && SPARKLE_POS.map((pos, i) => (
-        <motion.div key={i} className="absolute text-blue-300/30 text-xs pointer-events-none select-none" style={pos}
-          animate={{ opacity: [0.2, 0.7, 0.2], scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 2 + i * 0.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}>
-          ✦
-        </motion.div>
-      ))}
+      <div className="absolute top-16 -right-24 w-80 h-80 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.28) 0%, transparent 70%)', filter: 'blur(52px)' }} />
+      <div className="absolute bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%)', filter: 'blur(44px)' }} />
 
       {/* Back */}
       <button
@@ -73,144 +171,128 @@ export default function ScratchCardPage() {
       >
         <ArrowLeft className="w-4 h-4 text-white" />
       </button>
-      <p className="absolute top-14 right-4 text-[10px] text-white/30 z-20">
-        Scratch Card · {playsLeft} play{playsLeft !== 1 ? 's' : ''} left
-      </p>
 
-      {/* Title */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full z-10 gap-6">
-        <div className="text-center">
-          <h1 className="text-xl font-extrabold text-white">Scratch &amp; Win</h1>
-          <p className="text-sm text-white/45 mt-1">
-            {state === 'revealing' ? 'Revealing your reward…' : 'Tap the card to scratch and reveal'}
-          </p>
-        </div>
+      {/* Main */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
 
-        {/* Scratch Card */}
+        {/* Hero text */}
         <motion.div
-          onClick={scratch}
-          className="relative z-10 rounded-3xl overflow-hidden select-none w-full max-w-[320px]"
-          style={{
-            boxShadow: '0 28px 72px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08)',
-            cursor: state === 'idle' ? 'pointer' : 'default',
-          }}
-          whileTap={state === 'idle' ? { scale: 0.97 } : {}}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+          className="text-center mb-3"
         >
-          {/* Card header */}
-          <div style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-            <div className="absolute inset-0 opacity-[0.07]"
-              style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '18px 18px' }} />
-            <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-0.5 relative">Lucky Scratch</p>
-            <div className="flex items-center justify-between relative">
-              <p className="text-[18px] font-extrabold text-white">🃏 Scratch &amp; Win</p>
-              <div className="flex gap-1.5">
-                {PRIZES.slice(0, 2).map((p, i) => (
-                  <span key={i} className="text-[9px] font-semibold text-white/60 bg-white/10 px-1.5 py-0.5 rounded-full">
-                    {p.split(' ')[0]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
+          <p className="text-white/55 text-base font-medium">Shake Your Phone,</p>
+          <h1 className="text-[28px] font-black text-white tracking-tight leading-tight">WIN A REWARD</h1>
+        </motion.div>
 
-          {/* Scratch area */}
-          <div className="relative bg-white overflow-hidden" style={{ height: '240px' }}>
-            {/* Revealed content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6">
-              <AnimatePresence>
-                {state !== 'idle' && (
-                  <motion.div
-                    key="revealed"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 280, damping: 20, delay: 0.9 }}
-                    className="flex flex-col items-center gap-2 text-center"
-                  >
-                    <motion.span
-                      className="text-7xl"
-                      animate={{ rotate: [0, -12, 12, -6, 6, 0] }}
-                      transition={{ duration: 0.5, delay: 1.1 }}
-                    >
-                      {won ? wonPrize.split(' ').slice(-1)[0] : '😔'}
-                    </motion.span>
-                    <p className="text-base font-extrabold text-gray-800">
-                      {won ? wonPrize.split(' ').slice(0, -1).join(' ') : 'Not this time!'}
-                    </p>
-                    {won && <p className="text-xs text-gray-400 font-medium">Show this to the staff to redeem</p>}
-                    {!won && <p className="text-xs text-gray-400">Better luck on your next visit</p>}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+        {/* Entries */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="text-white/35 text-sm mb-10"
+        >
+          {PLAYS_DONE}/{MAX_PLAYS} Entries done
+        </motion.p>
 
-            {/* Metallic scratch overlay */}
-            <AnimatePresence>
-              {state === 'idle' && (
-                <motion.div
-                  key="overlay"
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden"
-                  style={{ background: 'linear-gradient(145deg, #C8C8C8 0%, #E4E4E4 25%, #B0B0B0 50%, #CECECE 75%, #BEBEBE 100%)' }}
-                  exit={{ y: '100%', transition: { duration: 0.65, ease: [0.4, 0, 0.2, 1] } }}
-                >
-                  {/* Metallic sheen */}
-                  <motion.div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.45) 50%, transparent 65%)' }}
-                    animate={{ x: ['-120%', '220%'] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 0.8 }}
-                  />
-                  <motion.span
-                    className="text-5xl z-10 select-none"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    🪙
-                  </motion.span>
-                  <div className="z-10 text-center">
-                    <p className="text-sm font-bold text-gray-500">Tap to Scratch</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Your reward is waiting</p>
-                  </div>
-                </motion.div>
-              )}
+        {/* Shake circle */}
+        <motion.div
+          onPointerDown={startHold}
+          onPointerUp={stopHold}
+          onPointerLeave={stopHold}
+          onPointerCancel={stopHold}
+          className="relative w-56 h-56 rounded-full flex items-center justify-center cursor-pointer select-none mb-8"
+          style={{
+            background: 'radial-gradient(circle at 40% 35%, rgba(109,40,217,0.55) 0%, rgba(29,10,90,0.92) 70%)',
+          }}
+          animate={isActive ? {
+            scale: [1, 1.04, 0.97, 1.03, 1],
+            boxShadow: [
+              '0 0 0 14px rgba(109,40,217,0.12), 0 0 0 28px rgba(109,40,217,0.06)',
+              '0 0 0 22px rgba(109,40,217,0.18), 0 0 0 44px rgba(109,40,217,0.08)',
+              '0 0 0 16px rgba(109,40,217,0.14), 0 0 0 32px rgba(109,40,217,0.07)',
+            ],
+          } : {
+            scale: [1, 1.02, 1],
+            boxShadow: [
+              '0 0 0 10px rgba(109,40,217,0.1), 0 0 0 20px rgba(109,40,217,0.05)',
+              '0 0 0 16px rgba(109,40,217,0.13), 0 0 0 32px rgba(109,40,217,0.06)',
+              '0 0 0 10px rgba(109,40,217,0.1), 0 0 0 20px rgba(109,40,217,0.05)',
+            ],
+          }}
+          transition={isActive
+            ? { duration: 0.28, repeat: Infinity, ease: 'easeInOut' }
+            : { duration: 2.6,  repeat: Infinity, ease: 'easeInOut' }
+          }
+        >
+          {/* Charge ring */}
+          {charge > 0 && (
+            <svg
+              className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
+              viewBox="0 0 100 100"
+            >
+              <circle
+                cx="50" cy="50" r="47"
+                fill="none"
+                stroke="rgba(167,139,250,0.55)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={`${(charge / 100) * CIRC} ${CIRC}`}
+              />
+            </svg>
+          )}
 
-              {state === 'revealing' && (
-                <motion.div
-                  key="shimmer"
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.95)' }}
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 0.6, repeat: 3, ease: 'linear' }}
-                    className="text-4xl"
-                  >
-                    ✨
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Shake icon */}
+          <motion.div
+            animate={isActive
+              ? { rotate: [-10, 10, -10, 10, 0], x: [-2, 2, -2, 2, 0] }
+              : { rotate: [0, 6, -6, 0] }
+            }
+            transition={isActive
+              ? { duration: 0.22, repeat: Infinity }
+              : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }
+            }
+          >
+            <ShakeIcon className="w-20 h-20 text-white" />
+          </motion.div>
+        </motion.div>
 
-          {/* Card footer */}
-          <div className="bg-white border-t border-gray-100 px-5 py-2.5 flex items-center justify-between">
-            <span className="font-mono text-[9px] text-gray-300 tracking-wider">LG-SCR-2026</span>
-            <span className="text-[9px] text-gray-300">{playsLeft} play{playsLeft !== 1 ? 's' : ''} remaining</span>
-          </div>
+        {/* iOS permission button */}
+        {needsPermission && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={requestPermission}
+            className="mb-5 px-6 py-2.5 rounded-2xl text-sm font-bold border"
+            style={{ color: '#A78BFA', borderColor: 'rgba(167,139,250,0.35)', background: 'rgba(109,40,217,0.15)' }}
+          >
+            Enable Shake Detection
+          </motion.button>
+        )}
+
+        {/* Win rate pill */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full mb-4"
+          style={{ background: 'rgba(180,83,9,0.3)', border: '1px solid rgba(217,119,6,0.3)' }}
+        >
+          <span>🎁</span>
+          <span className="text-sm font-bold" style={{ color: '#FCD34D' }}>
+            {Math.round(WIN_RATE * 100)}% Chances to win
+          </span>
         </motion.div>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-xs text-white/20 text-center z-10"
+          transition={{ delay: 0.3 }}
+          className="text-white/30 text-xs text-center"
         >
-          Each visit earns you {MAX_PLAYS > 1 ? `${MAX_PLAYS} scratches` : 'one scratch'} · Results are instant
+          {needsPermission
+            ? 'Tap above to enable motion, then shake!'
+            : 'Shake your phone or hold the circle to win'}
         </motion.p>
       </div>
     </div>

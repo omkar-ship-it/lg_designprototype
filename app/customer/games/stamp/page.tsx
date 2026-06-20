@@ -16,7 +16,130 @@ const REWARDS = {
   10: { reward: 'Free Breakfast Combo',  emoji: '🍳', type: 'grand'    },
 } as const
 
-type State = 'card' | 'surprise' | 'big-win'
+type State = 'card' | 'stamped' | 'surprise' | 'big-win'
+
+type Sparkle = { top?: string; right?: string; bottom?: string; left?: string; size: number; char: string; opacity: number }
+
+const SPARKLES: Sparkle[] = [
+  { top: '8%',  left:  '10%', size: 14, char: '✦', opacity: 0.4  },
+  { top: '14%', right: '10%', size: 10, char: '◆', opacity: 0.3  },
+  { top: '24%', left:  '6%',  size: 8,  char: '★', opacity: 0.25 },
+  { top: '35%', right: '6%',  size: 12, char: '✦', opacity: 0.35 },
+  { top: '52%', left:  '4%',  size: 9,  char: '◆', opacity: 0.3  },
+  { top: '65%', right: '8%',  size: 8,  char: '★', opacity: 0.25 },
+  { bottom: '30%', left: '10%', size: 11, char: '✦', opacity: 0.35 },
+  { bottom: '18%', right: '7%', size: 9,  char: '◆', opacity: 0.3  },
+  { top: '43%', left:  '3%',  size: 6,  char: '★', opacity: 0.2  },
+  { top: '48%', right: '4%',  size: 7,  char: '✦', opacity: 0.25 },
+]
+
+function ordinal(n: number) {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`
+}
+
+function SuccessfullyStamped({
+  stampNum, totalStamps, isRewardStamp, onContinue,
+}: {
+  stampNum: number
+  totalStamps: number
+  isRewardStamp: boolean
+  onContinue: () => void
+}) {
+  const remaining = totalStamps - stampNum
+
+  return (
+    <div
+      className="fixed inset-0 flex flex-col items-center justify-center"
+      style={{ background: 'linear-gradient(145deg, #180B35 0%, #2D1060 40%, #180B35 100%)' }}
+    >
+      {/* Scattered sparkles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {SPARKLES.map(({ top, right, bottom, left, size, char, opacity }, i) => (
+          <span
+            key={i}
+            className="absolute select-none"
+            style={{ top, right, bottom, left, fontSize: size, color: 'white', opacity }}
+          >
+            {char}
+          </span>
+        ))}
+      </div>
+
+      <div className="flex flex-col items-center gap-6 px-8 z-10">
+        {/* Stamp count */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <p className="font-bold text-sm tracking-wide" style={{ color: '#F59E0B' }}>
+            # {ordinal(stampNum)} Stamp Collected
+          </p>
+          {remaining > 0 && (
+            <p className="text-white/50 text-sm mt-0.5">{remaining} More to go</p>
+          )}
+        </motion.div>
+
+        {/* Glowing orb */}
+        <motion.div
+          initial={{ scale: 0.4, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 180, damping: 16, delay: 0.1 }}
+          className="relative"
+        >
+          {/* Outer diffuse glow */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              inset: '-32px',
+              background: 'radial-gradient(circle, rgba(109,40,217,0.55) 0%, transparent 65%)',
+              filter: 'blur(20px)',
+            }}
+          />
+          {/* Orb */}
+          <div
+            className="w-52 h-52 rounded-full relative overflow-hidden"
+            style={{
+              background: 'radial-gradient(circle at 32% 28%, #C084FC 0%, #7C3AED 38%, #3B0764 72%, #1A0545 100%)',
+              boxShadow: '0 0 60px rgba(109,40,217,0.7), 0 0 30px rgba(109,40,217,0.5), 0 0 0 1.5px rgba(167,139,250,0.4)',
+            }}
+          >
+            {/* Specular highlight */}
+            <div
+              className="absolute top-4 left-4 w-20 h-20 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)' }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Title */}
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="text-3xl font-black text-white tracking-tight text-center"
+        >
+          Successfully Stamped
+        </motion.h2>
+
+        {/* CTA */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onContinue}
+          className="mt-1 px-8 py-3.5 rounded-2xl font-bold text-sm text-white"
+          style={{ background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)' }}
+        >
+          {isRewardStamp ? 'See your reward →' : 'View my card'}
+        </motion.button>
+      </div>
+    </div>
+  )
+}
 
 function StampCardInner() {
   const router       = useRouter()
@@ -25,6 +148,7 @@ function StampCardInner() {
   const [state, setState]                   = useState<State>('card')
   const [lastStamp, setLastStamp]           = useState<number | null>(null)
   const [surpriseReward, setSurpriseReward] = useState<{ reward: string; emoji: string } | null>(null)
+  const [pendingRewardState, setPendingRewardState] = useState<'surprise' | 'big-win' | null>(null)
   const didAutoStamp = useRef(false)
 
   useEffect(() => {
@@ -33,15 +157,33 @@ function StampCardInner() {
     const newCount = CURRENT_STAMPS + 1
     setStamps(newCount)
     setLastStamp(newCount)
+    setTimeout(() => setLastStamp(null), 1400)
+
     if (newCount === BIG_REWARD_POS) {
-      setTimeout(() => setState('big-win'), 950)
+      setPendingRewardState('big-win')
     } else if ((REWARD_POSITIONS as readonly number[]).includes(newCount)) {
       setSurpriseReward(REWARDS[newCount as keyof typeof REWARDS] ?? { reward: 'Mystery Treat', emoji: '🎁' })
-      setTimeout(() => setState('surprise'), 950)
+      setPendingRewardState('surprise')
     }
-    setTimeout(() => setLastStamp(null), 1400)
+
+    setTimeout(() => setState('stamped'), 950)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleStampedContinue = () => {
+    if (pendingRewardState === 'big-win') setState('big-win')
+    else if (pendingRewardState === 'surprise') setState('surprise')
+    else setState('card')
+  }
+
+  if (state === 'stamped')
+    return (
+      <SuccessfullyStamped
+        stampNum={stamps}
+        totalStamps={TOTAL}
+        isRewardStamp={!!pendingRewardState}
+        onContinue={handleStampedContinue}
+      />
+    )
   if (state === 'big-win')
     return <WinCelebration reward={REWARDS[10].reward} emoji={REWARDS[10].emoji} hidePlayAgain onClose={() => setState('card')} />
   if (state === 'surprise' && surpriseReward)
@@ -60,7 +202,7 @@ function StampCardInner() {
       <div className="absolute bottom-40 -left-20 w-56 h-56 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(40px)' }} />
 
-      {/* Back — top-left overlay */}
+      {/* Back */}
       <button
         onClick={() => router.back()}
         className="absolute top-12 left-4 w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center z-20"
@@ -68,7 +210,6 @@ function StampCardInner() {
         <ArrowLeft className="w-4 h-4 text-white" />
       </button>
 
-      {/* Ambient label */}
       <p className="absolute top-14 right-4 text-[10px] text-white/30 z-20">Amber Cafe · Stamp Card</p>
 
       <div className="flex-1 flex flex-col justify-center relative z-10 mt-8">
@@ -105,7 +246,6 @@ function StampCardInner() {
             </div>
           </div>
 
-          {/* Perforated separator */}
           <div className="h-0" style={{ borderTop: '2px dashed rgba(245,158,11,0.35)' }} />
 
           {/* Stamp grid */}
@@ -136,42 +276,32 @@ function StampCardInner() {
                             style={{
                               background: isBigReward
                                 ? 'linear-gradient(145deg, #F59E0B, #D97706)'
-                                : 'linear-gradient(145deg, #F59E0B, #B45309)',
+                                : isReward
+                                  ? 'linear-gradient(145deg, #7C3AED, #5B21B6)'
+                                  : 'linear-gradient(145deg, #4B5563, #374151)',
                               boxShadow: isBigReward
                                 ? '0 6px 20px rgba(245,158,11,0.6)'
-                                : '0 4px 14px rgba(245,158,11,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
-                              border: isBigReward ? '2px solid #F59E0B' : 'none',
+                                : isReward
+                                  ? '0 4px 14px rgba(124,58,237,0.45)'
+                                  : '0 4px 10px rgba(0,0,0,0.2)',
                             }}
                             initial={isNew ? { scale: 0, rotate: -18 } : false}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={isNew ? { type: 'spring', stiffness: 320, damping: 11 } : { duration: 0 }}
                           >
-                            {isBigReward ? '🏆' : '☕'}
+                            {isBigReward ? '🏆' : isReward ? '🎁' : '✓'}
                           </motion.div>
                         ) : (
-                          /* Sealed stamp — mystery */
                           <motion.div
                             key={`off-${n}`}
                             className="absolute inset-0 rounded-full flex items-center justify-center"
                             style={{ background: '#E5E7EB' }}
                           >
-                            <span className="text-[13px] font-bold text-gray-400 select-none">?</span>
+                            <span className="text-[13px] font-bold text-gray-400 select-none">{n}</span>
                           </motion.div>
                         )}
                       </AnimatePresence>
                     </div>
-                    <div className="text-[10px] font-bold text-gray-600">{n}</div>
-                    {/* Green dot on collected reward stamps */}
-                    {isReward && isFilled && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs"
-                        style={{ background: '#10B981' }}
-                      >
-                        ✓
-                      </motion.div>
-                    )}
                   </div>
                 )
               })}
@@ -184,7 +314,6 @@ function StampCardInner() {
             </p>
           </div>
 
-          {/* Footer */}
           <div className="px-5 py-2.5 flex items-center justify-between"
             style={{ background: '#F9FAFB', borderTop: '1px solid #F3F4F6' }}>
             <span className="font-mono text-[9px] text-gray-300 tracking-wider">LG-AMBER-2026</span>
@@ -192,7 +321,6 @@ function StampCardInner() {
           </div>
         </motion.div>
 
-        {/* Hint */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

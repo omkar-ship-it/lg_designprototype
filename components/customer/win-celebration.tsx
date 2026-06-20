@@ -72,13 +72,30 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
     >
       <Confetti />
       <div className="relative z-10 text-center px-8 w-full max-w-sm mx-auto">
+        {/* YOU WON — above the emoji */}
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="text-xs font-bold tracking-widest uppercase mb-5"
+          style={{ color: '#F5C518' }}
+        >
+          🎉 YOU WON!
+        </motion.p>
+
+        {/* Emoji in glowing circular frame */}
         <motion.div
           initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: [0, 1.2, 1], rotate: [-20, 0] }}
+          animate={{ scale: [0, 1.15, 1], rotate: [-20, 0] }}
           transition={{ type: 'spring', stiffness: 300, damping: 16, delay: 0.1 }}
-          className="text-8xl mb-4 select-none"
+          className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-5 select-none"
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '2.5px solid rgba(255,255,255,0.25)',
+            boxShadow: '0 0 40px rgba(245,197,24,0.18), 0 0 80px rgba(124,58,237,0.15)',
+          }}
         >
-          {emoji}
+          <span className="text-6xl">{emoji}</span>
         </motion.div>
 
         <motion.div
@@ -86,16 +103,13 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#F5C518' }}>
-            🎉 YOU WON!
-          </p>
-          <h2 className="text-3xl font-extrabold text-white mb-1 text-glow-gold leading-tight">{reward}</h2>
-          <p className="text-sm text-white/60 mb-4">Added to your wallet</p>
+          <h2 className="text-3xl font-extrabold text-white mb-1 leading-tight">{reward}</h2>
+          <p className="text-sm text-white/60 mb-5">Added to your wallet</p>
 
-          {/* Reward code pill */}
-          <div className="inline-block bg-white/10 border border-white/20 rounded-xl px-5 py-2.5 mb-3">
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-0.5">Reward Code</p>
-            <p className="font-mono text-lg font-bold text-white tracking-wider">{displayCode}</p>
+          {/* Reward code box */}
+          <div className="bg-white/10 border border-white/20 rounded-xl px-5 py-3 mb-3">
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Reward Code</p>
+            <p className="font-mono text-xl font-black text-white tracking-wider">{displayCode}</p>
           </div>
           <p className="text-xs text-white/35 mb-6">Show this code to the staff at the counter to redeem</p>
         </motion.div>
