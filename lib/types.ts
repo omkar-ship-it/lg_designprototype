@@ -165,6 +165,20 @@ export interface BusinessProfile {
   qrCode: string
 }
 
+export interface ClaimableReward {
+  id: string
+  name: string
+  subtitle: string
+  pointsCost: number
+  totalSlots: number
+  slotsClaimed: number
+  claimBefore: string
+  redeemBefore: string
+  icon: string
+  isLocked: boolean
+  pointsNeeded?: number
+}
+
 export interface CustomerBusiness {
   id: string
   name: string
@@ -180,6 +194,8 @@ export interface CustomerBusiness {
   coverFrom: string
   coverTo: string
   coverEmoji: string
+  userPoints?: number
+  claimableRewards?: ClaimableReward[]
   mechanics: {
     type: MechanicType
     label: string

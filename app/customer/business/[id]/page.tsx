@@ -2,12 +2,12 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
-import type { MechanicType, CustomerBusiness } from '@/lib/types'
+import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   stamp:   '/customer/games/stamp',
@@ -51,11 +51,82 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 
 type Mechanic = CustomerBusiness['mechanics'][number]
 
+function RewardCard({ reward, biz }: { reward: ClaimableReward; biz: CustomerBusiness }) {
+  const available = reward.totalSlots - reward.slotsClaimed
+  const claimUrl  = `/customer/games/rub-lamp?name=${encodeURIComponent(reward.name)}&subtitle=${encodeURIComponent(reward.subtitle)}&pts=${reward.pointsCost}&avail=${available}&cb=${encodeURIComponent(reward.claimBefore)}&rb=${encodeURIComponent(reward.redeemBefore)}`
+
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{ background: '#FDFAF4', border: '1px solid #F3E8C8' }}
+    >
+      {/* Top row */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#FEF3C7', color: '#92400E' }}>
+          {reward.pointsCost} pts
+        </span>
+        {reward.isLocked ? (
+          <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: '#A78BFA', background: '#F5F3FF', borderRadius: 20, padding: '2px 8px' }}>
+            <Gift className="w-3 h-3" />
+            {reward.pointsNeeded} pts needed
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>
+            <Gift className="w-3 h-3" />
+            {reward.slotsClaimed}/{reward.totalSlots} Claimed
+          </span>
+        )}
+      </div>
+
+      {/* Reward identity + CTA */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm border border-amber-100">
+          {reward.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-900 leading-tight">{reward.name}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{reward.subtitle}</p>
+        </div>
+        {reward.isLocked ? (
+          <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <Lock className="w-4 h-4 text-gray-400" />
+          </div>
+        ) : (
+          <Link
+            href={claimUrl}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: '#92400E' }}
+          >
+            <ChevronRight className="w-4 h-4 text-white" />
+          </Link>
+        )}
+      </div>
+
+      {/* Dates */}
+      <div className="flex items-center gap-3 mt-3 text-[10px]" style={{ color: '#92400E', opacity: 0.7 }}>
+        <div className="flex items-center gap-1">
+          <CalendarDays className="w-3 h-3" />
+          <span>Claim Before</span>
+          <span className="font-semibold ml-0.5">{reward.claimBefore}</span>
+        </div>
+        <span className="opacity-40">|</span>
+        <div className="flex items-center gap-1">
+          <Gift className="w-3 h-3" />
+          <span>Redeem Before</span>
+          <span className="font-semibold ml-0.5">{reward.redeemBefore}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function BusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const biz = customerBusinesses.find(b => b.id === id) ?? customerBusinesses[0]
   const catColor = CATEGORY_COLORS[biz.category] ?? { bg: '#F3F4F6', text: '#374151' }
+
+  const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards'>('campaigns')
 
   // Code entry state
   const [activeCampaign, setActiveCampaign] = useState<Mechanic | null>(null)
@@ -221,21 +292,43 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
           {biz.tagline}
         </motion.p>
 
-        {/* ── Loyalty Campaigns ─────────────────────────────────── */}
+        {/* ── Campaigns / Rewards Tab Switcher ─────────────────── */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.13 }}
-          className="flex items-baseline justify-between mb-1"
+          className="flex gap-0 mb-5 border-b border-gray-100"
         >
-          <h2 className="text-base font-extrabold text-gray-900">Loyalty Campaigns</h2>
-          <span className="text-[11px] text-gray-400">{biz.mechanics.length} active</span>
+          {(['campaigns', 'rewards'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex items-center gap-1.5 px-1 pb-2.5 mr-6 text-sm font-bold capitalize relative"
+              style={{ color: activeTab === tab ? '#7C3AED' : '#9CA3AF' }}
+            >
+              {tab === 'campaigns'
+                ? <Zap className="w-3.5 h-3.5" />
+                : <Gift className="w-3.5 h-3.5" />
+              }
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="tab-underline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                  style={{ background: '#7C3AED' }}
+                />
+              )}
+            </button>
+          ))}
         </motion.div>
-        <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-          className="text-xs text-gray-400 mb-4"
-        >
-          Ask the staff for a code and tap a campaign to participate
-        </motion.p>
 
+        {/* ── Campaigns tab ─────────────────────────────────────── */}
+        {activeTab === 'campaigns' && (
+          <>
+            <motion.p
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-xs text-gray-400 mb-4"
+            >
+              Ask the staff for a code and tap a campaign to participate
+            </motion.p>
         <div className="space-y-4 mb-4">
           {biz.mechanics.map((m, i) => {
             const meta = MECHANIC_META[m.type]
@@ -406,6 +499,60 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             )
           })}
         </div>
+          </>
+        )}
+
+        {/* ── Rewards tab ───────────────────────────────────────── */}
+        {activeTab === 'rewards' && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="pb-4">
+
+            {/* Claimable rewards */}
+            {(() => {
+              const claimable = (biz.claimableRewards ?? []).filter(r => !r.isLocked)
+              return claimable.length > 0 ? (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-extrabold text-gray-900">Rewards to claim</h3>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">
+                      {claimable.length} available
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {claimable.map(r => (
+                      <RewardCard key={r.id} reward={r} biz={biz} />
+                    ))}
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {/* Locked rewards */}
+            {(() => {
+              const locked = (biz.claimableRewards ?? []).filter(r => r.isLocked)
+              return locked.length > 0 ? (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-extrabold text-gray-900">Locked Rewards</h3>
+                    <button className="text-[11px] font-bold text-purple-600">See all</button>
+                  </div>
+                  <div className="space-y-3">
+                    {locked.map(r => (
+                      <RewardCard key={r.id} reward={r} biz={biz} />
+                    ))}
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {!(biz.claimableRewards?.length) && (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-2">🎁</p>
+                <p className="text-sm">No rewards available right now</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
       </div>
 
       <BottomNav />
