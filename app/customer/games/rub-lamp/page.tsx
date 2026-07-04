@@ -499,19 +499,35 @@ function RubLampContent() {
               transition={{ duration: 0.25 }}
               className="w-full max-w-xs mb-5"
             >
-              <p className="text-white text-center text-[17px] font-medium mb-2.5">
-                {strokes} / {STROKES_NEEDED} strokes
-              </p>
               <div
-                className="w-full h-[3px] rounded-full overflow-hidden"
+                className="w-full h-2.5 rounded-full overflow-hidden"
                 style={{ background: 'rgba(255,255,255,0.10)' }}
               >
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(90deg, #FBBF24, #D97706)' }}
+                  style={{
+                    background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
+                    boxShadow: charge > 0 ? '0 0 12px rgba(245,158,11,0.75)' : 'none',
+                  }}
                   animate={{ width: `${charge}%` }}
                   transition={{ duration: 0.12, ease: 'easeOut' }}
                 />
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  {charge === 0
+                    ? '← Rub the lamp →'
+                    : charge < 50
+                    ? 'Keep rubbing...'
+                    : charge < 100
+                    ? 'Almost there! ✨'
+                    : ''}
+                </p>
+                {charge > 0 && (
+                  <p className="text-xs font-bold" style={{ color: 'rgba(245,158,11,0.85)' }}>
+                    {Math.round(charge)}%
+                  </p>
+                )}
               </div>
             </motion.div>
           )}
@@ -583,20 +599,6 @@ function RubLampContent() {
           )}
         </AnimatePresence>
 
-        {!claimed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="w-full max-w-xs"
-          >
-            {!claimed && charge === 0 && !isRubbing && (
-              <p className="text-center text-xs mt-4" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                Swipe left and right to rub the lamp
-              </p>
-            )}
-          </motion.div>
-        )}
 
         <AnimatePresence>
           {showReward && (

@@ -340,23 +340,33 @@ function SummonCircleContent() {
               )
             })()}
 
-            {/* Start-here arrow at 12 o'clock — shown before drawing begins */}
+            {/* Clockwise arrow arc at 12 o'clock — shown before drawing begins */}
             {coverage === 0 && !claimed && (
               <>
-                {/* Arrow shaft curving clockwise */}
                 <path
-                  d="M 150 40 A 110 110 0 0 1 195 55"
+                  d="M 150 40 A 110 110 0 0 1 218 110"
                   fill="none"
-                  stroke="rgba(245,158,11,0.7)"
-                  strokeWidth="2.5"
+                  stroke="rgba(245,158,11,0.55)"
+                  strokeWidth="3"
                   strokeLinecap="round"
-                  strokeDasharray="6 4"
+                  strokeDasharray="7 5"
                 />
-                {/* Arrowhead at tip */}
                 <polygon
-                  points="195,55 183,46 198,42"
-                  fill="rgba(245,158,11,0.8)"
+                  points="218,110 208,96 222,96"
+                  fill="rgba(245,158,11,0.65)"
                 />
+                {/* START label above the dot */}
+                <text
+                  x={CX}
+                  y={CY - RING_R - 22}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight="bold"
+                  fill="rgba(245,158,11,0.9)"
+                  fontFamily="system-ui,-apple-system"
+                >
+                  START
+                </text>
               </>
             )}
 
@@ -377,16 +387,38 @@ function SummonCircleContent() {
             <motion.div
               className="absolute rounded-full pointer-events-none"
               style={{
-                width: 14,
-                height: 14,
-                left: CX - 7,
-                top: CY - RING_R - 7,
+                width: 16,
+                height: 16,
+                left: CX - 8,
+                top: CY - RING_R - 8,
                 background: '#F59E0B',
-                boxShadow: '0 0 10px 3px rgba(245,158,11,0.7)',
+                boxShadow: '0 0 14px 4px rgba(245,158,11,0.75)',
               }}
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+              animate={{ scale: [1, 1.55, 1], opacity: [1, 0.45, 1] }}
               transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
             />
+          )}
+
+          {/* Orbiting demo dot — animates clockwise to show the user where to draw */}
+          {coverage === 0 && !isDrawing && !claimed && (
+            <motion.div
+              className="absolute pointer-events-none"
+              style={{ width: CONTAINER, height: CONTAINER, top: 0, left: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            >
+              <div
+                className="absolute rounded-full"
+                style={{
+                  width: 10,
+                  height: 10,
+                  left: CX - 5,
+                  top: CY - RING_R - 5,
+                  background: 'rgba(245,158,11,0.55)',
+                  boxShadow: '0 0 8px 3px rgba(245,158,11,0.35)',
+                }}
+              />
+            </motion.div>
           )}
 
           <AnimatePresence>
@@ -499,16 +531,30 @@ function SummonCircleContent() {
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               className="w-full max-w-xs mb-5"
             >
-              <p className="text-white text-center text-[17px] font-medium mb-2.5">
-                {coveragePct}% complete
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  Circle progress
+                </p>
+                <motion.p
+                  className="text-2xl font-bold tabular-nums"
+                  style={{ color: coveragePct > 60 ? '#FBBF24' : coveragePct > 25 ? '#FCD34D' : 'rgba(255,255,255,0.65)' }}
+                  key={coveragePct}
+                  animate={{ scale: [1.12, 1] }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {coveragePct}%
+                </motion.p>
+              </div>
               <div
-                className="w-full h-[3px] rounded-full overflow-hidden"
+                className="w-full h-2.5 rounded-full overflow-hidden"
                 style={{ background: 'rgba(255,255,255,0.10)' }}
               >
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(90deg, #FBBF24, #D97706)' }}
+                  style={{
+                    background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
+                    boxShadow: coveragePct > 0 ? '0 0 12px rgba(245,158,11,0.7)' : 'none',
+                  }}
                   animate={{ width: `${Math.min(100, coveragePct)}%` }}
                   transition={{ duration: 0.08 }}
                 />
