@@ -165,6 +165,8 @@ export interface BusinessProfile {
   qrCode: string
 }
 
+export type RewardCtaType = 'rub-lamp' | 'summon-circle' | 'scratch-smoke'
+
 export interface ClaimableReward {
   id: string
   name: string
@@ -177,6 +179,7 @@ export interface ClaimableReward {
   icon: string
   isLocked: boolean
   pointsNeeded?: number
+  ctaType: RewardCtaType
 }
 
 export interface CustomerBusiness {

@@ -51,9 +51,21 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 
 type Mechanic = CustomerBusiness['mechanics'][number]
 
-function RewardCard({ reward, biz }: { reward: ClaimableReward; biz: CustomerBusiness }) {
+const CTA_META: Record<string, { label: string; emoji: string; color: string; bg: string }> = {
+  'rub-lamp':      { label: 'Rub the Lamp',     emoji: '🪔', color: '#92400E', bg: '#FEF3C7' },
+  'summon-circle': { label: 'Draw the Circle',   emoji: '⭕', color: '#5B21B6', bg: '#EDE9FE' },
+  'scratch-smoke': { label: 'Scratch the Smoke', emoji: '✦', color: '#065F46', bg: '#D1FAE5' },
+}
+
+function RewardCard({ reward }: { reward: ClaimableReward }) {
   const available = reward.totalSlots - reward.slotsClaimed
-  const claimUrl  = `/customer/games/rub-lamp?name=${encodeURIComponent(reward.name)}&subtitle=${encodeURIComponent(reward.subtitle)}&pts=${reward.pointsCost}&avail=${available}&cb=${encodeURIComponent(reward.claimBefore)}&rb=${encodeURIComponent(reward.redeemBefore)}`
+  const gameRoute = reward.ctaType === 'summon-circle'
+    ? '/customer/games/summon-circle'
+    : reward.ctaType === 'scratch-smoke'
+      ? '/customer/games/scratch-smoke'
+      : '/customer/games/rub-lamp'
+  const claimUrl  = `${gameRoute}?name=${encodeURIComponent(reward.name)}&subtitle=${encodeURIComponent(reward.subtitle)}&pts=${reward.pointsCost}&avail=${available}&cb=${encodeURIComponent(reward.claimBefore)}&rb=${encodeURIComponent(reward.redeemBefore)}`
+  const ctaMeta   = CTA_META[reward.ctaType]
 
   return (
     <div
@@ -86,6 +98,12 @@ function RewardCard({ reward, biz }: { reward: ClaimableReward; biz: CustomerBus
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-gray-900 leading-tight">{reward.name}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">{reward.subtitle}</p>
+          <span
+            className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full"
+            style={{ background: ctaMeta.bg, color: ctaMeta.color }}
+          >
+            {ctaMeta.emoji} {ctaMeta.label}
+          </span>
         </div>
         {reward.isLocked ? (
           <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -519,7 +537,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="space-y-3">
                     {claimable.map(r => (
-                      <RewardCard key={r.id} reward={r} biz={biz} />
+                      <RewardCard key={r.id} reward={r} />
                     ))}
                   </div>
                 </div>
@@ -537,7 +555,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="space-y-3">
                     {locked.map(r => (
-                      <RewardCard key={r.id} reward={r} biz={biz} />
+                      <RewardCard key={r.id} reward={r} />
                     ))}
                   </div>
                 </div>
