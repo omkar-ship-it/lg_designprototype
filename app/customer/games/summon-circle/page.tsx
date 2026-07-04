@@ -9,8 +9,8 @@ const CONTAINER = 300
 const CX = 150
 const CY = 150
 const RING_R = 110
+const RING_CIRC = 2 * Math.PI * RING_R
 const SECTORS = 72
-const TRAIL_MAX = 180
 
 const STARS = [
   { x:  8, y: 10, s: 14, o: 0.38 },
@@ -61,6 +61,37 @@ const DEFAULT_REWARD = {
   redeemBefore: '7 Jul',
 }
 
+function CuteGenie() {
+  return (
+    <svg width="92" height="92" viewBox="0 0 92 92" fill="none">
+      <path d="M32 92 C26 76 34 64 28 52 C24 44 29 36 37 32"
+        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
+      <path d="M60 92 C66 76 58 64 64 52 C68 44 63 36 55 32"
+        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
+      <ellipse cx="46" cy="56" rx="18" ry="14" fill="#60A5FA"/>
+      <path d="M28 52 Q17 41 22 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
+      <path d="M64 52 Q75 41 70 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
+      <circle cx="46" cy="25" r="23" fill="#60A5FA"/>
+      <circle cx="23" cy="27" r="5.5" fill="#3B82F6"/>
+      <circle cx="69" cy="27" r="5.5" fill="#3B82F6"/>
+      <circle cx="20" cy="31" r="2.8" fill="#FBBF24" stroke="#D97706" strokeWidth="0.8"/>
+      <ellipse cx="36" cy="21" rx="7.5" ry="8.5" fill="white"/>
+      <ellipse cx="56" cy="21" rx="7.5" ry="8.5" fill="white"/>
+      <circle cx="37.5" cy="22" r="5" fill="#1E3A8A"/>
+      <circle cx="54.5" cy="22" r="5" fill="#1E3A8A"/>
+      <circle cx="39.5" cy="19.5" r="1.8" fill="white"/>
+      <circle cx="56.5" cy="19.5" r="1.8" fill="white"/>
+      <ellipse cx="24" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
+      <ellipse cx="68" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
+      <ellipse cx="46" cy="31" rx="3" ry="2.5" fill="#3B82F6"/>
+      <path d="M35 40 Q46 51 57 40" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+      <text x="1" y="14" fontSize="11" fill="#FBBF24" opacity="0.9">✦</text>
+      <text x="72" y="10" fontSize="9" fill="#FBBF24" opacity="0.7">✦</text>
+      <text x="76" y="50" fontSize="7" fill="#A78BFA" opacity="0.6">✦</text>
+    </svg>
+  )
+}
+
 function StarField() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -93,7 +124,6 @@ function SummonCircleContent() {
   const [coverage, setCoverage]     = useState(0)
   const [claimed, setClaimed]       = useState(false)
   const [isDrawing, setIsDrawing]   = useState(false)
-  const [arcPoints, setArcPoints]   = useState<{ x: number; y: number }[]>([])
   const [flash, setFlash]           = useState(false)
   const [showBurst, setShowBurst]   = useState(false)
 
@@ -138,14 +168,6 @@ function SummonCircleContent() {
     const angle = Math.atan2(dy, dx)
     const sector = getSectorFromAngle(angle)
     visitedRef.current.add(sector)
-
-    const projX = CX + RING_R * Math.cos(angle)
-    const projY = CY + RING_R * Math.sin(angle)
-
-    setArcPoints(prev => {
-      const next = [...prev, { x: projX, y: projY }]
-      return next.length > TRAIL_MAX ? next.slice(next.length - TRAIL_MAX) : next
-    })
 
     const cov = visitedRef.current.size / SECTORS
     setCoverage(cov)
@@ -259,50 +281,113 @@ function SummonCircleContent() {
               </filter>
             </defs>
 
-            {claimed ? (
+            {/* Guide ring — visible dashed track */}
+            {!claimed && (
               <circle
-                cx={CX}
-                cy={CY}
-                r={RING_R}
+                cx={CX} cy={CY} r={RING_R}
                 fill="none"
-                stroke="#F59E0B"
+                stroke="rgba(255,255,255,0.28)"
                 strokeWidth="3"
-                filter="url(#ringGlow)"
-              />
-            ) : (
-              <circle
-                cx={CX}
-                cy={CY}
-                r={RING_R}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth="2"
-                strokeDasharray="6 5"
+                strokeDasharray="10 6"
               />
             )}
 
-            {arcPoints.length > 1 && !claimed && (
-              <polyline
-                points={arcPoints.map(p => `${p.x},${p.y}`).join(' ')}
+            {/* Tick marks at 12 / 3 / 6 / 9 o'clock */}
+            {!claimed && [0, 90, 180, 270].map(deg => {
+              const rad = (deg - 90) * Math.PI / 180
+              return (
+                <line
+                  key={deg}
+                  x1={CX + (RING_R - 12) * Math.cos(rad)}
+                  y1={CY + (RING_R - 12) * Math.sin(rad)}
+                  x2={CX + (RING_R + 12) * Math.cos(rad)}
+                  y2={CY + (RING_R + 12) * Math.sin(rad)}
+                  stroke="rgba(255,255,255,0.55)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              )
+            })}
+
+            {/* Progress arc — fills clockwise from 12 o'clock */}
+            {coverage > 0 && !claimed && (
+              <circle
+                cx={CX} cy={CY} r={RING_R}
                 fill="none"
                 stroke="#F59E0B"
-                strokeWidth="3.5"
+                strokeWidth="5"
                 strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#goldGlow)"
+                strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                style={{
+                  transform: `rotate(-90deg)`,
+                  transformOrigin: `${CX}px ${CY}px`,
+                  filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.85))',
+                }}
               />
             )}
 
-            {arcPoints.length > 0 && !claimed && (
+            {/* Moving tip dot at arc head */}
+            {coverage > 0 && !claimed && (() => {
+              const a = (-90 + coverage * 360) * (Math.PI / 180)
+              return (
+                <circle
+                  cx={CX + RING_R * Math.cos(a)}
+                  cy={CY + RING_R * Math.sin(a)}
+                  r={6}
+                  fill="#F59E0B"
+                  filter="url(#goldGlow)"
+                />
+              )
+            })()}
+
+            {/* Start-here arrow at 12 o'clock — shown before drawing begins */}
+            {coverage === 0 && !claimed && (
+              <>
+                {/* Arrow shaft curving clockwise */}
+                <path
+                  d="M 150 40 A 110 110 0 0 1 195 55"
+                  fill="none"
+                  stroke="rgba(245,158,11,0.7)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray="6 4"
+                />
+                {/* Arrowhead at tip */}
+                <polygon
+                  points="195,55 183,46 198,42"
+                  fill="rgba(245,158,11,0.8)"
+                />
+              </>
+            )}
+
+            {/* Completed ring */}
+            {claimed && (
               <circle
-                cx={arcPoints[arcPoints.length - 1].x}
-                cy={arcPoints[arcPoints.length - 1].y}
-                r={5}
-                fill="#F59E0B"
-                filter="url(#goldGlow)"
+                cx={CX} cy={CY} r={RING_R}
+                fill="none"
+                stroke="#F59E0B"
+                strokeWidth="4"
+                filter="url(#ringGlow)"
               />
             )}
           </svg>
+
+          {/* Pulsing start dot at 12 o'clock */}
+          {coverage === 0 && !claimed && (
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 14,
+                height: 14,
+                left: CX - 7,
+                top: CY - RING_R - 7,
+                background: '#F59E0B',
+                boxShadow: '0 0 10px 3px rgba(245,158,11,0.7)',
+              }}
+              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
 
           <AnimatePresence>
             {orbitVisible && !claimed && (
@@ -378,9 +463,8 @@ function SummonCircleContent() {
                   initial={{ scale: 0, rotate: -30, opacity: 0 }}
                   animate={{ scale: 1, rotate: 0, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.1 }}
-                  className="text-7xl leading-none"
                 >
-                  🧞
+                  <CuteGenie />
                 </motion.div>
               ) : (
                 <motion.div
@@ -518,14 +602,28 @@ function SummonCircleContent() {
         </AnimatePresence>
 
         {!claimed && coverage === 0 && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="text-center text-xs mt-4"
-            style={{ color: 'rgba(255,255,255,0.22)' }}
+            className="text-center mt-4"
           >
-            Trace the circle around the lamp
+            <p className="text-sm font-semibold" style={{ color: 'rgba(245,158,11,0.9)' }}>
+              Start at the gold dot ↑
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Draw a full circle clockwise ↻
+            </p>
+          </motion.div>
+        )}
+        {!claimed && coverage > 0 && coverage < 0.85 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-xs mt-2"
+            style={{ color: 'rgba(255,255,255,0.30)' }}
+          >
+            Keep going ↻
           </motion.p>
         )}
       </div>

@@ -16,7 +16,7 @@ const SCREEN_CX = CONTAINER / 2
 const SCREEN_CY = CONTAINER / 2
 
 const STROKES_NEEDED = 6
-const MIN_STROKE_PX  = 25
+const MIN_STROKE_PX  = 20
 const MAX_PARTICLES  = 20
 
 const STARS = [
@@ -119,6 +119,50 @@ function ConfettiLayer({ show }: { show: boolean }) {
         />
       ))}
     </div>
+  )
+}
+
+function CuteGenie() {
+  return (
+    <svg width="92" height="92" viewBox="0 0 92 92" fill="none">
+      {/* Wispy smoke tail — no legs */}
+      <path d="M32 92 C26 76 34 64 28 52 C24 44 29 36 37 32"
+        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
+      <path d="M60 92 C66 76 58 64 64 52 C68 44 63 36 55 32"
+        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
+      {/* Body */}
+      <ellipse cx="46" cy="56" rx="18" ry="14" fill="#60A5FA"/>
+      {/* Arms raised (excited) */}
+      <path d="M28 52 Q17 41 22 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
+      <path d="M64 52 Q75 41 70 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
+      {/* Bald head */}
+      <circle cx="46" cy="25" r="23" fill="#60A5FA"/>
+      {/* Ears */}
+      <circle cx="23" cy="27" r="5.5" fill="#3B82F6"/>
+      <circle cx="69" cy="27" r="5.5" fill="#3B82F6"/>
+      {/* Gold earring on left ear */}
+      <circle cx="20" cy="31" r="2.8" fill="#FBBF24" stroke="#D97706" strokeWidth="0.8"/>
+      {/* Eye whites */}
+      <ellipse cx="36" cy="21" rx="7.5" ry="8.5" fill="white"/>
+      <ellipse cx="56" cy="21" rx="7.5" ry="8.5" fill="white"/>
+      {/* Pupils */}
+      <circle cx="37.5" cy="22" r="5" fill="#1E3A8A"/>
+      <circle cx="54.5" cy="22" r="5" fill="#1E3A8A"/>
+      {/* Eye shine */}
+      <circle cx="39.5" cy="19.5" r="1.8" fill="white"/>
+      <circle cx="56.5" cy="19.5" r="1.8" fill="white"/>
+      {/* Blush */}
+      <ellipse cx="24" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
+      <ellipse cx="68" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
+      {/* Nose */}
+      <ellipse cx="46" cy="31" rx="3" ry="2.5" fill="#3B82F6"/>
+      {/* Big happy smile */}
+      <path d="M35 40 Q46 51 57 40" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+      {/* Sparkle stars */}
+      <text x="1" y="14" fontSize="11" fill="#FBBF24" opacity="0.9">✦</text>
+      <text x="72" y="10" fontSize="9" fill="#FBBF24" opacity="0.7">✦</text>
+      <text x="76" y="50" fontSize="7" fill="#A78BFA" opacity="0.6">✦</text>
+    </svg>
   )
 }
 
@@ -231,6 +275,8 @@ function RubLampContent() {
 
     if (dirRef.current !== null && dirRef.current !== newDir) {
       const strokeDist = Math.abs(x - strokeStartXRef.current)
+      strokeStartXRef.current = x  // always reset on reversal so each segment is independent
+
       if (strokeDist >= MIN_STROKE_PX) {
         const next = strokesRef.current + 1
         strokesRef.current = next
@@ -238,7 +284,6 @@ function RubLampContent() {
         setLampShakeKey(k => k + 1)
         emitSmoke(next, 2 + next)
         if (typeof navigator !== 'undefined') navigator.vibrate?.(18)
-        strokeStartXRef.current = x
 
         if (next >= STROKES_NEEDED) {
           triggerClaim()
@@ -247,9 +292,7 @@ function RubLampContent() {
       }
     }
 
-    if (dirRef.current === null || dirRef.current !== newDir) {
-      dirRef.current = newDir
-    }
+    dirRef.current = newDir
   }, [lampX, emitSmoke, triggerClaim])
 
   const onPointerUp = useCallback(() => {
@@ -389,9 +432,8 @@ function RubLampContent() {
                   initial={{ scale: 0, rotate: -20, opacity: 0 }}
                   animate={{ scale: [0, 1.25, 1], rotate: 0, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.05 }}
-                  className="text-7xl leading-none"
                 >
-                  🧞
+                  <CuteGenie />
                 </motion.div>
               ) : (
                 <motion.div
