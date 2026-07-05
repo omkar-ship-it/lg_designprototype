@@ -310,18 +310,16 @@ function SummonCircleContent() {
           >
             <defs>
               {/* Ultra-wide atmospheric bloom */}
-              <filter id="bloomWide" x="-130%" y="-130%" width="360%" height="360%">
-                <feGaussianBlur stdDeviation="18" result="blur" />
+              <filter id="bloomWide" x="-150%" y="-150%" width="400%" height="400%">
+                <feGaussianBlur stdDeviation="22" result="blur" />
                 <feMerge><feMergeNode in="blur" /></feMerge>
               </filter>
-              {/* Medium bloom for glow body */}
-              <filter id="bloomMed" x="-90%" y="-90%" width="280%" height="280%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
+              <filter id="bloomMed" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="10" result="blur" />
                 <feMerge><feMergeNode in="blur" /></feMerge>
               </filter>
-              {/* Tip dot — blur + source for sharp center */}
               <filter id="tipGlow" x="-300%" y="-300%" width="700%" height="700%">
-                <feGaussianBlur stdDeviation="9" result="blur" />
+                <feGaussianBlur stdDeviation="8" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -361,7 +359,7 @@ function SummonCircleContent() {
               <>
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(180,90,5,${0.13 + coverage * 0.22})`}
+                  stroke={`rgba(251,191,36,${0.08 + coverage * 0.16})`}
                   strokeWidth="46" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -369,7 +367,7 @@ function SummonCircleContent() {
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(217,119,6,${0.42 + coverage * 0.30})`}
+                  stroke={`rgba(252,211,77,${0.28 + coverage * 0.26})`}
                   strokeWidth="22" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -377,17 +375,17 @@ function SummonCircleContent() {
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(245,158,11,${0.88 + coverage * 0.12})`}
+                  stroke={`rgba(245,158,11,${0.86 + coverage * 0.14})`}
                   strokeWidth="10" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{
                     transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`,
-                    filter: 'drop-shadow(0 0 7px rgba(245,158,11,0.85))',
+                    filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.80))',
                   }}
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(254,243,199,0.94)"
+                  stroke="rgba(255,251,235,0.92)"
                   strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -395,17 +393,17 @@ function SummonCircleContent() {
               </>
             )}
 
-            {/* Tip dot — warm amber sunburst */}
+            {/* Tip dot — soft warm sunburst */}
             {coverage > 0 && !claimed && (() => {
               const a = (-90 + coverage * 360) * (Math.PI / 180)
               const tx = CX + RING_R * Math.cos(a)
               const ty = CY + RING_R * Math.sin(a)
               return (
                 <>
-                  <circle cx={tx} cy={ty} r={32} fill="rgba(180,90,5,0.22)" filter="url(#bloomWide)" />
-                  <circle cx={tx} cy={ty} r={16} fill="rgba(217,119,6,0.65)" filter="url(#bloomMed)" />
-                  <circle cx={tx} cy={ty} r={9} fill="#F59E0B" filter="url(#tipGlow)" />
-                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(254,243,199,0.95)" />
+                  <circle cx={tx} cy={ty} r={32} fill="rgba(251,191,36,0.16)" filter="url(#bloomWide)" />
+                  <circle cx={tx} cy={ty} r={16} fill="rgba(252,211,77,0.55)" filter="url(#bloomMed)" />
+                  <circle cx={tx} cy={ty} r={9} fill="#FBBF24" filter="url(#tipGlow)" />
+                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(255,251,235,0.94)" />
                 </>
               )
             })()}
@@ -430,16 +428,16 @@ function SummonCircleContent() {
             {claimed && (
               <>
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(180,90,5,0.18)" strokeWidth="46"
+                  fill="none" stroke="rgba(251,191,36,0.12)" strokeWidth="46"
                   filter="url(#bloomWide)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(217,119,6,0.55)" strokeWidth="22"
+                  fill="none" stroke="rgba(252,211,77,0.42)" strokeWidth="22"
                   filter="url(#bloomMed)" />
                 <circle cx={CX} cy={CY} r={RING_R}
                   fill="none" stroke="#F59E0B" strokeWidth="10"
                   filter="url(#ringGlow)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(254,243,199,0.94)" strokeWidth="2" />
+                  fill="none" stroke="rgba(255,251,235,0.92)" strokeWidth="2" />
               </>
             )}
           </svg>
@@ -546,9 +544,9 @@ function SummonCircleContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: claimed
-              ? '0 0 0 2px rgba(217,119,6,0.82), 0 0 50px 20px rgba(180,90,5,0.62), 0 0 100px 34px rgba(140,65,3,0.36), inset 0 0 60px 20px rgba(165,75,4,0.24)'
+              ? '0 0 0 2px rgba(251,191,36,0.70), 0 0 50px 20px rgba(251,191,36,0.38), 0 0 100px 34px rgba(245,158,11,0.22), inset 0 0 60px 20px rgba(252,211,77,0.14)'
               : coverage > 0.03
-                ? `0 0 0 ${0.5 + coverage * 2}px rgba(217,119,6,${0.16 + coverage * 0.66}), 0 0 ${14 + coverage * 52}px ${5 + coverage * 22}px rgba(180,90,5,${0.14 + coverage * 0.50}), 0 0 ${30 + coverage * 75}px ${8 + coverage * 28}px rgba(140,65,3,${0.05 + coverage * 0.30}), inset 0 0 ${5 + coverage * 52}px ${1.5 + coverage * 20}px rgba(165,75,4,${0.03 + coverage * 0.24})`
+                ? `0 0 0 ${0.5 + coverage * 2}px rgba(251,191,36,${0.14 + coverage * 0.52}), 0 0 ${14 + coverage * 52}px ${5 + coverage * 22}px rgba(251,191,36,${0.10 + coverage * 0.34}), 0 0 ${30 + coverage * 75}px ${8 + coverage * 28}px rgba(245,158,11,${0.04 + coverage * 0.20}), inset 0 0 ${5 + coverage * 52}px ${1.5 + coverage * 20}px rgba(252,211,77,${0.02 + coverage * 0.16})`
                 : '0 0 22px rgba(109,40,217,0.16)',
             }}
           >
