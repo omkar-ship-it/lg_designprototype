@@ -484,10 +484,10 @@ function RubLampContent() {
               )}
             </AnimatePresence>
 
-            {/* Smoke particles — origin at lamp opening (top-right of lamp body) */}
+            {/* Smoke particles — origin at lamp spout/nozzle tip (left side) */}
             <div
               className="absolute pointer-events-none overflow-visible"
-              style={{ left: '58%', top: '33%' }}
+              style={{ left: '20%', top: '42%' }}
             >
               <AnimatePresence>
                 {particles.map(p => (
