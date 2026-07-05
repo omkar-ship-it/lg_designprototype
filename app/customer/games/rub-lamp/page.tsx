@@ -317,7 +317,7 @@ function RubLampContent() {
           <svg
             viewBox="0 0 220 220"
             className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ transform: 'rotate(-90deg)' }}
+            style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}
           >
             <defs>
               <filter id="lampBloomWide" x="-130%" y="-130%" width="360%" height="360%">
@@ -434,9 +434,9 @@ function RubLampContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: ringClaimed
-                ? '0 0 70px rgba(245,158,11,0.5), 0 0 120px rgba(109,40,217,0.35)'
-                : isRubbing
-                  ? `0 0 ${30 + glowIntensity * 40}px rgba(245,158,11,${0.1 + glowIntensity * 0.25}), 0 0 ${60 + glowIntensity * 30}px rgba(109,40,217,0.2)`
+                ? '0 0 0 3px rgba(255,150,0,0.90), 0 0 55px 22px rgba(255,120,0,0.72), 0 0 110px 38px rgba(255,80,0,0.42), inset 0 0 65px 22px rgba(255,100,0,0.30)'
+                : charge > 3
+                  ? `0 0 0 ${1 + glowIntensity * 3}px rgba(255,150,0,${0.20 + glowIntensity * 0.70}), 0 0 ${18 + glowIntensity * 62}px ${7 + glowIntensity * 28}px rgba(255,120,0,${0.18 + glowIntensity * 0.58}), 0 0 ${38 + glowIntensity * 85}px ${10 + glowIntensity * 32}px rgba(255,80,0,${0.07 + glowIntensity * 0.35}), inset 0 0 ${8 + glowIntensity * 58}px ${2 + glowIntensity * 22}px rgba(255,100,0,${0.04 + glowIntensity * 0.28})`
                   : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >

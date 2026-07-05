@@ -306,7 +306,7 @@ function SummonCircleContent() {
           <svg
             viewBox={`0 0 ${CONTAINER} ${CONTAINER}`}
             className="absolute inset-0 pointer-events-none"
-            style={{ width: CONTAINER, height: CONTAINER }}
+            style={{ width: CONTAINER, height: CONTAINER, overflow: 'visible' }}
           >
             <defs>
               {/* Ultra-wide atmospheric bloom */}
@@ -550,10 +550,10 @@ function SummonCircleContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: claimed
-                ? '0 0 65px rgba(245,158,11,0.45), 0 0 110px rgba(109,40,217,0.32)'
-                : isDrawing
-                  ? `0 0 ${30 + coverage * 40}px rgba(245,158,11,${0.1 + coverage * 0.28}), 0 0 80px rgba(109,40,217,0.2)`
-                  : '0 0 22px rgba(109,40,217,0.16)',
+              ? '0 0 0 3px rgba(255,150,0,0.90), 0 0 55px 22px rgba(255,120,0,0.72), 0 0 110px 38px rgba(255,80,0,0.42), inset 0 0 65px 22px rgba(255,100,0,0.30)'
+              : coverage > 0.03
+                ? `0 0 0 ${1 + coverage * 3}px rgba(255,150,0,${0.20 + coverage * 0.70}), 0 0 ${18 + coverage * 62}px ${7 + coverage * 28}px rgba(255,120,0,${0.18 + coverage * 0.58}), 0 0 ${38 + coverage * 85}px ${10 + coverage * 32}px rgba(255,80,0,${0.07 + coverage * 0.35}), inset 0 0 ${8 + coverage * 58}px ${2 + coverage * 22}px rgba(255,100,0,${0.04 + coverage * 0.28})`
+                : '0 0 22px rgba(109,40,217,0.16)',
             }}
           >
             {/* Bokeh light orbs */}
