@@ -319,48 +319,101 @@ function RubLampContent() {
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ transform: 'rotate(-90deg)' }}
           >
-            {ringClaimed && (
-              <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(245,158,11,0.20)" strokeWidth="18" />
-            )}
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(251,191,36,0.38)" strokeWidth="4" strokeDasharray="8 5" />
-            {charge > 0 && (
-              <circle
-                cx={CX} cy={CY} r={R}
-                fill="none"
-                stroke="url(#lampGold)"
-                strokeWidth={ringClaimed ? 7 : 5}
-                strokeLinecap="round"
-                strokeDasharray={`${ringFilled} ${CIRC}`}
-                style={{
-                  filter: ringClaimed
-                    ? 'drop-shadow(0 0 10px rgba(245,158,11,1))'
-                    : `drop-shadow(0 0 ${4 + glowIntensity * 8}px rgba(245,158,11,${0.5 + glowIntensity * 0.5}))`,
-                }}
-              />
-            )}
             <defs>
-              <linearGradient id="lampGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FBBF24" />
-                <stop offset="50%" stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#D97706" />
-              </linearGradient>
+              <filter id="lampNeonBlur" x="-80%" y="-80%" width="260%" height="260%">
+                <feGaussianBlur stdDeviation="9" result="blur" />
+                <feMerge><feMergeNode in="blur" /></feMerge>
+              </filter>
+              <filter id="lampRingGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="12" floodColor="#F59E0B" floodOpacity="1" />
+              </filter>
             </defs>
+
+            {/* Guide ring — subtle lavender dashes */}
+            <circle cx={CX} cy={CY} r={R} fill="none"
+              stroke="rgba(150,90,255,0.10)" strokeWidth="22" />
+            <circle cx={CX} cy={CY} r={R} fill="none"
+              stroke="rgba(180,140,255,0.30)" strokeWidth="2" strokeDasharray="10 8" />
+
+            {/* Progress arc — neon 3-layer plasma */}
+            {charge > 0 && !ringClaimed && (
+              <>
+                <circle
+                  cx={CX} cy={CY} r={R}
+                  fill="none"
+                  stroke={`rgba(255,150,10,${0.20 + glowIntensity * 0.20})`}
+                  strokeWidth="28"
+                  strokeLinecap="round"
+                  strokeDasharray={`${ringFilled} ${CIRC}`}
+                  filter="url(#lampNeonBlur)"
+                />
+                <circle
+                  cx={CX} cy={CY} r={R}
+                  fill="none"
+                  stroke={`rgba(251,191,36,${0.60 + glowIntensity * 0.25})`}
+                  strokeWidth="11"
+                  strokeLinecap="round"
+                  strokeDasharray={`${ringFilled} ${CIRC}`}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.95))' }}
+                />
+                <circle
+                  cx={CX} cy={CY} r={R}
+                  fill="none"
+                  stroke="rgba(255,248,220,0.96)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${ringFilled} ${CIRC}`}
+                />
+              </>
+            )}
+
+            {/* Claimed full ring — neon glow */}
+            {ringClaimed && (
+              <>
+                <circle cx={CX} cy={CY} r={R}
+                  fill="none" stroke="rgba(255,150,10,0.28)" strokeWidth="28"
+                  filter="url(#lampNeonBlur)" />
+                <circle cx={CX} cy={CY} r={R}
+                  fill="none" stroke="#F59E0B" strokeWidth="10"
+                  filter="url(#lampRingGlow)" />
+                <circle cx={CX} cy={CY} r={R}
+                  fill="none" stroke="rgba(255,248,220,0.92)" strokeWidth="2.5" />
+              </>
+            )}
           </svg>
 
-          {/* Tip dot tracking ring */}
+          {/* Tip dot tracking ring — layered neon */}
           {charge > 1 && !ringClaimed && (
-            <motion.div
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                width: 14, height: 14,
-                left: dotX - 7,
-                top:  dotY - 7,
-                background: '#FBBF24',
-                boxShadow: `0 0 ${8 + glowIntensity * 8}px 3px rgba(245,158,11,${0.6 + glowIntensity * 0.4})`,
-              }}
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.4, repeat: Infinity }}
-            />
+            <>
+              <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 42, height: 42,
+                  left: dotX - 21, top: dotY - 21,
+                  background: 'rgba(255,175,20,0.22)',
+                  filter: 'blur(12px)',
+                }}
+              />
+              <motion.div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 18, height: 18,
+                  left: dotX - 9, top: dotY - 9,
+                  background: '#FBBF24',
+                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(245,158,11,${0.7 + glowIntensity * 0.3})`,
+                }}
+                animate={{ scale: [1, 1.25, 1] }}
+                transition={{ duration: 0.4, repeat: Infinity }}
+              />
+              <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 8, height: 8,
+                  left: dotX - 4, top: dotY - 4,
+                  background: 'rgba(255,255,245,0.96)',
+                }}
+              />
+            </>
           )}
 
           {/* Inner circle */}
@@ -375,6 +428,12 @@ function RubLampContent() {
                   : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >
+            {/* Bokeh light orbs */}
+            <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+              <div style={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,80,40,0.13)', filter: 'blur(24px)', left: '8%', top: '18%' }} />
+              <div style={{ position: 'absolute', width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,165,30,0.11)', filter: 'blur(20px)', right: '12%', bottom: '22%' }} />
+              <div style={{ position: 'absolute', width: 60, height: 60, borderRadius: '50%', background: 'rgba(120,40,230,0.20)', filter: 'blur(18px)', right: '22%', top: '12%' }} />
+            </div>
             <AnimatePresence mode="wait">
               {genieVisible ? (
                 <motion.div

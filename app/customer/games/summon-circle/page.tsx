@@ -309,28 +309,30 @@ function SummonCircleContent() {
             style={{ width: CONTAINER, height: CONTAINER }}
           >
             <defs>
-              <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#F59E0B" floodOpacity="0.9" />
+              <filter id="neonBlur" x="-80%" y="-80%" width="260%" height="260%">
+                <feGaussianBlur stdDeviation="9" result="blur" />
+                <feMerge><feMergeNode in="blur" /></feMerge>
+              </filter>
+              <filter id="dotGlow" x="-200%" y="-200%" width="500%" height="500%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
               </filter>
               <filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#F59E0B" floodOpacity="1" />
-              </filter>
-              <filter id="guideGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#FBBF24" floodOpacity="0.75" />
+                <feDropShadow dx="0" dy="0" stdDeviation="12" floodColor="#F59E0B" floodOpacity="1" />
               </filter>
             </defs>
 
-            {/* Guide ring — bright and clearly visible */}
+            {/* Guide ring — subtle lavender dashes for undrawn portion */}
             {!claimed && (
               <>
-                {/* Soft gold outer glow halo */}
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(251,191,36,0.15)" strokeWidth="18" />
-                {/* Main gold dashed guide */}
+                  stroke="rgba(150,90,255,0.10)" strokeWidth="22" />
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(251,191,36,0.55)" strokeWidth="2.5"
-                  strokeDasharray="12 7"
-                  filter="url(#guideGlow)"
+                  stroke="rgba(180,140,255,0.30)" strokeWidth="2"
+                  strokeDasharray="10 8"
                 />
               </>
             )}
@@ -340,39 +342,65 @@ function SummonCircleContent() {
               const rad = (deg - 90) * Math.PI / 180
               return (
                 <line key={deg}
-                  x1={CX + (RING_R - 14) * Math.cos(rad)} y1={CY + (RING_R - 14) * Math.sin(rad)}
-                  x2={CX + (RING_R + 14) * Math.cos(rad)} y2={CY + (RING_R + 14) * Math.sin(rad)}
-                  stroke="rgba(251,191,36,0.65)" strokeWidth="2.5" strokeLinecap="round"
+                  x1={CX + (RING_R - 12) * Math.cos(rad)} y1={CY + (RING_R - 12) * Math.sin(rad)}
+                  x2={CX + (RING_R + 12) * Math.cos(rad)} y2={CY + (RING_R + 12) * Math.sin(rad)}
+                  stroke="rgba(180,140,255,0.45)" strokeWidth="2" strokeLinecap="round"
                 />
               )
             })}
 
-            {/* Progress arc — thick gold fill from 12 o'clock */}
+            {/* Progress arc — neon 3-layer plasma glow */}
             {coverage > 0 && !claimed && (
-              <circle
-                cx={CX} cy={CY} r={RING_R}
-                fill="none"
-                stroke="#F59E0B"
-                strokeWidth="9"
-                strokeLinecap="round"
-                strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
-                style={{
-                  transform: 'rotate(-90deg)',
-                  transformOrigin: `${CX}px ${CY}px`,
-                  filter: `drop-shadow(0 0 ${6 + coverage * 10}px rgba(245,158,11,${0.8 + coverage * 0.2}))`,
-                }}
-              />
+              <>
+                {/* Outer diffuse bloom */}
+                <circle
+                  cx={CX} cy={CY} r={RING_R}
+                  fill="none"
+                  stroke={`rgba(255,150,10,${0.20 + coverage * 0.20})`}
+                  strokeWidth="32"
+                  strokeLinecap="round"
+                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                  filter="url(#neonBlur)"
+                />
+                {/* Mid warm glow */}
+                <circle
+                  cx={CX} cy={CY} r={RING_R}
+                  fill="none"
+                  stroke={`rgba(251,191,36,${0.60 + coverage * 0.25})`}
+                  strokeWidth="11"
+                  strokeLinecap="round"
+                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                  style={{
+                    transform: 'rotate(-90deg)',
+                    transformOrigin: `${CX}px ${CY}px`,
+                    filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.95))',
+                  }}
+                />
+                {/* Bright white-gold core */}
+                <circle
+                  cx={CX} cy={CY} r={RING_R}
+                  fill="none"
+                  stroke="rgba(255,248,220,0.96)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                />
+              </>
             )}
 
-            {/* Moving tip dot */}
+            {/* Moving tip dot — layered neon */}
             {coverage > 0 && !claimed && (() => {
               const a = (-90 + coverage * 360) * (Math.PI / 180)
+              const tx = CX + RING_R * Math.cos(a)
+              const ty = CY + RING_R * Math.sin(a)
               return (
-                <circle
-                  cx={CX + RING_R * Math.cos(a)}
-                  cy={CY + RING_R * Math.sin(a)}
-                  r={7} fill="#FBBF24" filter="url(#goldGlow)"
-                />
+                <>
+                  <circle cx={tx} cy={ty} r={20} fill="rgba(255,190,30,0.22)" filter="url(#neonBlur)" />
+                  <circle cx={tx} cy={ty} r={9} fill="#FBBF24" filter="url(#dotGlow)" />
+                  <circle cx={tx} cy={ty} r={4} fill="rgba(255,255,245,0.96)" />
+                </>
               )
             })()}
 
@@ -385,7 +413,6 @@ function SummonCircleContent() {
                   fontFamily="system-ui,-apple-system">
                   START
                 </text>
-                {/* Clockwise arc arrow */}
                 <path d="M 150 38 A 112 112 0 0 1 222 112"
                   fill="none" stroke="rgba(245,158,11,0.6)" strokeWidth="3"
                   strokeLinecap="round" strokeDasharray="8 5" />
@@ -393,11 +420,18 @@ function SummonCircleContent() {
               </>
             )}
 
-            {/* Completed ring */}
+            {/* Completed ring — full neon glow */}
             {claimed && (
-              <circle cx={CX} cy={CY} r={RING_R}
-                fill="none" stroke="#F59E0B" strokeWidth="5"
-                filter="url(#ringGlow)" />
+              <>
+                <circle cx={CX} cy={CY} r={RING_R}
+                  fill="none" stroke="rgba(255,150,10,0.28)" strokeWidth="32"
+                  filter="url(#neonBlur)" />
+                <circle cx={CX} cy={CY} r={RING_R}
+                  fill="none" stroke="#F59E0B" strokeWidth="10"
+                  filter="url(#ringGlow)" />
+                <circle cx={CX} cy={CY} r={RING_R}
+                  fill="none" stroke="rgba(255,248,220,0.92)" strokeWidth="2.5" />
+              </>
             )}
           </svg>
 
@@ -509,6 +543,12 @@ function SummonCircleContent() {
                   : '0 0 22px rgba(109,40,217,0.16)',
             }}
           >
+            {/* Bokeh light orbs */}
+            <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+              <div style={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,80,40,0.13)', filter: 'blur(24px)', left: '8%', top: '18%' }} />
+              <div style={{ position: 'absolute', width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,165,30,0.11)', filter: 'blur(20px)', right: '12%', bottom: '22%' }} />
+              <div style={{ position: 'absolute', width: 60, height: 60, borderRadius: '50%', background: 'rgba(120,40,230,0.20)', filter: 'blur(18px)', right: '22%', top: '12%' }} />
+            </div>
             <AnimatePresence mode="wait">
               {claimed ? (
                 <motion.div
