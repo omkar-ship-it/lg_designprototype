@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import { useState, useRef, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Gift } from 'lucide-react'
@@ -8,7 +8,7 @@ import Link from 'next/link'
 const CONTAINER = 300
 const CX = 150
 const CY = 150
-const RING_R = 110
+const RING_R = 112
 const RING_CIRC = 2 * Math.PI * RING_R
 const SECTORS = 72
 
@@ -31,66 +31,45 @@ const STARS = [
 ]
 
 const ORBIT_PARTICLES = [
-  { angle: 0,   dist: 90, delay: 0 },
-  { angle: 72,  dist: 95, delay: 0.4 },
-  { angle: 144, dist: 88, delay: 0.8 },
-  { angle: 216, dist: 93, delay: 1.2 },
-  { angle: 288, dist: 90, delay: 1.6 },
+  { angle: 0,   dist: 88, delay: 0 },
+  { angle: 72,  dist: 93, delay: 0.4 },
+  { angle: 144, dist: 86, delay: 0.8 },
+  { angle: 216, dist: 91, delay: 1.2 },
+  { angle: 288, dist: 88, delay: 1.6 },
 ]
 
-const BURST_PARTICLES = Array.from({ length: 15 }, (_, i) => ({
-  angle: (i / 15) * 360,
-  dist: 80 + Math.random() * 60,
-  delay: Math.random() * 0.2,
+const BURST_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+  angle: (i / 18) * 360,
+  dist:  85 + Math.random() * 65,
+  delay: Math.random() * 0.25,
 }))
 
-const CONFETTI_PIECES = Array.from({ length: 50 }, (_, i) => ({
-  x: Math.random() * 100,
-  color: ['#F59E0B', '#FBBF24', '#D97706', '#FDE68A', '#A78BFA', '#8B5CF6'][i % 6],
-  delay: Math.random() * 0.6,
-  duration: 1.8 + Math.random() * 1.2,
-  rotate: Math.random() * 360,
+const CONFETTI_PIECES = Array.from({ length: 55 }, (_, i) => ({
+  x:        Math.random() * 100,
+  color:    ['#F59E0B', '#FBBF24', '#D97706', '#FDE68A', '#A78BFA', '#8B5CF6', '#EC4899'][i % 7],
+  delay:    Math.random() * 0.65,
+  duration: 1.9 + Math.random() * 1.3,
+  rotate:   Math.random() * 360,
 }))
 
 const DEFAULT_REWARD = {
-  name: 'Free Coffee',
-  subtitle: 'Any size · All locations',
-  pts: 50,
-  available: 18,
-  claimBefore: '7 Jul',
-  redeemBefore: '7 Jul',
+  name: 'Free Croissant',
+  subtitle: 'Any flavour · All locations',
+  pts: 75,
+  available: 12,
+  claimBefore: '10 Jul',
+  redeemBefore: '10 Jul',
 }
 
-function CuteGenie() {
-  return (
-    <svg width="92" height="92" viewBox="0 0 92 92" fill="none">
-      <path d="M32 92 C26 76 34 64 28 52 C24 44 29 36 37 32"
-        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
-      <path d="M60 92 C66 76 58 64 64 52 C68 44 63 36 55 32"
-        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
-      <ellipse cx="46" cy="56" rx="18" ry="14" fill="#60A5FA"/>
-      <path d="M28 52 Q17 41 22 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
-      <path d="M64 52 Q75 41 70 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
-      <circle cx="46" cy="25" r="23" fill="#60A5FA"/>
-      <circle cx="23" cy="27" r="5.5" fill="#3B82F6"/>
-      <circle cx="69" cy="27" r="5.5" fill="#3B82F6"/>
-      <circle cx="20" cy="31" r="2.8" fill="#FBBF24" stroke="#D97706" strokeWidth="0.8"/>
-      <ellipse cx="36" cy="21" rx="7.5" ry="8.5" fill="white"/>
-      <ellipse cx="56" cy="21" rx="7.5" ry="8.5" fill="white"/>
-      <circle cx="37.5" cy="22" r="5" fill="#1E3A8A"/>
-      <circle cx="54.5" cy="22" r="5" fill="#1E3A8A"/>
-      <circle cx="39.5" cy="19.5" r="1.8" fill="white"/>
-      <circle cx="56.5" cy="19.5" r="1.8" fill="white"/>
-      <ellipse cx="24" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
-      <ellipse cx="68" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
-      <ellipse cx="46" cy="31" rx="3" ry="2.5" fill="#3B82F6"/>
-      <path d="M35 40 Q46 51 57 40" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-      <text x="1" y="14" fontSize="11" fill="#FBBF24" opacity="0.9">✦</text>
-      <text x="72" y="10" fontSize="9" fill="#FBBF24" opacity="0.7">✦</text>
-      <text x="76" y="50" fontSize="7" fill="#A78BFA" opacity="0.6">✦</text>
-    </svg>
-  )
+type TrailParticle = {
+  id: number
+  cx: number
+  cy: number
+  dx: number
+  dy: number
 }
+
+let trailCounter = 0
 
 function StarField() {
   return (
@@ -100,7 +79,7 @@ function StarField() {
           key={i}
           className="absolute text-white"
           style={{ left: `${s.x}%`, top: `${s.y}%`, opacity: s.o, fontSize: s.s }}
-          animate={{ opacity: [s.o, s.o * 0.35, s.o], scale: [1, 1.25, 1] }}
+          animate={{ opacity: [s.o, s.o * 0.3, s.o], scale: [1, 1.3, 1] }}
           transition={{ duration: 2.2 + i * 0.28, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
         >
           ✦
@@ -121,36 +100,41 @@ function SummonCircleContent() {
   const claimBefore  = params.get('cb')            ?? DEFAULT_REWARD.claimBefore
   const redeemBefore = params.get('rb')            ?? DEFAULT_REWARD.redeemBefore
 
-  const [coverage, setCoverage]     = useState(0)
-  const [claimed, setClaimed]       = useState(false)
-  const [isDrawing, setIsDrawing]   = useState(false)
-  const [flash, setFlash]           = useState(false)
-  const [showBurst, setShowBurst]   = useState(false)
+  const [coverage, setCoverage]           = useState(0)
+  const [claimed, setClaimed]             = useState(false)
+  const [isDrawing, setIsDrawing]         = useState(false)
+  const [flash, setFlash]                 = useState(false)
+  const [showBurst, setShowBurst]         = useState(false)
+  const [trailParticles, setTrailParticles] = useState<TrailParticle[]>([])
 
-  const visitedRef  = useRef<Set<number>>(new Set())
-  const firedRef    = useRef(false)
-  const isDownRef   = useRef(false)
+  const visitedRef   = useRef<Set<number>>(new Set())
+  const firedRef     = useRef(false)
+  const isDownRef    = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastTipRef   = useRef({ x: 0, y: 0 })
 
-  const getSectorFromAngle = (angle: number) => {
-    const normalized = ((angle * 180) / Math.PI + 360) % 360
-    return Math.floor(normalized / 5) % SECTORS
+  const coveragePct   = Math.round(coverage * 100)
+  const orbitVisible  = coverage > 0.1
+
+  const getSector = (angle: number) => {
+    const deg = ((angle * 180) / Math.PI + 360) % 360
+    return Math.floor(deg / 5) % SECTORS
   }
 
   const triggerClaim = useCallback(() => {
     firedRef.current = true
     setIsDrawing(false)
-    if (typeof navigator !== 'undefined') navigator.vibrate?.([80, 40, 120])
+    if (typeof navigator !== 'undefined') navigator.vibrate?.([80, 40, 120, 40, 180])
     setFlash(true)
-    setTimeout(() => setFlash(false), 400)
+    setTimeout(() => setFlash(false), 450)
     setShowBurst(true)
-    setTimeout(() => setClaimed(true), 500)
+    setTimeout(() => setClaimed(true), 520)
   }, [])
 
-  const getContainerCenter = useCallback(() => {
+  const getCenter = useCallback(() => {
     if (!containerRef.current) return { x: CX, y: CY }
-    const rect = containerRef.current.getBoundingClientRect()
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+    const r = containerRef.current.getBoundingClientRect()
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
   }, [])
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -162,16 +146,37 @@ function SummonCircleContent() {
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!isDownRef.current || firedRef.current) return
-    const center = getContainerCenter()
+    const center = getCenter()
     const dx = e.clientX - center.x
     const dy = e.clientY - center.y
     const angle = Math.atan2(dy, dx)
-    const sector = getSectorFromAngle(angle)
-    visitedRef.current.add(sector)
+    visitedRef.current.add(getSector(angle))
+
+    // Tip position in container SVG coords
+    const tipX = CX + RING_R * Math.cos(angle)
+    const tipY = CY + RING_R * Math.sin(angle)
+
+    // Emit sparkle trail particle every ~8px of tip movement
+    const moved = Math.hypot(tipX - lastTipRef.current.x, tipY - lastTipRef.current.y)
+    if (moved > 8) {
+      lastTipRef.current = { x: tipX, y: tipY }
+      const driftAngle = Math.atan2(tipY - CY, tipX - CX)
+      const dist = 12 + Math.random() * 14
+      setTrailParticles(prev => {
+        const p: TrailParticle = {
+          id: ++trailCounter,
+          cx: tipX,
+          cy: tipY,
+          dx: Math.cos(driftAngle) * dist,
+          dy: Math.sin(driftAngle) * dist,
+        }
+        return [...prev.slice(-22), p]
+      })
+    }
 
     const cov = visitedRef.current.size / SECTORS
     setCoverage(cov)
-    if (cov >= 0.85) triggerClaim()
+    if (cov >= 0.85 && !firedRef.current) triggerClaim()
   }
 
   const onPointerUp = () => {
@@ -179,8 +184,9 @@ function SummonCircleContent() {
     setIsDrawing(false)
   }
 
-  const coveragePct = Math.round(coverage * 100)
-  const orbitVisible = coverage > 0.1
+  const removeTrail = useCallback((id: number) => {
+    setTrailParticles(prev => prev.filter(p => p.id !== id))
+  }, [])
 
   return (
     <div
@@ -189,29 +195,31 @@ function SummonCircleContent() {
     >
       <StarField />
 
+      {/* Flash on completion */}
       <AnimatePresence>
         {flash && (
           <motion.div
             className="fixed inset-0 z-50 pointer-events-none"
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.6, 0] }}
+            animate={{ opacity: [0, 0.75, 0] }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, times: [0, 0.4, 1] }}
-            style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(245,158,11,0.7) 60%, transparent 100%)' }}
+            transition={{ duration: 0.45, times: [0, 0.35, 1] }}
+            style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.95) 0%, rgba(245,158,11,0.75) 55%, transparent 100%)' }}
           />
         )}
       </AnimatePresence>
 
+      {/* Confetti */}
       <AnimatePresence>
         {claimed && (
           <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden">
             {CONFETTI_PIECES.map((c, i) => (
               <motion.div
                 key={i}
-                className="absolute w-2 h-1.5 rounded-sm"
+                className="absolute w-2 h-2 rounded-sm"
                 style={{ left: `${c.x}%`, top: '-8px', background: c.color }}
                 initial={{ y: 0, opacity: 1, rotate: c.rotate }}
-                animate={{ y: '105vh', opacity: [1, 1, 0], rotate: c.rotate + 360 * 2 }}
+                animate={{ y: '108vh', opacity: [1, 1, 0], rotate: c.rotate + 720 }}
                 transition={{ duration: c.duration, delay: c.delay, ease: 'easeIn' }}
               />
             ))}
@@ -228,24 +236,23 @@ function SummonCircleContent() {
 
       <div className="flex-1 flex flex-col items-center px-5 pt-20 pb-8 relative z-10">
 
-        <div className="text-center mb-7 min-h-[60px] flex flex-col items-center justify-center">
+        {/* Title */}
+        <div className="text-center mb-6 min-h-[60px] flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
             {claimed ? (
               <motion.div
-                key="claimed-title"
+                key="claimed"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
               >
-                <p className="text-white text-[21px] font-bold leading-snug">
-                  ★ Your wish was granted! ✨
-                </p>
+                <p className="text-white text-[22px] font-bold">★ Your wish was granted! ✨</p>
                 <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
             ) : (
-              <motion.div key="summon-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-white text-[21px] font-bold leading-snug">
-                  Summon the genie to claim<br />your reward
+              <motion.div key="draw" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                <p className="text-white text-[22px] font-bold leading-snug">
+                  Draw a circle to<br />summon the genie
                 </p>
                 <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
@@ -253,132 +260,112 @@ function SummonCircleContent() {
           </AnimatePresence>
         </div>
 
+        {/* Circle arena */}
         <div
           ref={containerRef}
           className="relative flex items-center justify-center mb-5"
-          style={{
-            width: CONTAINER,
-            height: CONTAINER,
-            touchAction: 'none',
-            cursor: claimed ? 'default' : isDrawing ? 'crosshair' : 'crosshair',
-          }}
+          style={{ width: CONTAINER, height: CONTAINER, touchAction: 'none', cursor: 'crosshair' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
+          {/* SVG layer */}
           <svg
             viewBox={`0 0 ${CONTAINER} ${CONTAINER}`}
             className="absolute inset-0 pointer-events-none"
             style={{ width: CONTAINER, height: CONTAINER }}
           >
             <defs>
-              <filter id="goldGlow">
-                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#F59E0B" floodOpacity="0.8" />
+              <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#F59E0B" floodOpacity="0.9" />
               </filter>
-              <filter id="ringGlow">
-                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#F59E0B" floodOpacity="0.9" />
+              <filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#F59E0B" floodOpacity="1" />
+              </filter>
+              <filter id="guideGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#FFFFFF" floodOpacity="0.7" />
               </filter>
             </defs>
 
-            {/* Guide ring — visible dashed track */}
+            {/* Guide ring — bright and clearly visible */}
             {!claimed && (
-              <circle
-                cx={CX} cy={CY} r={RING_R}
-                fill="none"
-                stroke="rgba(255,255,255,0.28)"
-                strokeWidth="3"
-                strokeDasharray="10 6"
-              />
+              <>
+                {/* Soft outer glow */}
+                <circle cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke="rgba(245,158,11,0.15)" strokeWidth="16" />
+                {/* Main dashed guide */}
+                <circle cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke="rgba(255,255,255,0.55)" strokeWidth="2.5"
+                  strokeDasharray="12 7"
+                  filter="url(#guideGlow)"
+                />
+              </>
             )}
 
             {/* Tick marks at 12 / 3 / 6 / 9 o'clock */}
             {!claimed && [0, 90, 180, 270].map(deg => {
               const rad = (deg - 90) * Math.PI / 180
               return (
-                <line
-                  key={deg}
-                  x1={CX + (RING_R - 12) * Math.cos(rad)}
-                  y1={CY + (RING_R - 12) * Math.sin(rad)}
-                  x2={CX + (RING_R + 12) * Math.cos(rad)}
-                  y2={CY + (RING_R + 12) * Math.sin(rad)}
-                  stroke="rgba(255,255,255,0.55)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
+                <line key={deg}
+                  x1={CX + (RING_R - 14) * Math.cos(rad)} y1={CY + (RING_R - 14) * Math.sin(rad)}
+                  x2={CX + (RING_R + 14) * Math.cos(rad)} y2={CY + (RING_R + 14) * Math.sin(rad)}
+                  stroke="rgba(255,255,255,0.70)" strokeWidth="2.5" strokeLinecap="round"
                 />
               )
             })}
 
-            {/* Progress arc — fills clockwise from 12 o'clock */}
+            {/* Progress arc — thick gold fill from 12 o'clock */}
             {coverage > 0 && !claimed && (
               <circle
                 cx={CX} cy={CY} r={RING_R}
                 fill="none"
                 stroke="#F59E0B"
-                strokeWidth="5"
+                strokeWidth="9"
                 strokeLinecap="round"
                 strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                 style={{
-                  transform: `rotate(-90deg)`,
+                  transform: 'rotate(-90deg)',
                   transformOrigin: `${CX}px ${CY}px`,
-                  filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.85))',
+                  filter: `drop-shadow(0 0 ${6 + coverage * 10}px rgba(245,158,11,${0.8 + coverage * 0.2}))`,
                 }}
               />
             )}
 
-            {/* Moving tip dot at arc head */}
+            {/* Moving tip dot */}
             {coverage > 0 && !claimed && (() => {
               const a = (-90 + coverage * 360) * (Math.PI / 180)
               return (
                 <circle
                   cx={CX + RING_R * Math.cos(a)}
                   cy={CY + RING_R * Math.sin(a)}
-                  r={6}
-                  fill="#F59E0B"
-                  filter="url(#goldGlow)"
+                  r={7} fill="#FBBF24" filter="url(#goldGlow)"
                 />
               )
             })()}
 
-            {/* Clockwise arrow arc at 12 o'clock — shown before drawing begins */}
+            {/* START label + clockwise hint — before user draws */}
             {coverage === 0 && !claimed && (
               <>
-                <path
-                  d="M 150 40 A 110 110 0 0 1 218 110"
-                  fill="none"
-                  stroke="rgba(245,158,11,0.55)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray="7 5"
-                />
-                <polygon
-                  points="218,110 208,96 222,96"
-                  fill="rgba(245,158,11,0.65)"
-                />
-                {/* START label above the dot */}
-                <text
-                  x={CX}
-                  y={CY - RING_R - 22}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="bold"
-                  fill="rgba(245,158,11,0.9)"
-                  fontFamily="system-ui,-apple-system"
-                >
+                <text x={CX} y={CY - RING_R - 24}
+                  textAnchor="middle" fontSize="12" fontWeight="bold"
+                  fill="rgba(245,158,11,0.95)"
+                  fontFamily="system-ui,-apple-system">
                   START
                 </text>
+                {/* Clockwise arc arrow */}
+                <path d="M 150 38 A 112 112 0 0 1 222 112"
+                  fill="none" stroke="rgba(245,158,11,0.6)" strokeWidth="3"
+                  strokeLinecap="round" strokeDasharray="8 5" />
+                <polygon points="222,112 210,100 225,98" fill="rgba(245,158,11,0.7)" />
               </>
             )}
 
             {/* Completed ring */}
             {claimed && (
-              <circle
-                cx={CX} cy={CY} r={RING_R}
-                fill="none"
-                stroke="#F59E0B"
-                strokeWidth="4"
-                filter="url(#ringGlow)"
-              />
+              <circle cx={CX} cy={CY} r={RING_R}
+                fill="none" stroke="#F59E0B" strokeWidth="5"
+                filter="url(#ringGlow)" />
             )}
           </svg>
 
@@ -387,19 +374,18 @@ function SummonCircleContent() {
             <motion.div
               className="absolute rounded-full pointer-events-none"
               style={{
-                width: 16,
-                height: 16,
-                left: CX - 8,
-                top: CY - RING_R - 8,
+                width: 18, height: 18,
+                left: CX - 9,
+                top: CY - RING_R - 9,
                 background: '#F59E0B',
-                boxShadow: '0 0 14px 4px rgba(245,158,11,0.75)',
+                boxShadow: '0 0 16px 5px rgba(245,158,11,0.8)',
               }}
-              animate={{ scale: [1, 1.55, 1], opacity: [1, 0.45, 1] }}
-              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+              animate={{ scale: [1, 1.6, 1], opacity: [1, 0.4, 1] }}
+              transition={{ duration: 1.3, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
 
-          {/* Orbiting demo dot — animates clockwise to show the user where to draw */}
+          {/* Orbiting demo dot — shows clockwise direction before drawing */}
           {coverage === 0 && !isDrawing && !claimed && (
             <motion.div
               className="absolute pointer-events-none"
@@ -410,121 +396,124 @@ function SummonCircleContent() {
               <div
                 className="absolute rounded-full"
                 style={{
-                  width: 10,
-                  height: 10,
-                  left: CX - 5,
-                  top: CY - RING_R - 5,
-                  background: 'rgba(245,158,11,0.55)',
-                  boxShadow: '0 0 8px 3px rgba(245,158,11,0.35)',
+                  width: 11, height: 11,
+                  left: CX - 5.5,
+                  top:  CY - RING_R - 5.5,
+                  background: 'rgba(245,158,11,0.6)',
+                  boxShadow: '0 0 10px 3px rgba(245,158,11,0.4)',
                 }}
               />
             </motion.div>
           )}
 
+          {/* Sparkle trail particles at arc tip */}
+          {trailParticles.map(p => (
+            <motion.div
+              key={p.id}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 7, height: 7,
+                left: p.cx - 3.5,
+                top:  p.cy - 3.5,
+                background: '#FBBF24',
+                boxShadow: '0 0 6px 2px rgba(245,158,11,0.7)',
+              }}
+              initial={{ opacity: 1, scale: 1 }}
+              animate={{ opacity: 0, scale: 0.2, x: p.dx, y: p.dy }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              onAnimationComplete={() => removeTrail(p.id)}
+            />
+          ))}
+
+          {/* Orbit particles (appear as coverage grows) */}
           <AnimatePresence>
-            {orbitVisible && !claimed && (
-              <>
-                {ORBIT_PARTICLES.map((p, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute pointer-events-none"
-                    style={{ width: CONTAINER, height: CONTAINER, top: 0, left: 0 }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2 + i * 0.3, repeat: Infinity, ease: 'linear', delay: p.delay }}
-                  >
-                    <motion.div
-                      className="absolute w-2 h-2 rounded-full bg-amber-400"
-                      style={{
-                        left: CX + p.dist * Math.cos((p.angle * Math.PI) / 180) - 4,
-                        top: CY + p.dist * Math.sin((p.angle * Math.PI) / 180) - 4,
-                        boxShadow: '0 0 6px 2px rgba(245,158,11,0.7)',
-                        opacity: Math.min(1, coverage * 3),
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </>
-            )}
+            {orbitVisible && !claimed && ORBIT_PARTICLES.map((p, i) => (
+              <motion.div
+                key={i}
+                className="absolute pointer-events-none"
+                style={{ width: CONTAINER, height: CONTAINER, top: 0, left: 0 }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2 + i * 0.3, repeat: Infinity, ease: 'linear', delay: p.delay }}
+              >
+                <motion.div
+                  className="absolute w-2.5 h-2.5 rounded-full bg-amber-400"
+                  style={{
+                    left: CX + p.dist * Math.cos((p.angle * Math.PI) / 180) - 5,
+                    top:  CY + p.dist * Math.sin((p.angle * Math.PI) / 180) - 5,
+                    boxShadow: '0 0 8px 3px rgba(245,158,11,0.75)',
+                    opacity: Math.min(1, coverage * 3.5),
+                  }}
+                />
+              </motion.div>
+            ))}
           </AnimatePresence>
 
+          {/* Burst particles on completion */}
           <AnimatePresence>
-            {showBurst && (
-              <>
-                {BURST_PARTICLES.map((p, i) => {
-                  const rad = (p.angle * Math.PI) / 180
-                  return (
-                    <motion.div
-                      key={i}
-                      className="absolute w-2 h-2 rounded-full pointer-events-none"
-                      style={{
-                        left: CX - 4,
-                        top: CY - 4,
-                        background: '#F59E0B',
-                        boxShadow: '0 0 6px 2px rgba(245,158,11,0.8)',
-                      }}
-                      initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-                      animate={{
-                        x: Math.cos(rad) * p.dist,
-                        y: Math.sin(rad) * p.dist,
-                        opacity: 0,
-                        scale: 0.2,
-                      }}
-                      transition={{ duration: 0.7, delay: p.delay, ease: 'easeOut' }}
-                    />
-                  )
-                })}
-              </>
-            )}
+            {showBurst && BURST_PARTICLES.map((p, i) => {
+              const rad = (p.angle * Math.PI) / 180
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute w-2.5 h-2.5 rounded-full pointer-events-none"
+                  style={{ left: CX - 5, top: CY - 5, background: '#F59E0B', boxShadow: '0 0 8px 3px rgba(245,158,11,0.85)' }}
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                  animate={{ x: Math.cos(rad) * p.dist, y: Math.sin(rad) * p.dist, opacity: 0, scale: 0.2 }}
+                  transition={{ duration: 0.75, delay: p.delay, ease: 'easeOut' }}
+                />
+              )
+            })}
           </AnimatePresence>
 
+          {/* Inner circle — lamp or genie */}
           <motion.div
             className="absolute inset-6 rounded-full flex items-center justify-center overflow-hidden"
             style={{
-              background: 'radial-gradient(circle at 38% 32%, rgba(100,40,200,0.72) 0%, rgba(18,6,50,0.96) 70%)',
-              boxShadow: isDrawing && !claimed
-                ? '0 0 44px rgba(245,158,11,0.28), 0 0 80px rgba(109,40,217,0.22)'
-                : claimed
-                  ? '0 0 60px rgba(245,158,11,0.4), 0 0 100px rgba(109,40,217,0.28)'
-                  : '0 0 20px rgba(109,40,217,0.16)',
+              background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
+              boxShadow: claimed
+                ? '0 0 65px rgba(245,158,11,0.45), 0 0 110px rgba(109,40,217,0.32)'
+                : isDrawing
+                  ? `0 0 ${30 + coverage * 40}px rgba(245,158,11,${0.1 + coverage * 0.28}), 0 0 80px rgba(109,40,217,0.2)`
+                  : '0 0 22px rgba(109,40,217,0.16)',
             }}
           >
             <AnimatePresence mode="wait">
               {claimed ? (
                 <motion.div
                   key="genie"
-                  initial={{ scale: 0, rotate: -30, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.1 }}
+                  initial={{ scale: 0, y: 20, opacity: 0 }}
+                  animate={{ scale: [0, 1.2, 1], y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 13, delay: 0.08 }}
                 >
-                  <CuteGenie />
+                  <img src="/genie.png" alt="Genie" style={{ width: 100, height: 'auto', objectFit: 'contain' }} />
                 </motion.div>
               ) : (
                 <motion.div
                   key="lamp"
                   animate={isDrawing
-                    ? { scale: [1, 1.05, 1], rotate: [-2, 2, -2, 0] }
+                    ? { scale: [1, 1.06, 1], rotate: [-3, 3, -3, 0] }
                     : { scale: [1, 1.025, 1] }
                   }
                   transition={isDrawing
-                    ? { duration: 0.3, repeat: Infinity }
-                    : { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }
+                    ? { duration: 0.28, repeat: Infinity }
+                    : { duration: 2.5, repeat: Infinity, ease: 'easeInOut' }
                   }
-                  className="text-7xl leading-none"
                   style={{
                     filter: coverage > 0.6
-                      ? `drop-shadow(0 0 ${8 + (coverage - 0.6) * 20}px rgba(245,158,11,0.8))`
+                      ? `drop-shadow(0 0 ${10 + (coverage - 0.6) * 20}px rgba(245,158,11,0.9)) drop-shadow(0 0 20px rgba(245,158,11,0.5))`
                       : coverage > 0.2
-                        ? 'drop-shadow(0 0 4px rgba(245,158,11,0.4))'
-                        : 'none',
+                        ? 'drop-shadow(0 0 8px rgba(245,158,11,0.5))'
+                        : 'drop-shadow(0 0 3px rgba(245,158,11,0.2))',
                   }}
                 >
-                  🪔
+                  <img src="/genie-lamp.png" alt="Lamp" style={{ width: 95, height: 'auto', objectFit: 'contain' }} />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         </div>
 
+        {/* Progress */}
         <AnimatePresence>
           {!claimed && (
             <motion.div
@@ -532,37 +521,57 @@ function SummonCircleContent() {
               className="w-full max-w-xs mb-5"
             >
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.42)' }}>
                   Circle progress
                 </p>
                 <motion.p
+                  key={coveragePct}
                   className="text-2xl font-bold tabular-nums"
                   style={{ color: coveragePct > 60 ? '#FBBF24' : coveragePct > 25 ? '#FCD34D' : 'rgba(255,255,255,0.65)' }}
-                  key={coveragePct}
-                  animate={{ scale: [1.12, 1] }}
+                  animate={{ scale: [1.15, 1] }}
                   transition={{ duration: 0.15 }}
                 >
                   {coveragePct}%
                 </motion.p>
               </div>
-              <div
-                className="w-full h-2.5 rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.10)' }}
-              >
+              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.09)' }}>
                 <motion.div
                   className="h-full rounded-full"
                   style={{
                     background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
-                    boxShadow: coveragePct > 0 ? '0 0 12px rgba(245,158,11,0.7)' : 'none',
+                    boxShadow: coveragePct > 0 ? `0 0 ${8 + coveragePct / 10}px rgba(245,158,11,0.75)` : 'none',
                   }}
                   animate={{ width: `${Math.min(100, coveragePct)}%` }}
                   transition={{ duration: 0.08 }}
                 />
               </div>
+              {coverage === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
+                  className="text-center mt-3"
+                >
+                  <p className="text-sm font-semibold" style={{ color: 'rgba(245,158,11,0.85)' }}>
+                    Start at the gold dot ↑
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                    Draw a full circle clockwise ↻
+                  </p>
+                </motion.div>
+              )}
+              {coverage > 0 && coverage < 0.85 && (
+                <motion.p
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="text-center text-xs mt-2"
+                  style={{ color: coverage > 0.6 ? 'rgba(245,158,11,0.7)' : 'rgba(255,255,255,0.28)' }}
+                >
+                  {coverage < 0.4 ? 'Keep going ↻' : coverage < 0.7 ? 'The genie is rising... ✨' : 'Almost there! 🔥'}
+                </motion.p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Claimed headline */}
         <AnimatePresence>
           {claimed && (
             <motion.p
@@ -571,27 +580,26 @@ function SummonCircleContent() {
               transition={{ delay: 0.35 }}
               className="text-white font-bold text-lg mb-4"
             >
-              Here is Your Reward
+              Here is Your Reward ✨
             </motion.p>
           )}
         </AnimatePresence>
 
+        {/* Reward card */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="w-full max-w-xs rounded-2xl p-4"
           style={{
-            background: 'rgba(28,14,55,0.88)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            background: 'rgba(28,14,55,0.90)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
           }}
         >
           <div className="flex items-center justify-between mb-3">
-            <span
-              className="text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: 'rgba(234,179,8,0.18)', color: '#EAB308', border: '1px solid rgba(234,179,8,0.2)' }}
-            >
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(234,179,8,0.18)', color: '#EAB308', border: '1px solid rgba(234,179,8,0.2)' }}>
               {pts} pts
             </span>
             <div className="flex items-center gap-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
@@ -599,7 +607,6 @@ function SummonCircleContent() {
               <span>{claimed ? available - 1 : available} Available</span>
             </div>
           </div>
-
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
               🎁
@@ -609,7 +616,6 @@ function SummonCircleContent() {
               <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{subtitle}</p>
             </div>
           </div>
-
           <div className="flex items-center gap-2 text-[10px] flex-wrap" style={{ color: 'rgba(255,255,255,0.35)' }}>
             <div className="flex items-center gap-1">
               <CalendarDays className="w-3 h-3" />
@@ -625,6 +631,7 @@ function SummonCircleContent() {
           </div>
         </motion.div>
 
+        {/* Wallet CTA */}
         <AnimatePresence>
           {claimed && (
             <motion.div
@@ -636,42 +643,13 @@ function SummonCircleContent() {
               <Link
                 href="/customer/wallet"
                 className="flex items-center justify-center w-full py-4 rounded-2xl font-bold text-base text-white"
-                style={{
-                  background: 'rgba(255,255,255,0.09)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                }}
+                style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)' }}
               >
                 View in Wallet →
               </Link>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {!claimed && coverage === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-center mt-4"
-          >
-            <p className="text-sm font-semibold" style={{ color: 'rgba(245,158,11,0.9)' }}>
-              Start at the gold dot ↑
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              Draw a full circle clockwise ↻
-            </p>
-          </motion.div>
-        )}
-        {!claimed && coverage > 0 && coverage < 0.85 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-xs mt-2"
-            style={{ color: 'rgba(255,255,255,0.30)' }}
-          >
-            Keep going ↻
-          </motion.p>
-        )}
       </div>
     </div>
   )

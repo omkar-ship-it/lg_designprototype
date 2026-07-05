@@ -10,14 +10,13 @@ const CX   = 110
 const CY   = 110
 const CIRC = 2 * Math.PI * R
 
-const CONTAINER = 240
+const CONTAINER = 260
 const SCREEN_R  = (R / 220) * CONTAINER
 const SCREEN_CX = CONTAINER / 2
 const SCREEN_CY = CONTAINER / 2
 
-const STROKES_NEEDED = 6
-const MIN_STROKE_PX  = 20
-const MAX_PARTICLES  = 20
+const TOTAL_RUB_PX = 480
+const MAX_PARTICLES = 32
 
 const STARS = [
   { x:  8, y: 10, s: 14, o: 0.38 },
@@ -37,15 +36,17 @@ const STARS = [
   { x: 57, y: 62, s:  5, o: 0.12 },
 ]
 
-const CONFETTI_COLORS = ['#F5C518', '#A78BFA', '#EC4899', '#06B6D4', '#22C55E', '#F59E0B']
+const CONFETTI_COLORS = ['#F5C518', '#A78BFA', '#EC4899', '#06B6D4', '#22C55E', '#F59E0B', '#FBBF24']
 
 type SmokeParticle = {
   id: number
   xOff: number
   xDrift: number
+  yDrift: number
   size: number
   duration: number
   opacity: number
+  color: string
 }
 
 type ConfettiPiece = {
@@ -68,7 +69,7 @@ function StarField() {
           key={i}
           className="absolute text-white"
           style={{ left: `${s.x}%`, top: `${s.y}%`, opacity: s.o, fontSize: s.s }}
-          animate={{ opacity: [s.o, s.o * 0.35, s.o], scale: [1, 1.25, 1] }}
+          animate={{ opacity: [s.o, s.o * 0.3, s.o], scale: [1, 1.3, 1] }}
           transition={{ duration: 2.2 + i * 0.28, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
         >
           ✦
@@ -80,25 +81,21 @@ function StarField() {
 
 function ConfettiLayer({ show }: { show: boolean }) {
   const [pieces, setPieces] = useState<ConfettiPiece[]>([])
-
   useEffect(() => {
     if (!show) return
-    const generated: ConfettiPiece[] = Array.from({ length: 50 }, (_, i) => ({
+    setPieces(Array.from({ length: 65 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       rotation: Math.random() * 360,
       rotationEnd: Math.random() * 720 - 360,
-      duration: 2 + Math.random() * 1,
-      delay: Math.random() * 0.5,
-      isStrip: Math.random() > 0.6,
-      size: 4 + Math.floor(Math.random() * 8),
-    }))
-    setPieces(generated)
+      duration: 1.8 + Math.random() * 1.6,
+      delay: Math.random() * 0.7,
+      isStrip: Math.random() > 0.55,
+      size: 5 + Math.floor(Math.random() * 9),
+    })))
   }, [show])
-
   if (!show || pieces.length === 0) return null
-
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
       {pieces.map((p) => (
@@ -106,12 +103,10 @@ function ConfettiLayer({ show }: { show: boolean }) {
           key={p.id}
           className="absolute"
           style={{
-            left: `${p.x}%`,
-            top: '-20px',
+            left: `${p.x}%`, top: '-20px',
             width: p.isStrip ? p.size / 2 : p.size,
             height: p.isStrip ? p.size * 3 : p.size,
-            background: p.color,
-            rotate: p.rotation,
+            background: p.color, rotate: p.rotation,
             borderRadius: p.isStrip ? 1 : 2,
           }}
           animate={{ y: '110vh', rotate: p.rotationEnd }}
@@ -119,50 +114,6 @@ function ConfettiLayer({ show }: { show: boolean }) {
         />
       ))}
     </div>
-  )
-}
-
-function CuteGenie() {
-  return (
-    <svg width="92" height="92" viewBox="0 0 92 92" fill="none">
-      {/* Wispy smoke tail — no legs */}
-      <path d="M32 92 C26 76 34 64 28 52 C24 44 29 36 37 32"
-        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
-      <path d="M60 92 C66 76 58 64 64 52 C68 44 63 36 55 32"
-        stroke="rgba(139,92,246,0.45)" strokeWidth="13" strokeLinecap="round"/>
-      {/* Body */}
-      <ellipse cx="46" cy="56" rx="18" ry="14" fill="#60A5FA"/>
-      {/* Arms raised (excited) */}
-      <path d="M28 52 Q17 41 22 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
-      <path d="M64 52 Q75 41 70 31" stroke="#60A5FA" strokeWidth="9" strokeLinecap="round"/>
-      {/* Bald head */}
-      <circle cx="46" cy="25" r="23" fill="#60A5FA"/>
-      {/* Ears */}
-      <circle cx="23" cy="27" r="5.5" fill="#3B82F6"/>
-      <circle cx="69" cy="27" r="5.5" fill="#3B82F6"/>
-      {/* Gold earring on left ear */}
-      <circle cx="20" cy="31" r="2.8" fill="#FBBF24" stroke="#D97706" strokeWidth="0.8"/>
-      {/* Eye whites */}
-      <ellipse cx="36" cy="21" rx="7.5" ry="8.5" fill="white"/>
-      <ellipse cx="56" cy="21" rx="7.5" ry="8.5" fill="white"/>
-      {/* Pupils */}
-      <circle cx="37.5" cy="22" r="5" fill="#1E3A8A"/>
-      <circle cx="54.5" cy="22" r="5" fill="#1E3A8A"/>
-      {/* Eye shine */}
-      <circle cx="39.5" cy="19.5" r="1.8" fill="white"/>
-      <circle cx="56.5" cy="19.5" r="1.8" fill="white"/>
-      {/* Blush */}
-      <ellipse cx="24" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
-      <ellipse cx="68" cy="34" rx="5" ry="3" fill="rgba(244,114,182,0.4)"/>
-      {/* Nose */}
-      <ellipse cx="46" cy="31" rx="3" ry="2.5" fill="#3B82F6"/>
-      {/* Big happy smile */}
-      <path d="M35 40 Q46 51 57 40" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-      {/* Sparkle stars */}
-      <text x="1" y="14" fontSize="11" fill="#FBBF24" opacity="0.9">✦</text>
-      <text x="72" y="10" fontSize="9" fill="#FBBF24" opacity="0.7">✦</text>
-      <text x="76" y="50" fontSize="7" fill="#A78BFA" opacity="0.6">✦</text>
-    </svg>
   )
 }
 
@@ -188,64 +139,70 @@ function RubLampContent() {
   const claimBefore  = params.get('cb')            ?? DEFAULT_REWARD.claimBefore
   const redeemBefore = params.get('rb')            ?? DEFAULT_REWARD.redeemBefore
 
-  const [strokes, setStrokes]             = useState(0)
-  const [claimed, setClaimed]             = useState(false)
-  const [showConfetti, setShowConfetti]   = useState(false)
-  const [showReward, setShowReward]       = useState(false)
-  const [isRubbing, setIsRubbing]         = useState(false)
-  const [particles, setParticles]         = useState<SmokeParticle[]>([])
-  const [lampShakeKey, setLampShakeKey]   = useState(0)
-  const [genieVisible, setGenieVisible]   = useState(false)
-  const [ringClaimed, setRingClaimed]     = useState(false)
+  const [charge, setCharge]             = useState(0)
+  const [claimed, setClaimed]           = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [showReward, setShowReward]     = useState(false)
+  const [isRubbing, setIsRubbing]       = useState(false)
+  const [particles, setParticles]       = useState<SmokeParticle[]>([])
+  const [lampShakeKey, setLampShakeKey] = useState(0)
+  const [genieVisible, setGenieVisible] = useState(false)
+  const [ringClaimed, setRingClaimed]   = useState(false)
 
-  const strokesRef  = useRef(0)
-  const firedRef    = useRef(false)
-  const isDownRef   = useRef(false)
-  const lastXRef    = useRef(0)
-  const dirRef      = useRef<'left' | 'right' | null>(null)
-  const strokeStartXRef = useRef(0)
+  const rubPxRef       = useRef(0)
+  const firedRef       = useRef(false)
+  const isDownRef      = useRef(false)
+  const lastXRef       = useRef(0)
+  const touchStartXRef = useRef(0)
+  const lastEmitPxRef  = useRef(0)
+  const lastShakePxRef = useRef(0)
 
-  const lampX = useMotionValue(0)
-  const lampSpring = useSpring(lampX, { stiffness: 300, damping: 28, mass: 0.6 })
+  const lampX      = useMotionValue(0)
+  const lampSpring = useSpring(lampX, { stiffness: 320, damping: 26, mass: 0.5 })
 
-  const charge = Math.min(100, (strokes / STROKES_NEEDED) * 100)
-  const ringFilled = (charge / 100) * CIRC
-
+  const ringFilled  = (charge / 100) * CIRC
   const screenAngle = ((charge / 100) * 360 - 90) * (Math.PI / 180)
-  const dotX = SCREEN_CX + SCREEN_R * Math.cos(screenAngle)
-  const dotY = SCREEN_CY + SCREEN_R * Math.sin(screenAngle)
+  const dotX        = SCREEN_CX + SCREEN_R * Math.cos(screenAngle)
+  const dotY        = SCREEN_CY + SCREEN_R * Math.sin(screenAngle)
 
-  const emitSmoke = useCallback((_strokeNum: number, count: number) => {
+  const emitSmoke = useCallback((count: number, intensity: number) => {
+    const smokeColors = [
+      'rgba(168,85,247,0.75)',
+      'rgba(200,170,255,0.7)',
+      'rgba(255,255,255,0.72)',
+      'rgba(245,158,11,0.55)',
+      'rgba(251,191,36,0.45)',
+    ]
     const newParticles: SmokeParticle[] = Array.from({ length: count }, () => {
       particleCounter += 1
+      const isGolden = intensity > 70 && Math.random() > 0.5
       return {
-        id: particleCounter,
-        xOff: (Math.random() - 0.5) * 40,
-        xDrift: (Math.random() - 0.5) * 28,
-        size: 16 + Math.random() * 20,
-        duration: 0.9 + Math.random() * 0.5,
-        opacity: 0.55 + Math.random() * 0.3,
+        id:       particleCounter,
+        xOff:     -18 + (Math.random() - 0.5) * 22,
+        xDrift:   (Math.random() - 0.5) * 45,
+        yDrift:   -(60 + Math.random() * 50),
+        size:     (intensity > 60 ? 18 : 12) + Math.random() * 22,
+        duration: 0.8 + Math.random() * 0.9,
+        opacity:  0.5 + Math.random() * 0.38,
+        color:    isGolden ? 'rgba(251,191,36,0.6)' : smokeColors[Math.floor(Math.random() * smokeColors.length)],
       }
     })
-    setParticles(prev => {
-      const combined = [...prev, ...newParticles]
-      return combined.slice(-MAX_PARTICLES)
-    })
+    setParticles(prev => [...prev, ...newParticles].slice(-MAX_PARTICLES))
   }, [])
 
   const triggerClaim = useCallback(() => {
     firedRef.current = true
-    emitSmoke(6, 15)
-    if (typeof navigator !== 'undefined') navigator.vibrate?.([60, 30, 80, 30, 120])
+    emitSmoke(24, 100)
+    if (typeof navigator !== 'undefined') navigator.vibrate?.([60, 30, 80, 30, 120, 30, 160])
     setTimeout(() => {
       setClaimed(true)
       setGenieVisible(true)
       setRingClaimed(true)
-    }, 400)
+    }, 380)
     setTimeout(() => {
       setShowConfetti(true)
       setShowReward(true)
-    }, 700)
+    }, 680)
   }, [emitSmoke])
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -253,46 +210,48 @@ function RubLampContent() {
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     isDownRef.current   = true
     lastXRef.current    = e.clientX
-    strokeStartXRef.current = e.clientX
-    dirRef.current      = null
+    touchStartXRef.current = e.clientX
     setIsRubbing(true)
   }, [])
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDownRef.current || firedRef.current) return
 
-    const x = e.clientX
-    const dx = x - lastXRef.current
+    const x  = e.clientX
+    const dx = Math.abs(x - lastXRef.current)
     lastXRef.current = x
+    if (dx < 0.5) return
 
-    const clamped = Math.max(-35, Math.min(35, x - strokeStartXRef.current))
-    lampX.set(clamped)
+    lampX.set(Math.max(-42, Math.min(42, x - touchStartXRef.current)))
 
-    if (Math.abs(dx) < 1) return
+    const prev = rubPxRef.current
+    rubPxRef.current = Math.min(TOTAL_RUB_PX, prev + dx)
+    const newCharge = (rubPxRef.current / TOTAL_RUB_PX) * 100
 
-    const movingRight = dx > 0
-    const newDir: 'left' | 'right' = movingRight ? 'right' : 'left'
-
-    if (dirRef.current !== null && dirRef.current !== newDir) {
-      const strokeDist = Math.abs(x - strokeStartXRef.current)
-      strokeStartXRef.current = x  // always reset on reversal so each segment is independent
-
-      if (strokeDist >= MIN_STROKE_PX) {
-        const next = strokesRef.current + 1
-        strokesRef.current = next
-        setStrokes(next)
-        setLampShakeKey(k => k + 1)
-        emitSmoke(next, 2 + next)
-        if (typeof navigator !== 'undefined') navigator.vibrate?.(18)
-
-        if (next >= STROKES_NEEDED) {
-          triggerClaim()
-          return
-        }
-      }
+    // Shake lamp every 22px
+    if (rubPxRef.current - lastShakePxRef.current >= 22) {
+      lastShakePxRef.current = rubPxRef.current
+      setLampShakeKey(k => k + 1)
     }
 
-    dirRef.current = newDir
+    // Smoke: gets denser at higher charge
+    const emitEvery = newCharge > 80 ? 6 : newCharge > 55 ? 10 : newCharge > 30 ? 15 : 22
+    if (rubPxRef.current - lastEmitPxRef.current >= emitEvery) {
+      lastEmitPxRef.current = rubPxRef.current
+      const count = newCharge > 80 ? 4 : newCharge > 55 ? 3 : newCharge > 30 ? 2 : 1
+      emitSmoke(count, newCharge)
+    }
+
+    // Haptic every ~50px
+    if (Math.floor(rubPxRef.current / 50) > Math.floor(prev / 50)) {
+      if (typeof navigator !== 'undefined') navigator.vibrate?.(10)
+    }
+
+    setCharge(newCharge)
+
+    if (newCharge >= 100 && !firedRef.current) {
+      triggerClaim()
+    }
   }, [lampX, emitSmoke, triggerClaim])
 
   const onPointerUp = useCallback(() => {
@@ -304,6 +263,8 @@ function RubLampContent() {
   const removeParticle = useCallback((id: number) => {
     setParticles(prev => prev.filter(p => p.id !== id))
   }, [])
+
+  const glowIntensity = Math.max(0, charge - 20) / 80
 
   return (
     <div
@@ -322,7 +283,8 @@ function RubLampContent() {
 
       <div className="flex-1 flex flex-col items-center px-5 pt-20 pb-8 relative z-10">
 
-        <div className="text-center mb-7 min-h-[60px] flex flex-col items-center justify-center">
+        {/* Title */}
+        <div className="text-center mb-6 min-h-[60px] flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
             {claimed ? (
               <motion.div
@@ -331,15 +293,13 @@ function RubLampContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
               >
-                <p className="text-white text-[21px] font-bold leading-snug">
-                  ★ Successfully claimed<br />Your Reward
-                </p>
+                <p className="text-white text-[22px] font-bold leading-snug">★ Your wish is granted!</p>
                 <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
             ) : (
               <motion.div key="rub-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-white text-[21px] font-bold leading-snug">
-                  Rub the lamp to claim<br />your reward
+                <p className="text-white text-[22px] font-bold leading-snug">
+                  Rub the lamp to<br />claim your reward
                 </p>
                 <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
@@ -347,6 +307,7 @@ function RubLampContent() {
           </AnimatePresence>
         </div>
 
+        {/* Ring + Lamp */}
         <div
           className="relative flex items-center justify-center mb-5"
           style={{
@@ -360,25 +321,16 @@ function RubLampContent() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
+          {/* Progress ring SVG */}
           <svg
             viewBox="0 0 220 220"
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ transform: 'rotate(-90deg)' }}
           >
             {ringClaimed && (
-              <circle
-                cx={CX} cy={CY} r={R + 8}
-                fill="none"
-                stroke="rgba(245,158,11,0.22)"
-                strokeWidth="16"
-              />
+              <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(245,158,11,0.20)" strokeWidth="18" />
             )}
-            <circle
-              cx={CX} cy={CY} r={R}
-              fill="none"
-              stroke="rgba(255,255,255,0.10)"
-              strokeWidth="4"
-            />
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="4" />
             {charge > 0 && (
               <circle
                 cx={CX} cy={CY} r={R}
@@ -389,81 +341,95 @@ function RubLampContent() {
                 strokeDasharray={`${ringFilled} ${CIRC}`}
                 style={{
                   filter: ringClaimed
-                    ? 'drop-shadow(0 0 8px rgba(245,158,11,0.9))'
-                    : 'drop-shadow(0 0 5px rgba(245,158,11,0.7))',
+                    ? 'drop-shadow(0 0 10px rgba(245,158,11,1))'
+                    : `drop-shadow(0 0 ${4 + glowIntensity * 8}px rgba(245,158,11,${0.5 + glowIntensity * 0.5}))`,
                 }}
               />
             )}
             <defs>
               <linearGradient id="lampGold" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#FBBF24" />
+                <stop offset="50%" stopColor="#F59E0B" />
                 <stop offset="100%" stopColor="#D97706" />
               </linearGradient>
             </defs>
           </svg>
 
+          {/* Tip dot tracking ring */}
           {charge > 1 && !ringClaimed && (
-            <div
-              className="absolute w-4 h-4 rounded-full pointer-events-none"
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
               style={{
-                left: dotX - 8,
-                top:  dotY - 8,
-                background: '#F59E0B',
-                boxShadow: '0 0 8px 2px rgba(245,158,11,0.7)',
+                width: 14, height: 14,
+                left: dotX - 7,
+                top:  dotY - 7,
+                background: '#FBBF24',
+                boxShadow: `0 0 ${8 + glowIntensity * 8}px 3px rgba(245,158,11,${0.6 + glowIntensity * 0.4})`,
               }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.4, repeat: Infinity }}
             />
           )}
 
+          {/* Inner circle */}
           <motion.div
-            className="absolute inset-4 rounded-full flex items-center justify-center overflow-hidden"
+            className="absolute inset-3 rounded-full flex items-center justify-center overflow-visible"
             style={{
-              background: 'radial-gradient(circle at 38% 32%, rgba(100,40,200,0.72) 0%, rgba(18,6,50,0.96) 70%)',
-              boxShadow: isRubbing && !claimed
-                ? '0 0 44px rgba(245,158,11,0.28), 0 0 80px rgba(109,40,217,0.22)'
-                : ringClaimed
-                  ? '0 0 60px rgba(245,158,11,0.45), 0 0 110px rgba(109,40,217,0.30)'
-                  : '0 0 20px rgba(109,40,217,0.16)',
+              background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
+              boxShadow: ringClaimed
+                ? '0 0 70px rgba(245,158,11,0.5), 0 0 120px rgba(109,40,217,0.35)'
+                : isRubbing
+                  ? `0 0 ${30 + glowIntensity * 40}px rgba(245,158,11,${0.1 + glowIntensity * 0.25}), 0 0 ${60 + glowIntensity * 30}px rgba(109,40,217,0.2)`
+                  : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >
             <AnimatePresence mode="wait">
               {genieVisible ? (
                 <motion.div
                   key="genie"
-                  initial={{ scale: 0, rotate: -20, opacity: 0 }}
-                  animate={{ scale: [0, 1.25, 1], rotate: 0, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.05 }}
+                  initial={{ scale: 0, y: 30, opacity: 0 }}
+                  animate={{ scale: [0, 1.18, 1], y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 13, delay: 0.05 }}
                 >
-                  <CuteGenie />
+                  <img
+                    src="/genie.png"
+                    alt="Genie"
+                    style={{ width: 110, height: 'auto', objectFit: 'contain' }}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
                   key={`lamp-${lampShakeKey}`}
                   animate={lampShakeKey > 0
-                    ? { rotate: [-8, 8, -8, 8, 0] }
-                    : { scale: [1, 1.025, 1] }
+                    ? { rotate: [-9, 9, -7, 7, -4, 4, 0], scale: [1, 1.04, 1] }
+                    : { scale: [1, 1.02, 1] }
                   }
                   transition={lampShakeKey > 0
-                    ? { duration: 0.32, ease: 'easeInOut' }
-                    : { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }
+                    ? { duration: 0.35, ease: 'easeInOut' }
+                    : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
                   }
-                  className="text-7xl leading-none"
                   style={{
                     x: lampSpring,
-                    filter: charge > 60
-                      ? `drop-shadow(0 0 ${8 + (charge - 60) / 4}px rgba(245,158,11,0.85))`
+                    filter: charge > 55
+                      ? `drop-shadow(0 0 ${10 + (charge - 55) / 3}px rgba(245,158,11,0.95)) drop-shadow(0 0 ${22 + (charge - 55) / 2}px rgba(245,158,11,0.55))`
                       : charge > 20
-                        ? 'drop-shadow(0 0 4px rgba(245,158,11,0.4))'
-                        : 'none',
+                        ? 'drop-shadow(0 0 8px rgba(245,158,11,0.55))'
+                        : 'drop-shadow(0 0 3px rgba(245,158,11,0.2))',
                   }}
                 >
-                  🪔
+                  <img
+                    src="/genie-lamp.png"
+                    alt="Lamp"
+                    style={{ width: 130, height: 'auto', objectFit: 'contain' }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
 
+            {/* Smoke particles — origin near lamp spout */}
             <div
               className="absolute pointer-events-none overflow-visible"
-              style={{ bottom: '55%', left: '50%', transform: 'translateX(-50%)' }}
+              style={{ bottom: '54%', left: '42%' }}
             >
               <AnimatePresence>
                 {particles.map(p => (
@@ -473,17 +439,14 @@ function RubLampContent() {
                     style={{
                       width: p.size,
                       height: p.size,
-                      background: Math.random() > 0.5
-                        ? 'rgba(168,85,247,0.7)'
-                        : 'rgba(255,255,255,0.75)',
-                      filter: 'blur(4px)',
-                      x: p.xOff,
+                      background: p.color,
+                      filter: 'blur(5px)',
                       marginLeft: -p.size / 2,
-                      marginTop: -p.size / 2,
+                      marginTop:  -p.size / 2,
                     }}
-                    initial={{ y: 0, opacity: p.opacity, scale: 0.4 }}
-                    animate={{ y: -90, x: p.xOff + p.xDrift, opacity: 0, scale: 2.8 }}
-                    transition={{ duration: p.duration, ease: [0.2, 0, 0.4, 1] }}
+                    initial={{ x: p.xOff, y: 0, opacity: p.opacity, scale: 0.35 }}
+                    animate={{ x: p.xOff + p.xDrift, y: p.yDrift, opacity: 0, scale: 2.6 }}
+                    transition={{ duration: p.duration, ease: [0.15, 0, 0.4, 1] }}
                     onAnimationComplete={() => removeParticle(p.id)}
                   />
                 ))}
@@ -492,47 +455,64 @@ function RubLampContent() {
           </motion.div>
         </div>
 
+        {/* Progress bar */}
         <AnimatePresence>
           {!claimed && (
             <motion.div
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.3 }}
               className="w-full max-w-xs mb-5"
             >
               <div
                 className="w-full h-2.5 rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.10)' }}
+                style={{ background: 'rgba(255,255,255,0.09)' }}
               >
                 <motion.div
                   className="h-full rounded-full"
                   style={{
                     background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
-                    boxShadow: charge > 0 ? '0 0 12px rgba(245,158,11,0.75)' : 'none',
+                    boxShadow: charge > 0 ? `0 0 ${8 + glowIntensity * 10}px rgba(245,158,11,${0.6 + glowIntensity * 0.4})` : 'none',
                   }}
                   animate={{ width: `${charge}%` }}
-                  transition={{ duration: 0.12, ease: 'easeOut' }}
+                  transition={{ duration: 0.1, ease: 'easeOut' }}
                 />
               </div>
               <div className="flex justify-between items-center mt-2">
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
-                  {charge === 0
-                    ? '← Rub the lamp →'
-                    : charge < 50
-                    ? 'Keep rubbing...'
-                    : charge < 100
-                    ? 'Almost there! ✨'
-                    : ''}
-                </p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={charge < 30 ? 'hint1' : charge < 60 ? 'hint2' : charge < 90 ? 'hint3' : 'hint4'}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-xs"
+                    style={{ color: 'rgba(255,255,255,0.32)' }}
+                  >
+                    {charge === 0
+                      ? '← Rub the lamp →'
+                      : charge < 30
+                      ? 'Keep rubbing...'
+                      : charge < 60
+                      ? 'The genie is stirring... ✨'
+                      : charge < 90
+                      ? 'Almost there! The magic is building 🔥'
+                      : ''}
+                  </motion.p>
+                </AnimatePresence>
                 {charge > 0 && (
-                  <p className="text-xs font-bold" style={{ color: 'rgba(245,158,11,0.85)' }}>
+                  <motion.p
+                    className="text-xs font-bold tabular-nums ml-2 flex-shrink-0"
+                    style={{ color: 'rgba(245,158,11,0.85)' }}
+                  >
                     {Math.round(charge)}%
-                  </p>
+                  </motion.p>
                 )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Claimed headline */}
         <AnimatePresence>
           {claimed && (
             <motion.p
@@ -541,22 +521,23 @@ function RubLampContent() {
               transition={{ delay: 0.2 }}
               className="text-white font-bold text-lg mb-4"
             >
-              Here is Your Reward
+              Here is Your Reward ✨
             </motion.p>
           )}
         </AnimatePresence>
 
+        {/* Reward card */}
         <AnimatePresence>
           {showReward && (
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 20 }}
               className="w-full max-w-xs rounded-2xl p-4"
               style={{
-                background: 'rgba(28,14,55,0.88)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                background: 'rgba(28,14,55,0.90)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -571,7 +552,6 @@ function RubLampContent() {
                   <span>{available - 1} Available</span>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
                   🎁
@@ -581,7 +561,6 @@ function RubLampContent() {
                   <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{subtitle}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-2 text-[10px] flex-wrap" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 <div className="flex items-center gap-1">
                   <CalendarDays className="w-3 h-3" />
@@ -599,22 +578,19 @@ function RubLampContent() {
           )}
         </AnimatePresence>
 
-
+        {/* Wallet CTA */}
         <AnimatePresence>
           {showReward && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.35 }}
               className="w-full max-w-xs mt-4"
             >
               <Link
                 href="/customer/wallet"
                 className="flex items-center justify-center w-full py-4 rounded-2xl font-bold text-base text-white"
-                style={{
-                  background: 'rgba(255,255,255,0.09)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                }}
+                style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)' }}
               >
                 View in Wallet →
               </Link>
