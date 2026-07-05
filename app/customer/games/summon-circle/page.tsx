@@ -107,12 +107,14 @@ function SummonCircleContent() {
   const [showBurst, setShowBurst]         = useState(false)
   const [trailParticles, setTrailParticles] = useState<TrailParticle[]>([])
 
-  const visitedRef    = useRef<Set<number>>(new Set())
-  const firedRef      = useRef(false)
-  const isDownRef     = useRef(false)
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const lastTipRef    = useRef({ x: 0, y: 0 })
-  const milestonesRef = useRef<Set<number>>(new Set())
+  const visitedRef      = useRef<Set<number>>(new Set())
+  const firedRef        = useRef(false)
+  const isDownRef       = useRef(false)
+  const containerRef    = useRef<HTMLDivElement>(null)
+  const lastTipRef      = useRef({ x: 0, y: 0 })
+  const milestonesRef   = useRef<Set<number>>(new Set())
+  const gestureAngleRef = useRef(0)           // cumulative absolute angle in current gesture
+  const prevRawAngleRef = useRef<number | null>(null)
 
   const coveragePct   = Math.round(coverage * 100)
   const orbitVisible  = coverage > 0.1
@@ -143,6 +145,13 @@ function SummonCircleContent() {
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     isDownRef.current = true
     setIsDrawing(true)
+    // Fresh start for each new gesture
+    visitedRef.current = new Set()
+    milestonesRef.current = new Set()
+    gestureAngleRef.current = 0
+    prevRawAngleRef.current = null
+    lastTipRef.current = { x: 0, y: 0 }
+    setCoverage(0)
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -150,14 +159,28 @@ function SummonCircleContent() {
     const center = getCenter()
     const dx = e.clientX - center.x
     const dy = e.clientY - center.y
-    const angle = Math.atan2(dy, dx)
-    visitedRef.current.add(getSector(angle))
+    const rawAngle = Math.atan2(dy, dx)
 
-    // Tip position in container SVG coords
-    const tipX = CX + RING_R * Math.cos(angle)
-    const tipY = CY + RING_R * Math.sin(angle)
+    // Accumulate absolute angular travel for this gesture
+    if (prevRawAngleRef.current !== null) {
+      let delta = rawAngle - prevRawAngleRef.current
+      if (delta >  Math.PI) delta -= 2 * Math.PI
+      if (delta < -Math.PI) delta += 2 * Math.PI
+      gestureAngleRef.current += Math.abs(delta)
+    }
+    prevRawAngleRef.current = rawAngle
 
-    // Emit sparkle trail particle every ~8px of tip movement
+    // Progress: how far through a full circle (0 → 1)
+    const FULL_CIRCLE = 2 * Math.PI
+    const cov = Math.min(1, gestureAngleRef.current / FULL_CIRCLE)
+    setCoverage(cov)
+
+    // Also register sector for the visual arc fill
+    visitedRef.current.add(getSector(rawAngle))
+
+    // Sparkle trail particles every ~8px of tip movement
+    const tipX = CX + RING_R * Math.cos(rawAngle)
+    const tipY = CY + RING_R * Math.sin(rawAngle)
     const moved = Math.hypot(tipX - lastTipRef.current.x, tipY - lastTipRef.current.y)
     if (moved > 8) {
       lastTipRef.current = { x: tipX, y: tipY }
@@ -175,9 +198,6 @@ function SummonCircleContent() {
       })
     }
 
-    const cov = visitedRef.current.size / SECTORS
-    setCoverage(cov)
-
     // Haptic pulse at 25 / 50 / 75% milestones
     const milestoneHit = [0.25, 0.5, 0.75].find(m => cov >= m && !milestonesRef.current.has(m))
     if (milestoneHit) {
@@ -185,7 +205,10 @@ function SummonCircleContent() {
       if (typeof navigator !== 'undefined') navigator.vibrate?.([30, 20, 50])
     }
 
-    if (cov >= 0.85 && !firedRef.current) triggerClaim()
+    // Complete at 340° — one full circle in one gesture
+    if (gestureAngleRef.current >= (340 * Math.PI / 180) && !firedRef.current) {
+      triggerClaim()
+    }
   }
 
   const onPointerUp = () => {
@@ -293,19 +316,19 @@ function SummonCircleContent() {
                 <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#F59E0B" floodOpacity="1" />
               </filter>
               <filter id="guideGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#C4B5FD" floodOpacity="0.9" />
+                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#FBBF24" floodOpacity="0.75" />
               </filter>
             </defs>
 
             {/* Guide ring — bright and clearly visible */}
             {!claimed && (
               <>
-                {/* Soft violet outer glow halo */}
+                {/* Soft gold outer glow halo */}
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(167,139,250,0.18)" strokeWidth="18" />
-                {/* Main violet dashed guide — clearly visible, on-theme */}
+                  stroke="rgba(251,191,36,0.15)" strokeWidth="18" />
+                {/* Main gold dashed guide */}
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(196,181,253,0.75)" strokeWidth="2.5"
+                  stroke="rgba(251,191,36,0.55)" strokeWidth="2.5"
                   strokeDasharray="12 7"
                   filter="url(#guideGlow)"
                 />
@@ -319,7 +342,7 @@ function SummonCircleContent() {
                 <line key={deg}
                   x1={CX + (RING_R - 14) * Math.cos(rad)} y1={CY + (RING_R - 14) * Math.sin(rad)}
                   x2={CX + (RING_R + 14) * Math.cos(rad)} y2={CY + (RING_R + 14) * Math.sin(rad)}
-                  stroke="rgba(196,181,253,0.85)" strokeWidth="2.5" strokeLinecap="round"
+                  stroke="rgba(251,191,36,0.65)" strokeWidth="2.5" strokeLinecap="round"
                 />
               )
             })}

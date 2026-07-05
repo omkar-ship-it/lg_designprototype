@@ -322,7 +322,7 @@ function RubLampContent() {
             {ringClaimed && (
               <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(245,158,11,0.20)" strokeWidth="18" />
             )}
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(139,92,246,0.45)" strokeWidth="4" strokeDasharray="8 5" />
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(251,191,36,0.38)" strokeWidth="4" strokeDasharray="8 5" />
             {charge > 0 && (
               <circle
                 cx={CX} cy={CY} r={R}
