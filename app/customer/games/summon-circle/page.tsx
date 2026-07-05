@@ -382,7 +382,7 @@ function SummonCircleContent() {
 
           {/* Guide dot — glowing magic orb that marks current position on the arc */}
           {!claimed && (
-            <motion.div
+            <div
               className="absolute pointer-events-none"
               style={{
                 left: 0, top: 0, width: 28, height: 28, zIndex: 20,
@@ -390,37 +390,41 @@ function SummonCircleContent() {
                 willChange: 'transform',
                 transition: 'transform 0.03s linear',
               }}
-              animate={!isDragging && coverage === 0
-                ? { scale: [1, 1.22, 1], opacity: [0.82, 1, 0.82] }
-                : { scale: isDragging ? 1.1 : 1, opacity: 1 }
-              }
-              transition={!isDragging && coverage === 0
-                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
-                : { duration: 0.1 }
-              }
             >
-              {/* Soft atmospheric halo */}
-              <div style={{
-                position: 'absolute', inset: -10, borderRadius: '50%',
-                background: `rgba(168,85,247,${0.18 + coverage * 0.38})`,
-                filter: 'blur(9px)',
-              }} />
-              {/* Orb body */}
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                background: 'radial-gradient(circle at 38% 32%, #fff 0%, rgba(216,180,254,0.95) 42%, rgba(168,85,247,0.85) 100%)',
-                boxShadow: isDragging
-                  ? '0 0 0 1.5px rgba(192,132,252,0.95), 0 0 14px 5px rgba(168,85,247,0.65)'
-                  : '0 0 0 1px rgba(192,132,252,0.75), 0 0 8px 3px rgba(168,85,247,0.42)',
-              }} />
-              {/* Bright centre spark */}
-              <div style={{
-                position: 'absolute', width: 7, height: 7,
-                top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-                borderRadius: '50%', background: 'rgba(255,255,255,0.95)',
-                boxShadow: '0 0 4px 2px rgba(233,213,255,0.8)',
-              }} />
-            </motion.div>
+              <motion.div
+                style={{ width: 28, height: 28, position: 'relative' }}
+                animate={!isDragging && coverage === 0
+                  ? { scale: [1, 1.22, 1], opacity: [0.82, 1, 0.82] }
+                  : { scale: isDragging ? 1.1 : 1, opacity: 1 }
+                }
+                transition={!isDragging && coverage === 0
+                  ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+                  : { duration: 0.1 }
+                }
+              >
+                {/* Soft atmospheric halo */}
+                <div style={{
+                  position: 'absolute', inset: -10, borderRadius: '50%',
+                  background: `rgba(168,85,247,${0.18 + coverage * 0.38})`,
+                  filter: 'blur(9px)',
+                }} />
+                {/* Orb body */}
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'radial-gradient(circle at 38% 32%, #fff 0%, rgba(216,180,254,0.95) 42%, rgba(168,85,247,0.85) 100%)',
+                  boxShadow: isDragging
+                    ? '0 0 0 1.5px rgba(192,132,252,0.95), 0 0 14px 5px rgba(168,85,247,0.65)'
+                    : '0 0 0 1px rgba(192,132,252,0.75), 0 0 8px 3px rgba(168,85,247,0.42)',
+                }} />
+                {/* Bright centre spark */}
+                <div style={{
+                  position: 'absolute', width: 7, height: 7,
+                  top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+                  borderRadius: '50%', background: 'rgba(255,255,255,0.95)',
+                  boxShadow: '0 0 4px 2px rgba(233,213,255,0.8)',
+                }} />
+              </motion.div>
+            </div>
           )}
 
           {/* Orbit particles (appear as coverage grows) */}
