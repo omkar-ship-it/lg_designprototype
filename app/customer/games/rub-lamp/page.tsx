@@ -174,7 +174,7 @@ function RubLampContent() {
       const isBright = intensity > 70 && Math.random() > 0.5
       return {
         id:       particleCounter,
-        xOff:     -18 + (Math.random() - 0.5) * 22,
+        xOff:     (Math.random() - 0.5) * 10,
         xDrift:   (Math.random() - 0.5) * 45,
         yDrift:   -(60 + Math.random() * 50),
         size:     (intensity > 60 ? 18 : 12) + Math.random() * 22,
@@ -484,10 +484,10 @@ function RubLampContent() {
               )}
             </AnimatePresence>
 
-            {/* Smoke particles — origin at lamp spout tip (upper-left of lamp) */}
+            {/* Smoke particles — origin at lamp opening (top-right of lamp body) */}
             <div
               className="absolute pointer-events-none overflow-visible"
-              style={{ left: '24%', top: '38%' }}
+              style={{ left: '58%', top: '33%' }}
             >
               <AnimatePresence>
                 {particles.map(p => (
