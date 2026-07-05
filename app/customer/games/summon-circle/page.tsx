@@ -10,7 +10,6 @@ const CX = 150
 const CY = 150
 const RING_R = 112
 const RING_CIRC = 2 * Math.PI * RING_R
-const SECTORS = 180
 
 const STARS = [
   { x:  8, y: 10, s: 14, o: 0.38 },
@@ -61,15 +60,6 @@ const DEFAULT_REWARD = {
   redeemBefore: '10 Jul',
 }
 
-type TrailParticle = {
-  id: number
-  cx: number
-  cy: number
-  dx: number
-  dy: number
-}
-
-let trailCounter = 0
 
 function StarField() {
   return (
@@ -100,33 +90,29 @@ function SummonCircleContent() {
   const claimBefore  = params.get('cb')            ?? DEFAULT_REWARD.claimBefore
   const redeemBefore = params.get('rb')            ?? DEFAULT_REWARD.redeemBefore
 
-  const [coverage, setCoverage]           = useState(0)
-  const [claimed, setClaimed]             = useState(false)
-  const [isDrawing, setIsDrawing]         = useState(false)
-  const [flash, setFlash]                 = useState(false)
-  const [showBurst, setShowBurst]         = useState(false)
-  const [trailParticles, setTrailParticles] = useState<TrailParticle[]>([])
+  const [coverage, setCoverage]   = useState(0)
+  const [claimed, setClaimed]     = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [flash, setFlash]         = useState(false)
+  const [showBurst, setShowBurst] = useState(false)
 
-  const visitedRef      = useRef<Set<number>>(new Set())
-  const firedRef        = useRef(false)
-  const isDownRef       = useRef(false)
-  const containerRef    = useRef<HTMLDivElement>(null)
-  const lastTipRef      = useRef({ x: 0, y: 0 })
-  const milestonesRef   = useRef<Set<number>>(new Set())
-  const gestureAngleRef = useRef(0)           // cumulative absolute angle in current gesture
-  const prevRawAngleRef = useRef<number | null>(null)
+  const firedRef         = useRef(false)
+  const isDownRef        = useRef(false)
+  const containerRef     = useRef<HTMLDivElement>(null)
+  const milestonesRef    = useRef<Set<number>>(new Set())
+  const prevClockwiseRef = useRef(0)   // degrees 0–340, puck's current position
 
-  const coveragePct   = Math.round(coverage * 100)
-  const orbitVisible  = coverage > 0.1
+  const coveragePct  = Math.round(coverage * 100)
+  const orbitVisible = coverage > 0.1
 
-  const getSector = (angle: number) => {
-    const deg = ((angle * 180) / Math.PI + 360) % 360
-    return Math.floor(deg / 2) % SECTORS
-  }
+  // Puck position on the ring (SVG coordinates)
+  const puckAngleRad = (-90 + coverage * 340) * (Math.PI / 180)
+  const puckX = CX + RING_R * Math.cos(puckAngleRad)
+  const puckY = CY + RING_R * Math.sin(puckAngleRad)
 
   const triggerClaim = useCallback(() => {
     firedRef.current = true
-    setIsDrawing(false)
+    setIsDragging(false)
     if (typeof navigator !== 'undefined') navigator.vibrate?.([80, 40, 120, 40, 180])
     setFlash(true)
     setTimeout(() => setFlash(false), 450)
@@ -134,91 +120,51 @@ function SummonCircleContent() {
     setTimeout(() => setClaimed(true), 520)
   }, [])
 
-  const getCenter = useCallback(() => {
-    if (!containerRef.current) return { x: CX, y: CY }
-    const r = containerRef.current.getBoundingClientRect()
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
-  }, [])
-
   const onPointerDown = (e: React.PointerEvent) => {
-    if (firedRef.current) return
+    if (firedRef.current || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const touchX = e.clientX - rect.left
+    const touchY = e.clientY - rect.top
+    // Only grab if finger is on/near the puck
+    if (Math.hypot(touchX - puckX, touchY - puckY) > 48) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     isDownRef.current = true
-    setIsDrawing(true)
-    // Fresh start for each new gesture
-    visitedRef.current = new Set()
-    milestonesRef.current = new Set()
-    gestureAngleRef.current = 0
-    prevRawAngleRef.current = null
-    lastTipRef.current = { x: 0, y: 0 }
-    setCoverage(0)
+    setIsDragging(true)
+    prevClockwiseRef.current = coverage * 340
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDownRef.current || firedRef.current) return
-    const center = getCenter()
-    const dx = e.clientX - center.x
-    const dy = e.clientY - center.y
-    const rawAngle = Math.atan2(dy, dx)
+    if (!isDownRef.current || firedRef.current || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const dx = e.clientX - rect.left - CX
+    const dy = e.clientY - rect.top  - CY
+    // Clockwise angle from 12 o'clock (0° at top, increasing clockwise)
+    const cwAngle = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360
 
-    // Accumulate absolute angular travel for this gesture
-    if (prevRawAngleRef.current !== null) {
-      let delta = rawAngle - prevRawAngleRef.current
-      if (delta >  Math.PI) delta -= 2 * Math.PI
-      if (delta < -Math.PI) delta += 2 * Math.PI
-      gestureAngleRef.current += Math.abs(delta)
-    }
-    prevRawAngleRef.current = rawAngle
+    // Delta from previous position — handles 360° wrap
+    let delta = cwAngle - (prevClockwiseRef.current % 360)
+    if (delta >  180) delta -= 360
+    if (delta < -180) delta += 360
 
-    // Progress: how far through a full circle (0 → 1)
-    const FULL_CIRCLE = 2 * Math.PI
-    const cov = Math.min(1, gestureAngleRef.current / FULL_CIRCLE)
-    setCoverage(cov)
+    const newCw = Math.min(340, Math.max(0, prevClockwiseRef.current + delta))
+    prevClockwiseRef.current = newCw
+    const newCoverage = newCw / 340
+    setCoverage(newCoverage)
 
-    // Also register sector for the visual arc fill
-    visitedRef.current.add(getSector(rawAngle))
-
-    // Sparkle trail particles every ~8px of tip movement
-    const tipX = CX + RING_R * Math.cos(rawAngle)
-    const tipY = CY + RING_R * Math.sin(rawAngle)
-    const moved = Math.hypot(tipX - lastTipRef.current.x, tipY - lastTipRef.current.y)
-    if (moved > 8) {
-      lastTipRef.current = { x: tipX, y: tipY }
-      const driftAngle = Math.atan2(tipY - CY, tipX - CX)
-      const dist = 12 + Math.random() * 14
-      setTrailParticles(prev => {
-        const p: TrailParticle = {
-          id: ++trailCounter,
-          cx: tipX,
-          cy: tipY,
-          dx: Math.cos(driftAngle) * dist,
-          dy: Math.sin(driftAngle) * dist,
-        }
-        return [...prev.slice(-22), p]
-      })
-    }
-
-    // Haptic pulse at 25 / 50 / 75% milestones
-    const milestoneHit = [0.25, 0.5, 0.75].find(m => cov >= m && !milestonesRef.current.has(m))
-    if (milestoneHit) {
-      milestonesRef.current.add(milestoneHit)
+    // Haptic at 25 / 50 / 75%
+    const hit = [0.25, 0.5, 0.75].find(m => newCoverage >= m && !milestonesRef.current.has(m))
+    if (hit) {
+      milestonesRef.current.add(hit)
       if (typeof navigator !== 'undefined') navigator.vibrate?.([30, 20, 50])
     }
 
-    // Complete at 340° — one full circle in one gesture
-    if (gestureAngleRef.current >= (340 * Math.PI / 180) && !firedRef.current) {
-      triggerClaim()
-    }
+    if (newCw >= 340 && !firedRef.current) triggerClaim()
   }
 
   const onPointerUp = () => {
     isDownRef.current = false
-    setIsDrawing(false)
+    setIsDragging(false)
   }
-
-  const removeTrail = useCallback((id: number) => {
-    setTrailParticles(prev => prev.filter(p => p.id !== id))
-  }, [])
 
   return (
     <div
@@ -284,7 +230,7 @@ function SummonCircleContent() {
             ) : (
               <motion.div key="draw" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <p className="text-white text-[22px] font-bold leading-snug">
-                  Draw a circle to<br />summon the genie
+                  Drag the puck to<br />summon the genie
                 </p>
                 <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
@@ -296,7 +242,7 @@ function SummonCircleContent() {
         <div
           ref={containerRef}
           className="relative flex items-center justify-center mb-5"
-          style={{ width: CONTAINER, height: CONTAINER, touchAction: 'none', cursor: 'crosshair' }}
+          style={{ width: CONTAINER, height: CONTAINER, touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -393,35 +339,23 @@ function SummonCircleContent() {
               </>
             )}
 
-            {/* Tip dot — soft warm sunburst */}
-            {coverage > 0 && !claimed && (() => {
-              const a = (-90 + coverage * 360) * (Math.PI / 180)
-              const tx = CX + RING_R * Math.cos(a)
-              const ty = CY + RING_R * Math.sin(a)
-              return (
-                <>
-                  <circle cx={tx} cy={ty} r={32} fill="rgba(168,85,247,0.16)" filter="url(#bloomWide)" />
-                  <circle cx={tx} cy={ty} r={16} fill="rgba(192,132,252,0.55)" filter="url(#bloomMed)" />
-                  <circle cx={tx} cy={ty} r={9} fill="#A855F7" filter="url(#tipGlow)" />
-                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(233,213,255,0.94)" />
-                </>
-              )
-            })()}
-
-            {/* START label + clockwise hint — before user draws */}
-            {coverage === 0 && !claimed && (
+            {/* Puck glow halo in SVG (behind the HTML puck) */}
+            {!claimed && (
               <>
-                <text x={CX} y={CY - RING_R - 24}
-                  textAnchor="middle" fontSize="12" fontWeight="bold"
-                  fill="rgba(168,85,247,0.95)"
-                  fontFamily="system-ui,-apple-system">
-                  START
-                </text>
-                <path d="M 150 38 A 112 112 0 0 1 222 112"
-                  fill="none" stroke="rgba(168,85,247,0.6)" strokeWidth="3"
-                  strokeLinecap="round" strokeDasharray="8 5" />
-                <polygon points="222,112 210,100 225,98" fill="rgba(168,85,247,0.7)" />
+                <circle cx={puckX} cy={puckY} r={34}
+                  fill={`rgba(168,85,247,${0.06 + coverage * 0.18})`}
+                  filter="url(#bloomWide)" />
+                <circle cx={puckX} cy={puckY} r={18}
+                  fill={`rgba(192,132,252,${0.18 + coverage * 0.30})`}
+                  filter="url(#bloomMed)" />
               </>
+            )}
+
+            {/* Clockwise direction arrow — only before drag starts */}
+            {coverage === 0 && !claimed && (
+              <path d="M 162 28 A 112 112 0 0 1 234 112"
+                fill="none" stroke="rgba(168,85,247,0.45)" strokeWidth="2.5"
+                strokeLinecap="round" strokeDasharray="6 5" />
             )}
 
             {/* Completed ring — purple plasma */}
@@ -442,61 +376,41 @@ function SummonCircleContent() {
             )}
           </svg>
 
-          {/* Pulsing start dot at 12 o'clock */}
-          {coverage === 0 && !claimed && (
-            <motion.div
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                width: 18, height: 18,
-                left: CX - 9,
-                top: CY - RING_R - 9,
-                background: '#A855F7',
-                boxShadow: '0 0 16px 5px rgba(168,85,247,0.8)',
-              }}
-              animate={{ scale: [1, 1.6, 1], opacity: [1, 0.4, 1] }}
-              transition={{ duration: 1.3, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-
-          {/* Orbiting demo dot — shows clockwise direction before drawing */}
-          {coverage === 0 && !isDrawing && !claimed && (
+          {/* Carrom puck — draggable striker on the ring */}
+          {!claimed && (
             <motion.div
               className="absolute pointer-events-none"
-              style={{ width: CONTAINER, height: CONTAINER, top: 0, left: 0 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              style={{ left: puckX - 22, top: puckY - 22, width: 44, height: 44 }}
+              animate={!isDragging && coverage === 0
+                ? { scale: [1, 1.12, 1], y: [0, -3, 0] }
+                : { scale: isDragging ? 0.94 : 1, y: 0 }
+              }
+              transition={!isDragging && coverage === 0
+                ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+                : { duration: 0.12 }
+              }
             >
-              <div
-                className="absolute rounded-full"
-                style={{
-                  width: 11, height: 11,
-                  left: CX - 5.5,
-                  top:  CY - RING_R - 5.5,
-                  background: 'rgba(168,85,247,0.6)',
-                  boxShadow: '0 0 10px 3px rgba(168,85,247,0.4)',
-                }}
-              />
+              {/* Puck body */}
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                background: 'radial-gradient(circle at 36% 30%, rgba(255,255,255,0.97) 0%, rgba(216,180,254,0.88) 55%, rgba(168,85,247,0.72) 100%)',
+                boxShadow: isDragging
+                  ? '0 0 0 3px rgba(168,85,247,0.95), 0 4px 20px 6px rgba(168,85,247,0.55)'
+                  : '0 0 0 2px rgba(168,85,247,0.72), 0 2px 12px 3px rgba(168,85,247,0.38)',
+              }} />
+              {/* Inner ring detail (carrom striker groove) */}
+              <div style={{
+                position: 'absolute', inset: 9, borderRadius: '50%',
+                border: '1.5px solid rgba(147,51,234,0.45)',
+              }} />
+              {/* Center mark */}
+              <div style={{
+                position: 'absolute', width: 7, height: 7,
+                top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+                borderRadius: '50%', background: 'rgba(126,34,206,0.75)',
+              }} />
             </motion.div>
           )}
-
-          {/* Sparkle trail particles at arc tip */}
-          {trailParticles.map(p => (
-            <motion.div
-              key={p.id}
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                width: 7, height: 7,
-                left: p.cx - 3.5,
-                top:  p.cy - 3.5,
-                background: '#A855F7',
-                boxShadow: '0 0 6px 2px rgba(168,85,247,0.7)',
-              }}
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 0, scale: 0.2, x: p.dx, y: p.dy }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
-              onAnimationComplete={() => removeTrail(p.id)}
-            />
-          ))}
 
           {/* Orbit particles (appear as coverage grows) */}
           <AnimatePresence>
@@ -569,11 +483,11 @@ function SummonCircleContent() {
               ) : (
                 <motion.div
                   key="lamp"
-                  animate={isDrawing
+                  animate={isDragging
                     ? { scale: [1, 1.06, 1], rotate: [-3, 3, -3, 0] }
                     : { scale: [1, 1.025, 1] }
                   }
-                  transition={isDrawing
+                  transition={isDragging
                     ? { duration: 0.28, repeat: Infinity }
                     : { duration: 2.5, repeat: Infinity, ease: 'easeInOut' }
                   }
@@ -630,10 +544,10 @@ function SummonCircleContent() {
                   className="text-center mt-3"
                 >
                   <p className="text-sm font-semibold" style={{ color: 'rgba(168,85,247,0.85)' }}>
-                    Start at the purple dot ↑
+                    Grab the puck and drag clockwise ↻
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
-                    Draw a full circle clockwise ↻
+                    Take it all the way around the ring
                   </p>
                 </motion.div>
               )}
