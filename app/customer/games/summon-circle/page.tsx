@@ -379,38 +379,40 @@ function SummonCircleContent() {
             )}
           </svg>
 
-          {/* Carrom puck — draggable striker on the ring, above inner circle */}
+          {/* Guide dot — glowing magic orb that marks current position on the arc */}
           {!claimed && (
             <motion.div
               className="absolute pointer-events-none"
-              style={{ left: puckX - 22, top: puckY - 22, width: 44, height: 44, zIndex: 20 }}
+              style={{ left: puckX - 14, top: puckY - 14, width: 28, height: 28, zIndex: 20 }}
               animate={!isDragging && coverage === 0
-                ? { scale: [1, 1.12, 1], y: [0, -3, 0] }
-                : { scale: isDragging ? 0.94 : 1, y: 0 }
+                ? { scale: [1, 1.22, 1], opacity: [0.82, 1, 0.82] }
+                : { scale: isDragging ? 1.1 : 1, opacity: 1 }
               }
               transition={!isDragging && coverage === 0
-                ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
-                : { duration: 0.12 }
+                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+                : { duration: 0.1 }
               }
             >
-              {/* Puck body */}
+              {/* Soft atmospheric halo */}
+              <div style={{
+                position: 'absolute', inset: -10, borderRadius: '50%',
+                background: `rgba(168,85,247,${0.18 + coverage * 0.38})`,
+                filter: 'blur(9px)',
+              }} />
+              {/* Orb body */}
               <div style={{
                 position: 'absolute', inset: 0, borderRadius: '50%',
-                background: 'radial-gradient(circle at 36% 30%, rgba(255,255,255,0.97) 0%, rgba(216,180,254,0.88) 55%, rgba(168,85,247,0.72) 100%)',
+                background: 'radial-gradient(circle at 38% 32%, #fff 0%, rgba(216,180,254,0.95) 42%, rgba(168,85,247,0.85) 100%)',
                 boxShadow: isDragging
-                  ? '0 0 0 3px rgba(168,85,247,0.95), 0 4px 20px 6px rgba(168,85,247,0.55)'
-                  : '0 0 0 2px rgba(168,85,247,0.72), 0 2px 12px 3px rgba(168,85,247,0.38)',
+                  ? '0 0 0 1.5px rgba(192,132,252,0.95), 0 0 14px 5px rgba(168,85,247,0.65)'
+                  : '0 0 0 1px rgba(192,132,252,0.75), 0 0 8px 3px rgba(168,85,247,0.42)',
               }} />
-              {/* Inner ring detail (carrom striker groove) */}
-              <div style={{
-                position: 'absolute', inset: 9, borderRadius: '50%',
-                border: '1.5px solid rgba(147,51,234,0.45)',
-              }} />
-              {/* Center mark */}
+              {/* Bright centre spark */}
               <div style={{
                 position: 'absolute', width: 7, height: 7,
                 top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-                borderRadius: '50%', background: 'rgba(126,34,206,0.75)',
+                borderRadius: '50%', background: 'rgba(255,255,255,0.95)',
+                boxShadow: '0 0 4px 2px rgba(233,213,255,0.8)',
               }} />
             </motion.div>
           )}
@@ -481,7 +483,7 @@ function SummonCircleContent() {
                   animate={{ scale: [0, 1.2, 1], y: 0, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 280, damping: 13, delay: 0.08 }}
                 >
-                  <img src="/genie.png" alt="Genie" style={{ width: 100, height: 'auto', objectFit: 'contain' }} />
+                  <img src="/genie.png" alt="Genie" style={{ width: 135, height: 'auto', objectFit: 'contain' }} />
                 </motion.div>
               ) : (
                 <motion.div

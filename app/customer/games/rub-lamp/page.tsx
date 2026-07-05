@@ -453,7 +453,7 @@ function RubLampContent() {
                   <img
                     src="/genie.png"
                     alt="Genie"
-                    style={{ width: 110, height: 'auto', objectFit: 'contain' }}
+                    style={{ width: 140, height: 'auto', objectFit: 'contain' }}
                   />
                 </motion.div>
               ) : (
