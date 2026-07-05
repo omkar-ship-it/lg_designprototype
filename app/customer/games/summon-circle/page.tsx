@@ -96,17 +96,18 @@ function SummonCircleContent() {
   const [flash, setFlash]         = useState(false)
   const [showBurst, setShowBurst] = useState(false)
 
-  const firedRef         = useRef(false)
-  const isDownRef        = useRef(false)
-  const containerRef     = useRef<HTMLDivElement>(null)
-  const milestonesRef    = useRef<Set<number>>(new Set())
-  const prevClockwiseRef = useRef(0)   // degrees 0–340, puck's current position
+  const firedRef          = useRef(false)
+  const isDownRef         = useRef(false)
+  const containerRef      = useRef<HTMLDivElement>(null)
+  const milestonesRef     = useRef<Set<number>>(new Set())
+  const prevPointerAngle  = useRef(0)   // pointer's raw clockwise angle (0–360)
+  const puckTravelRef     = useRef(0)   // cumulative puck travel in degrees (0–340)
 
   const coveragePct  = Math.round(coverage * 100)
   const orbitVisible = coverage > 0.1
 
-  // Puck position on the ring (SVG coordinates)
-  const puckAngleRad = (-90 + coverage * 340) * (Math.PI / 180)
+  // Puck position on the ring (SVG coordinates) — always at 12 o'clock + travel
+  const puckAngleRad = (-90 + puckTravelRef.current) * (Math.PI / 180)
   const puckX = CX + RING_R * Math.cos(puckAngleRad)
   const puckY = CY + RING_R * Math.sin(puckAngleRad)
 
@@ -125,12 +126,14 @@ function SummonCircleContent() {
     const rect = containerRef.current.getBoundingClientRect()
     const touchX = e.clientX - rect.left
     const touchY = e.clientY - rect.top
-    // Only grab if finger is on/near the puck
-    if (Math.hypot(touchX - puckX, touchY - puckY) > 48) return
+    // Grab anywhere near the ring track — like placing finger on a rotary dial
+    const distFromCenter = Math.hypot(touchX - CX, touchY - CY)
+    if (Math.abs(distFromCenter - RING_R) > 55) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     isDownRef.current = true
     setIsDragging(true)
-    prevClockwiseRef.current = coverage * 340
+    // Track pointer's angular position (not puck position) — delta drives the puck
+    prevPointerAngle.current = (Math.atan2(touchY - CY, touchX - CX) * 180 / Math.PI + 90 + 360) % 360
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -138,17 +141,17 @@ function SummonCircleContent() {
     const rect = containerRef.current.getBoundingClientRect()
     const dx = e.clientX - rect.left - CX
     const dy = e.clientY - rect.top  - CY
-    // Clockwise angle from 12 o'clock (0° at top, increasing clockwise)
     const cwAngle = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360
 
-    // Delta from previous position — handles 360° wrap
-    let delta = cwAngle - (prevClockwiseRef.current % 360)
+    // Angular delta of pointer — drives puck travel regardless of grab position
+    let delta = cwAngle - prevPointerAngle.current
     if (delta >  180) delta -= 360
     if (delta < -180) delta += 360
+    prevPointerAngle.current = cwAngle
 
-    const newCw = Math.min(340, Math.max(0, prevClockwiseRef.current + delta))
-    prevClockwiseRef.current = newCw
-    const newCoverage = newCw / 340
+    const newTravel = Math.min(340, Math.max(0, puckTravelRef.current + delta))
+    puckTravelRef.current = newTravel
+    const newCoverage = newTravel / 340
     setCoverage(newCoverage)
 
     // Haptic at 25 / 50 / 75%
@@ -158,7 +161,7 @@ function SummonCircleContent() {
       if (typeof navigator !== 'undefined') navigator.vibrate?.([30, 20, 50])
     }
 
-    if (newCw >= 340 && !firedRef.current) triggerClaim()
+    if (newTravel >= 340 && !firedRef.current) triggerClaim()
   }
 
   const onPointerUp = () => {
@@ -376,11 +379,11 @@ function SummonCircleContent() {
             )}
           </svg>
 
-          {/* Carrom puck — draggable striker on the ring */}
+          {/* Carrom puck — draggable striker on the ring, above inner circle */}
           {!claimed && (
             <motion.div
               className="absolute pointer-events-none"
-              style={{ left: puckX - 22, top: puckY - 22, width: 44, height: 44 }}
+              style={{ left: puckX - 22, top: puckY - 22, width: 44, height: 44, zIndex: 20 }}
               animate={!isDragging && coverage === 0
                 ? { scale: [1, 1.12, 1], y: [0, -3, 0] }
                 : { scale: isDragging ? 0.94 : 1, y: 0 }
@@ -454,7 +457,7 @@ function SummonCircleContent() {
 
           {/* Inner circle — lamp or genie */}
           <motion.div
-            className="absolute inset-6 rounded-full flex items-center justify-center overflow-hidden"
+            className="absolute inset-6 rounded-full flex items-center justify-center overflow-visible"
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: claimed
