@@ -337,7 +337,7 @@ function RubLampContent() {
             <circle cx={CX} cy={CY} r={R} fill="none"
               stroke="rgba(120,60,240,0.07)" strokeWidth="22" />
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(215,195,255,0.22)" strokeWidth="1.5" strokeDasharray="7 9" />
+              stroke="rgba(215,195,255,0.13)" strokeWidth="1.5" strokeDasharray="7 9" />
 
             {/* Progress arc — 4-layer soft warm amber */}
             {charge > 0 && !ringClaimed && (
@@ -359,7 +359,7 @@ function RubLampContent() {
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
                   stroke={`rgba(245,158,11,${0.86 + glowIntensity * 0.14})`}
-                  strokeWidth="9" strokeLinecap="round"
+                  strokeWidth="7" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                   style={{ filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.80))' }}
                 />
@@ -382,7 +382,7 @@ function RubLampContent() {
                   fill="none" stroke="rgba(252,211,77,0.42)" strokeWidth="18"
                   filter="url(#lampBloomMed)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="#F59E0B" strokeWidth="9"
+                  fill="none" stroke="#F59E0B" strokeWidth="7"
                   filter="url(#lampRingGlow)" />
                 <circle cx={CX} cy={CY} r={R}
                   fill="none" stroke="rgba(255,251,235,0.92)" strokeWidth="2" />
