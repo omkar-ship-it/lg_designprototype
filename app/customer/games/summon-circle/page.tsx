@@ -303,41 +303,42 @@ function SummonCircleContent() {
               )
             })}
 
-            {/* Progress arc — 4-layer purple plasma */}
+            {/* Progress arc — 4-layer purple plasma, dashoffset for GPU-smooth animation */}
             {coverage > 0 && !claimed && (
               <>
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
                   stroke={`rgba(168,85,247,${0.08 + coverage * 0.18})`}
                   strokeWidth="46" strokeLinecap="round"
-                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                  strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - coverage)}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`, transition: 'stroke-dashoffset 0.03s linear' }}
                   filter="url(#bloomWide)"
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
                   stroke={`rgba(192,132,252,${0.28 + coverage * 0.28})`}
                   strokeWidth="22" strokeLinecap="round"
-                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                  strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - coverage)}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`, transition: 'stroke-dashoffset 0.03s linear' }}
                   filter="url(#bloomMed)"
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
                   stroke={`rgba(167,139,250,${0.86 + coverage * 0.14})`}
                   strokeWidth="10" strokeLinecap="round"
-                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                  strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - coverage)}
                   style={{
                     transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`,
                     filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.80))',
+                    transition: 'stroke-dashoffset 0.03s linear',
                   }}
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
                   stroke="rgba(233,213,255,0.92)"
                   strokeWidth="2" strokeLinecap="round"
-                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                  strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - coverage)}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`, transition: 'stroke-dashoffset 0.03s linear' }}
                 />
               </>
             )}
@@ -383,7 +384,12 @@ function SummonCircleContent() {
           {!claimed && (
             <motion.div
               className="absolute pointer-events-none"
-              style={{ left: puckX - 14, top: puckY - 14, width: 28, height: 28, zIndex: 20 }}
+              style={{
+                left: 0, top: 0, width: 28, height: 28, zIndex: 20,
+                transform: `translate(${puckX - 14}px, ${puckY - 14}px)`,
+                willChange: 'transform',
+                transition: 'transform 0.03s linear',
+              }}
               animate={!isDragging && coverage === 0
                 ? { scale: [1, 1.22, 1], opacity: [0.82, 1, 0.82] }
                 : { scale: isDragging ? 1.1 : 1, opacity: 1 }
@@ -483,7 +489,7 @@ function SummonCircleContent() {
                   animate={{ scale: [0, 1.2, 1], y: 0, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 280, damping: 13, delay: 0.08 }}
                 >
-                  <img src="/genie.png" alt="Genie" style={{ width: 135, height: 'auto', objectFit: 'contain' }} />
+                  <img src="/genie.png" alt="Genie" style={{ width: 162, height: 'auto', objectFit: 'contain' }} />
                 </motion.div>
               ) : (
                 <motion.div
