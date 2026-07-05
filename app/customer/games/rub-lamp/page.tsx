@@ -339,91 +339,87 @@ function RubLampContent() {
             <circle cx={CX} cy={CY} r={R} fill="none"
               stroke="rgba(215,195,255,0.22)" strokeWidth="1.5" strokeDasharray="7 9" />
 
-            {/* Progress arc — 4-layer plasma */}
+            {/* Progress arc — 4-layer soft warm amber */}
             {charge > 0 && !ringClaimed && (
               <>
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(255,110,0,${0.16 + glowIntensity * 0.24})`}
+                  stroke={`rgba(180,90,5,${0.13 + glowIntensity * 0.22})`}
                   strokeWidth="36" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                   filter="url(#lampBloomWide)"
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(251,160,15,${0.48 + glowIntensity * 0.32})`}
+                  stroke={`rgba(217,119,6,${0.42 + glowIntensity * 0.30})`}
                   strokeWidth="18" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                   filter="url(#lampBloomMed)"
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(253,205,45,${0.88 + glowIntensity * 0.12})`}
+                  stroke={`rgba(245,158,11,${0.88 + glowIntensity * 0.12})`}
                   strokeWidth="9" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
-                  style={{ filter: 'drop-shadow(0 0 7px rgba(255,170,0,1))' }}
+                  style={{ filter: 'drop-shadow(0 0 7px rgba(245,158,11,0.85))' }}
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke="rgba(255,253,225,0.98)"
+                  stroke="rgba(254,243,199,0.94)"
                   strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                 />
               </>
             )}
 
-            {/* Claimed full ring — 4-layer neon */}
+            {/* Claimed full ring — soft warm amber */}
             {ringClaimed && (
               <>
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(255,110,0,0.22)" strokeWidth="36"
+                  fill="none" stroke="rgba(180,90,5,0.18)" strokeWidth="36"
                   filter="url(#lampBloomWide)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(251,160,15,0.62)" strokeWidth="18"
+                  fill="none" stroke="rgba(217,119,6,0.55)" strokeWidth="18"
                   filter="url(#lampBloomMed)" />
                 <circle cx={CX} cy={CY} r={R}
                   fill="none" stroke="#F59E0B" strokeWidth="9"
                   filter="url(#lampRingGlow)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(255,253,225,0.96)" strokeWidth="2" />
+                  fill="none" stroke="rgba(254,243,199,0.94)" strokeWidth="2" />
               </>
             )}
           </svg>
 
-          {/* Tip dot — sunburst layers */}
+          {/* Tip dot — warm amber sunburst */}
           {charge > 1 && !ringClaimed && (
             <>
-              {/* Outermost atmospheric halo */}
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 64, height: 64,
                 left: dotX - 32, top: dotY - 32,
-                background: 'rgba(255,140,0,0.18)',
+                background: 'rgba(180,90,5,0.16)',
                 filter: 'blur(18px)',
               }} />
-              {/* Wide glow */}
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 38, height: 38,
                 left: dotX - 19, top: dotY - 19,
-                background: 'rgba(255,200,30,0.40)',
+                background: 'rgba(217,119,6,0.36)',
                 filter: 'blur(8px)',
               }} />
-              {/* Pulsing main dot */}
               <motion.div
                 className="absolute rounded-full pointer-events-none"
                 style={{
                   width: 20, height: 20,
                   left: dotX - 10, top: dotY - 10,
-                  background: '#FBBF24',
-                  boxShadow: `0 0 ${14 + glowIntensity * 18}px 5px rgba(245,158,11,${0.75 + glowIntensity * 0.25})`,
+                  background: '#F59E0B',
+                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(217,119,6,${0.70 + glowIntensity * 0.30})`,
                 }}
                 animate={{ scale: [1, 1.28, 1] }}
                 transition={{ duration: 0.4, repeat: Infinity }}
               />
-              {/* White-hot core */}
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 8, height: 8,
                 left: dotX - 4, top: dotY - 4,
-                background: 'rgba(255,255,245,0.98)',
+                background: 'rgba(254,243,199,0.95)',
               }} />
             </>
           )}
@@ -434,9 +430,9 @@ function RubLampContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: ringClaimed
-                ? '0 0 0 3px rgba(255,150,0,0.90), 0 0 55px 22px rgba(255,120,0,0.72), 0 0 110px 38px rgba(255,80,0,0.42), inset 0 0 65px 22px rgba(255,100,0,0.30)'
+                ? '0 0 0 2px rgba(217,119,6,0.82), 0 0 50px 20px rgba(180,90,5,0.62), 0 0 100px 34px rgba(140,65,3,0.36), inset 0 0 60px 20px rgba(165,75,4,0.24)'
                 : charge > 3
-                  ? `0 0 0 ${1 + glowIntensity * 3}px rgba(255,150,0,${0.20 + glowIntensity * 0.70}), 0 0 ${18 + glowIntensity * 62}px ${7 + glowIntensity * 28}px rgba(255,120,0,${0.18 + glowIntensity * 0.58}), 0 0 ${38 + glowIntensity * 85}px ${10 + glowIntensity * 32}px rgba(255,80,0,${0.07 + glowIntensity * 0.35}), inset 0 0 ${8 + glowIntensity * 58}px ${2 + glowIntensity * 22}px rgba(255,100,0,${0.04 + glowIntensity * 0.28})`
+                  ? `0 0 0 ${0.5 + glowIntensity * 2}px rgba(217,119,6,${0.16 + glowIntensity * 0.66}), 0 0 ${14 + glowIntensity * 52}px ${5 + glowIntensity * 22}px rgba(180,90,5,${0.14 + glowIntensity * 0.50}), 0 0 ${30 + glowIntensity * 75}px ${8 + glowIntensity * 28}px rgba(140,65,3,${0.05 + glowIntensity * 0.30}), inset 0 0 ${5 + glowIntensity * 52}px ${1.5 + glowIntensity * 20}px rgba(165,75,4,${0.03 + glowIntensity * 0.24})`
                   : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >
