@@ -236,7 +236,7 @@ function SummonCircleContent() {
             animate={{ opacity: [0, 0.75, 0] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.45, times: [0, 0.35, 1] }}
-            style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.95) 0%, rgba(245,158,11,0.75) 55%, transparent 100%)' }}
+            style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.95) 0%, rgba(168,85,247,0.75) 55%, transparent 100%)' }}
           />
         )}
       </AnimatePresence>
@@ -326,7 +326,7 @@ function SummonCircleContent() {
                 </feMerge>
               </filter>
               <filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#F59E0B" floodOpacity="1" />
+                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#A855F7" floodOpacity="1" />
               </filter>
             </defs>
 
@@ -354,12 +354,12 @@ function SummonCircleContent() {
               )
             })}
 
-            {/* Progress arc — 4-layer soft warm amber */}
+            {/* Progress arc — 4-layer purple plasma */}
             {coverage > 0 && !claimed && (
               <>
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(251,191,36,${0.08 + coverage * 0.16})`}
+                  stroke={`rgba(168,85,247,${0.08 + coverage * 0.18})`}
                   strokeWidth="46" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -367,7 +367,7 @@ function SummonCircleContent() {
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(252,211,77,${0.28 + coverage * 0.26})`}
+                  stroke={`rgba(192,132,252,${0.28 + coverage * 0.28})`}
                   strokeWidth="22" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -375,17 +375,17 @@ function SummonCircleContent() {
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke={`rgba(245,158,11,${0.86 + coverage * 0.14})`}
+                  stroke={`rgba(167,139,250,${0.86 + coverage * 0.14})`}
                   strokeWidth="10" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{
                     transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`,
-                    filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.80))',
+                    filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.80))',
                   }}
                 />
                 <circle
                   cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(255,251,235,0.92)"
+                  stroke="rgba(233,213,255,0.92)"
                   strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
@@ -400,10 +400,10 @@ function SummonCircleContent() {
               const ty = CY + RING_R * Math.sin(a)
               return (
                 <>
-                  <circle cx={tx} cy={ty} r={32} fill="rgba(251,191,36,0.16)" filter="url(#bloomWide)" />
-                  <circle cx={tx} cy={ty} r={16} fill="rgba(252,211,77,0.55)" filter="url(#bloomMed)" />
-                  <circle cx={tx} cy={ty} r={9} fill="#FBBF24" filter="url(#tipGlow)" />
-                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(255,251,235,0.94)" />
+                  <circle cx={tx} cy={ty} r={32} fill="rgba(168,85,247,0.16)" filter="url(#bloomWide)" />
+                  <circle cx={tx} cy={ty} r={16} fill="rgba(192,132,252,0.55)" filter="url(#bloomMed)" />
+                  <circle cx={tx} cy={ty} r={9} fill="#A855F7" filter="url(#tipGlow)" />
+                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(233,213,255,0.94)" />
                 </>
               )
             })()}
@@ -413,31 +413,31 @@ function SummonCircleContent() {
               <>
                 <text x={CX} y={CY - RING_R - 24}
                   textAnchor="middle" fontSize="12" fontWeight="bold"
-                  fill="rgba(245,158,11,0.95)"
+                  fill="rgba(168,85,247,0.95)"
                   fontFamily="system-ui,-apple-system">
                   START
                 </text>
                 <path d="M 150 38 A 112 112 0 0 1 222 112"
-                  fill="none" stroke="rgba(245,158,11,0.6)" strokeWidth="3"
+                  fill="none" stroke="rgba(168,85,247,0.6)" strokeWidth="3"
                   strokeLinecap="round" strokeDasharray="8 5" />
-                <polygon points="222,112 210,100 225,98" fill="rgba(245,158,11,0.7)" />
+                <polygon points="222,112 210,100 225,98" fill="rgba(168,85,247,0.7)" />
               </>
             )}
 
-            {/* Completed ring — soft warm amber */}
+            {/* Completed ring — purple plasma */}
             {claimed && (
               <>
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(251,191,36,0.12)" strokeWidth="46"
+                  fill="none" stroke="rgba(168,85,247,0.12)" strokeWidth="46"
                   filter="url(#bloomWide)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(252,211,77,0.42)" strokeWidth="22"
+                  fill="none" stroke="rgba(192,132,252,0.42)" strokeWidth="22"
                   filter="url(#bloomMed)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="#F59E0B" strokeWidth="10"
+                  fill="none" stroke="#A855F7" strokeWidth="10"
                   filter="url(#ringGlow)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(255,251,235,0.92)" strokeWidth="2" />
+                  fill="none" stroke="rgba(233,213,255,0.92)" strokeWidth="2" />
               </>
             )}
           </svg>
@@ -450,8 +450,8 @@ function SummonCircleContent() {
                 width: 18, height: 18,
                 left: CX - 9,
                 top: CY - RING_R - 9,
-                background: '#F59E0B',
-                boxShadow: '0 0 16px 5px rgba(245,158,11,0.8)',
+                background: '#A855F7',
+                boxShadow: '0 0 16px 5px rgba(168,85,247,0.8)',
               }}
               animate={{ scale: [1, 1.6, 1], opacity: [1, 0.4, 1] }}
               transition={{ duration: 1.3, repeat: Infinity, ease: 'easeInOut' }}
@@ -472,8 +472,8 @@ function SummonCircleContent() {
                   width: 11, height: 11,
                   left: CX - 5.5,
                   top:  CY - RING_R - 5.5,
-                  background: 'rgba(245,158,11,0.6)',
-                  boxShadow: '0 0 10px 3px rgba(245,158,11,0.4)',
+                  background: 'rgba(168,85,247,0.6)',
+                  boxShadow: '0 0 10px 3px rgba(168,85,247,0.4)',
                 }}
               />
             </motion.div>
@@ -488,8 +488,8 @@ function SummonCircleContent() {
                 width: 7, height: 7,
                 left: p.cx - 3.5,
                 top:  p.cy - 3.5,
-                background: '#FBBF24',
-                boxShadow: '0 0 6px 2px rgba(245,158,11,0.7)',
+                background: '#A855F7',
+                boxShadow: '0 0 6px 2px rgba(168,85,247,0.7)',
               }}
               initial={{ opacity: 1, scale: 1 }}
               animate={{ opacity: 0, scale: 0.2, x: p.dx, y: p.dy }}
@@ -509,11 +509,11 @@ function SummonCircleContent() {
                 transition={{ duration: 2 + i * 0.3, repeat: Infinity, ease: 'linear', delay: p.delay }}
               >
                 <motion.div
-                  className="absolute w-2.5 h-2.5 rounded-full bg-amber-400"
+                  className="absolute w-2.5 h-2.5 rounded-full bg-purple-400"
                   style={{
                     left: CX + p.dist * Math.cos((p.angle * Math.PI) / 180) - 5,
                     top:  CY + p.dist * Math.sin((p.angle * Math.PI) / 180) - 5,
-                    boxShadow: '0 0 8px 3px rgba(245,158,11,0.75)',
+                    boxShadow: '0 0 8px 3px rgba(168,85,247,0.75)',
                     opacity: Math.min(1, coverage * 3.5),
                   }}
                 />
@@ -529,7 +529,7 @@ function SummonCircleContent() {
                 <motion.div
                   key={i}
                   className="absolute w-2.5 h-2.5 rounded-full pointer-events-none"
-                  style={{ left: CX - 5, top: CY - 5, background: '#F59E0B', boxShadow: '0 0 8px 3px rgba(245,158,11,0.85)' }}
+                  style={{ left: CX - 5, top: CY - 5, background: '#A855F7', boxShadow: '0 0 8px 3px rgba(168,85,247,0.85)' }}
                   initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                   animate={{ x: Math.cos(rad) * p.dist, y: Math.sin(rad) * p.dist, opacity: 0, scale: 0.2 }}
                   transition={{ duration: 0.75, delay: p.delay, ease: 'easeOut' }}
@@ -544,9 +544,9 @@ function SummonCircleContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: claimed
-              ? '0 0 0 2px rgba(251,191,36,0.70), 0 0 50px 20px rgba(251,191,36,0.38), 0 0 100px 34px rgba(245,158,11,0.22), inset 0 0 60px 20px rgba(252,211,77,0.14)'
+              ? '0 0 0 2px rgba(168,85,247,0.70), 0 0 50px 20px rgba(168,85,247,0.38), 0 0 100px 34px rgba(147,51,234,0.22), inset 0 0 60px 20px rgba(192,132,252,0.14)'
               : coverage > 0.03
-                ? `0 0 0 ${0.5 + coverage * 2}px rgba(251,191,36,${0.14 + coverage * 0.52}), 0 0 ${14 + coverage * 52}px ${5 + coverage * 22}px rgba(251,191,36,${0.10 + coverage * 0.34}), 0 0 ${30 + coverage * 75}px ${8 + coverage * 28}px rgba(245,158,11,${0.04 + coverage * 0.20}), inset 0 0 ${5 + coverage * 52}px ${1.5 + coverage * 20}px rgba(252,211,77,${0.02 + coverage * 0.16})`
+                ? `0 0 0 ${0.5 + coverage * 2}px rgba(168,85,247,${0.14 + coverage * 0.52}), 0 0 ${14 + coverage * 52}px ${5 + coverage * 22}px rgba(168,85,247,${0.10 + coverage * 0.34}), 0 0 ${30 + coverage * 75}px ${8 + coverage * 28}px rgba(147,51,234,${0.04 + coverage * 0.20}), inset 0 0 ${5 + coverage * 52}px ${1.5 + coverage * 20}px rgba(192,132,252,${0.02 + coverage * 0.16})`
                 : '0 0 22px rgba(109,40,217,0.16)',
             }}
           >
@@ -579,10 +579,10 @@ function SummonCircleContent() {
                   }
                   style={{
                     filter: coverage > 0.6
-                      ? `drop-shadow(0 0 ${10 + (coverage - 0.6) * 20}px rgba(245,158,11,0.9)) drop-shadow(0 0 20px rgba(245,158,11,0.5))`
+                      ? `drop-shadow(0 0 ${10 + (coverage - 0.6) * 20}px rgba(168,85,247,0.9)) drop-shadow(0 0 20px rgba(168,85,247,0.5))`
                       : coverage > 0.2
-                        ? 'drop-shadow(0 0 8px rgba(245,158,11,0.5))'
-                        : 'drop-shadow(0 0 3px rgba(245,158,11,0.2))',
+                        ? 'drop-shadow(0 0 8px rgba(168,85,247,0.5))'
+                        : 'drop-shadow(0 0 3px rgba(168,85,247,0.2))',
                   }}
                 >
                   <img src="/genie-lamp.png" alt="Lamp" style={{ width: 95, height: 'auto', objectFit: 'contain' }} />
@@ -606,7 +606,7 @@ function SummonCircleContent() {
                 <motion.p
                   key={coveragePct}
                   className="text-2xl font-bold tabular-nums"
-                  style={{ color: coveragePct > 60 ? '#FBBF24' : coveragePct > 25 ? '#FCD34D' : 'rgba(255,255,255,0.65)' }}
+                  style={{ color: coveragePct > 60 ? '#C084FC' : coveragePct > 25 ? '#DDD6FE' : 'rgba(255,255,255,0.65)' }}
                   animate={{ scale: [1.15, 1] }}
                   transition={{ duration: 0.15 }}
                 >
@@ -617,8 +617,8 @@ function SummonCircleContent() {
                 <motion.div
                   className="h-full rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
-                    boxShadow: coveragePct > 0 ? `0 0 ${8 + coveragePct / 10}px rgba(245,158,11,0.75)` : 'none',
+                    background: 'linear-gradient(90deg, #C084FC, #A855F7, #7C3AED)',
+                    boxShadow: coveragePct > 0 ? `0 0 ${8 + coveragePct / 10}px rgba(168,85,247,0.75)` : 'none',
                   }}
                   animate={{ width: `${Math.min(100, coveragePct)}%` }}
                   transition={{ duration: 0.08 }}
@@ -629,8 +629,8 @@ function SummonCircleContent() {
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
                   className="text-center mt-3"
                 >
-                  <p className="text-sm font-semibold" style={{ color: 'rgba(245,158,11,0.85)' }}>
-                    Start at the gold dot ↑
+                  <p className="text-sm font-semibold" style={{ color: 'rgba(168,85,247,0.85)' }}>
+                    Start at the purple dot ↑
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
                     Draw a full circle clockwise ↻
@@ -641,7 +641,7 @@ function SummonCircleContent() {
                 <motion.p
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="text-center text-xs mt-2"
-                  style={{ color: coverage > 0.6 ? 'rgba(245,158,11,0.7)' : 'rgba(255,255,255,0.28)' }}
+                  style={{ color: coverage > 0.6 ? 'rgba(168,85,247,0.85)' : 'rgba(255,255,255,0.28)' }}
                 >
                   {coverage < 0.4 ? 'Keep going ↻' : coverage < 0.7 ? 'The genie is rising... ✨' : 'Almost there! 🔥'}
                 </motion.p>

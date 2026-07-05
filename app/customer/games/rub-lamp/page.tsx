@@ -164,14 +164,14 @@ function RubLampContent() {
   const emitSmoke = useCallback((count: number, intensity: number) => {
     const smokeColors = [
       'rgba(168,85,247,0.75)',
-      'rgba(200,170,255,0.7)',
+      'rgba(192,132,252,0.70)',
+      'rgba(233,213,255,0.65)',
       'rgba(255,255,255,0.72)',
-      'rgba(245,158,11,0.55)',
-      'rgba(251,191,36,0.45)',
+      'rgba(147,51,234,0.55)',
     ]
     const newParticles: SmokeParticle[] = Array.from({ length: count }, () => {
       particleCounter += 1
-      const isGolden = intensity > 70 && Math.random() > 0.5
+      const isBright = intensity > 70 && Math.random() > 0.5
       return {
         id:       particleCounter,
         xOff:     -18 + (Math.random() - 0.5) * 22,
@@ -180,7 +180,7 @@ function RubLampContent() {
         size:     (intensity > 60 ? 18 : 12) + Math.random() * 22,
         duration: 0.8 + Math.random() * 0.9,
         opacity:  0.5 + Math.random() * 0.38,
-        color:    isGolden ? 'rgba(251,191,36,0.6)' : smokeColors[Math.floor(Math.random() * smokeColors.length)],
+        color:    isBright ? 'rgba(216,180,254,0.7)' : smokeColors[Math.floor(Math.random() * smokeColors.length)],
       }
     })
     setParticles(prev => [...prev, ...newParticles].slice(-MAX_PARTICLES))
@@ -329,7 +329,7 @@ function RubLampContent() {
                 <feMerge><feMergeNode in="blur" /></feMerge>
               </filter>
               <filter id="lampRingGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#F59E0B" floodOpacity="1" />
+                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#A855F7" floodOpacity="1" />
               </filter>
             </defs>
 
@@ -344,28 +344,28 @@ function RubLampContent() {
               <>
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(251,191,36,${0.08 + glowIntensity * 0.16})`}
+                  stroke={`rgba(168,85,247,${0.08 + glowIntensity * 0.18})`}
                   strokeWidth="36" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                   filter="url(#lampBloomWide)"
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(252,211,77,${0.28 + glowIntensity * 0.26})`}
+                  stroke={`rgba(192,132,252,${0.28 + glowIntensity * 0.28})`}
                   strokeWidth="18" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                   filter="url(#lampBloomMed)"
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(245,158,11,${0.86 + glowIntensity * 0.14})`}
+                  stroke={`rgba(167,139,250,${0.86 + glowIntensity * 0.14})`}
                   strokeWidth="7" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.80))' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.80))' }}
                 />
                 <circle
                   cx={CX} cy={CY} r={R} fill="none"
-                  stroke="rgba(255,251,235,0.92)"
+                  stroke="rgba(233,213,255,0.92)"
                   strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                 />
@@ -376,16 +376,16 @@ function RubLampContent() {
             {ringClaimed && (
               <>
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(251,191,36,0.12)" strokeWidth="36"
+                  fill="none" stroke="rgba(168,85,247,0.12)" strokeWidth="36"
                   filter="url(#lampBloomWide)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(252,211,77,0.42)" strokeWidth="18"
+                  fill="none" stroke="rgba(192,132,252,0.42)" strokeWidth="18"
                   filter="url(#lampBloomMed)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="#F59E0B" strokeWidth="7"
+                  fill="none" stroke="#A855F7" strokeWidth="7"
                   filter="url(#lampRingGlow)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(255,251,235,0.92)" strokeWidth="2" />
+                  fill="none" stroke="rgba(233,213,255,0.92)" strokeWidth="2" />
               </>
             )}
           </svg>
@@ -396,13 +396,13 @@ function RubLampContent() {
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 64, height: 64,
                 left: dotX - 32, top: dotY - 32,
-                background: 'rgba(251,191,36,0.14)',
+                background: 'rgba(168,85,247,0.14)',
                 filter: 'blur(18px)',
               }} />
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 38, height: 38,
                 left: dotX - 19, top: dotY - 19,
-                background: 'rgba(252,211,77,0.48)',
+                background: 'rgba(192,132,252,0.48)',
                 filter: 'blur(8px)',
               }} />
               <motion.div
@@ -410,8 +410,8 @@ function RubLampContent() {
                 style={{
                   width: 20, height: 20,
                   left: dotX - 10, top: dotY - 10,
-                  background: '#FBBF24',
-                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(251,191,36,${0.65 + glowIntensity * 0.30})`,
+                  background: '#A855F7',
+                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(168,85,247,${0.65 + glowIntensity * 0.30})`,
                 }}
                 animate={{ scale: [1, 1.28, 1] }}
                 transition={{ duration: 0.4, repeat: Infinity }}
@@ -419,7 +419,7 @@ function RubLampContent() {
               <div className="absolute rounded-full pointer-events-none" style={{
                 width: 8, height: 8,
                 left: dotX - 4, top: dotY - 4,
-                background: 'rgba(255,251,235,0.94)',
+                background: 'rgba(233,213,255,0.94)',
               }} />
             </>
           )}
@@ -430,9 +430,9 @@ function RubLampContent() {
             style={{
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: ringClaimed
-                ? '0 0 0 2px rgba(251,191,36,0.70), 0 0 50px 20px rgba(251,191,36,0.38), 0 0 100px 34px rgba(245,158,11,0.22), inset 0 0 60px 20px rgba(252,211,77,0.14)'
+                ? '0 0 0 2px rgba(168,85,247,0.70), 0 0 50px 20px rgba(168,85,247,0.38), 0 0 100px 34px rgba(147,51,234,0.22), inset 0 0 60px 20px rgba(192,132,252,0.14)'
                 : charge > 3
-                  ? `0 0 0 ${0.5 + glowIntensity * 2}px rgba(251,191,36,${0.14 + glowIntensity * 0.52}), 0 0 ${14 + glowIntensity * 52}px ${5 + glowIntensity * 22}px rgba(251,191,36,${0.10 + glowIntensity * 0.34}), 0 0 ${30 + glowIntensity * 75}px ${8 + glowIntensity * 28}px rgba(245,158,11,${0.04 + glowIntensity * 0.20}), inset 0 0 ${5 + glowIntensity * 52}px ${1.5 + glowIntensity * 20}px rgba(252,211,77,${0.02 + glowIntensity * 0.16})`
+                  ? `0 0 0 ${0.5 + glowIntensity * 2}px rgba(168,85,247,${0.14 + glowIntensity * 0.52}), 0 0 ${14 + glowIntensity * 52}px ${5 + glowIntensity * 22}px rgba(168,85,247,${0.10 + glowIntensity * 0.34}), 0 0 ${30 + glowIntensity * 75}px ${8 + glowIntensity * 28}px rgba(147,51,234,${0.04 + glowIntensity * 0.20}), inset 0 0 ${5 + glowIntensity * 52}px ${1.5 + glowIntensity * 20}px rgba(192,132,252,${0.02 + glowIntensity * 0.16})`
                   : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >
@@ -469,10 +469,10 @@ function RubLampContent() {
                   }
                   style={{
                     filter: charge > 55
-                      ? `drop-shadow(0 0 ${10 + (charge - 55) / 3}px rgba(245,158,11,0.95)) drop-shadow(0 0 ${22 + (charge - 55) / 2}px rgba(245,158,11,0.55))`
+                      ? `drop-shadow(0 0 ${10 + (charge - 55) / 3}px rgba(168,85,247,0.95)) drop-shadow(0 0 ${22 + (charge - 55) / 2}px rgba(168,85,247,0.55))`
                       : charge > 20
-                        ? 'drop-shadow(0 0 8px rgba(245,158,11,0.55))'
-                        : 'drop-shadow(0 0 3px rgba(245,158,11,0.2))',
+                        ? 'drop-shadow(0 0 8px rgba(168,85,247,0.55))'
+                        : 'drop-shadow(0 0 3px rgba(168,85,247,0.2))',
                   }}
                 >
                   <img
@@ -528,8 +528,8 @@ function RubLampContent() {
                 <motion.div
                   className="h-full rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, #FBBF24, #F59E0B, #D97706)',
-                    boxShadow: charge > 0 ? `0 0 ${8 + glowIntensity * 10}px rgba(245,158,11,${0.6 + glowIntensity * 0.4})` : 'none',
+                    background: 'linear-gradient(90deg, #C084FC, #A855F7, #7C3AED)',
+                    boxShadow: charge > 0 ? `0 0 ${8 + glowIntensity * 10}px rgba(168,85,247,${0.6 + glowIntensity * 0.4})` : 'none',
                   }}
                   animate={{ width: `${charge}%` }}
                   transition={{ duration: 0.1, ease: 'easeOut' }}
@@ -560,7 +560,7 @@ function RubLampContent() {
                 {charge > 0 && (
                   <motion.p
                     className="text-xs font-bold tabular-nums ml-2 flex-shrink-0"
-                    style={{ color: 'rgba(245,158,11,0.85)' }}
+                    style={{ color: 'rgba(168,85,247,0.85)' }}
                   >
                     {Math.round(charge)}%
                   </motion.p>
