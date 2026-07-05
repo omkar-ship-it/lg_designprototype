@@ -10,7 +10,7 @@ const CX = 150
 const CY = 150
 const RING_R = 112
 const RING_CIRC = 2 * Math.PI * RING_R
-const SECTORS = 72
+const SECTORS = 180
 
 const STARS = [
   { x:  8, y: 10, s: 14, o: 0.38 },
@@ -107,18 +107,19 @@ function SummonCircleContent() {
   const [showBurst, setShowBurst]         = useState(false)
   const [trailParticles, setTrailParticles] = useState<TrailParticle[]>([])
 
-  const visitedRef   = useRef<Set<number>>(new Set())
-  const firedRef     = useRef(false)
-  const isDownRef    = useRef(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const lastTipRef   = useRef({ x: 0, y: 0 })
+  const visitedRef    = useRef<Set<number>>(new Set())
+  const firedRef      = useRef(false)
+  const isDownRef     = useRef(false)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const lastTipRef    = useRef({ x: 0, y: 0 })
+  const milestonesRef = useRef<Set<number>>(new Set())
 
   const coveragePct   = Math.round(coverage * 100)
   const orbitVisible  = coverage > 0.1
 
   const getSector = (angle: number) => {
     const deg = ((angle * 180) / Math.PI + 360) % 360
-    return Math.floor(deg / 5) % SECTORS
+    return Math.floor(deg / 2) % SECTORS
   }
 
   const triggerClaim = useCallback(() => {
@@ -176,6 +177,14 @@ function SummonCircleContent() {
 
     const cov = visitedRef.current.size / SECTORS
     setCoverage(cov)
+
+    // Haptic pulse at 25 / 50 / 75% milestones
+    const milestoneHit = [0.25, 0.5, 0.75].find(m => cov >= m && !milestonesRef.current.has(m))
+    if (milestoneHit) {
+      milestonesRef.current.add(milestoneHit)
+      if (typeof navigator !== 'undefined') navigator.vibrate?.([30, 20, 50])
+    }
+
     if (cov >= 0.85 && !firedRef.current) triggerClaim()
   }
 
@@ -284,19 +293,19 @@ function SummonCircleContent() {
                 <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#F59E0B" floodOpacity="1" />
               </filter>
               <filter id="guideGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#FFFFFF" floodOpacity="0.7" />
+                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#C4B5FD" floodOpacity="0.9" />
               </filter>
             </defs>
 
             {/* Guide ring — bright and clearly visible */}
             {!claimed && (
               <>
-                {/* Soft outer glow */}
+                {/* Soft violet outer glow halo */}
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(245,158,11,0.15)" strokeWidth="16" />
-                {/* Main dashed guide */}
+                  stroke="rgba(167,139,250,0.18)" strokeWidth="18" />
+                {/* Main violet dashed guide — clearly visible, on-theme */}
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(255,255,255,0.55)" strokeWidth="2.5"
+                  stroke="rgba(196,181,253,0.75)" strokeWidth="2.5"
                   strokeDasharray="12 7"
                   filter="url(#guideGlow)"
                 />
@@ -310,7 +319,7 @@ function SummonCircleContent() {
                 <line key={deg}
                   x1={CX + (RING_R - 14) * Math.cos(rad)} y1={CY + (RING_R - 14) * Math.sin(rad)}
                   x2={CX + (RING_R + 14) * Math.cos(rad)} y2={CY + (RING_R + 14) * Math.sin(rad)}
-                  stroke="rgba(255,255,255,0.70)" strokeWidth="2.5" strokeLinecap="round"
+                  stroke="rgba(196,181,253,0.85)" strokeWidth="2.5" strokeLinecap="round"
                 />
               )
             })}

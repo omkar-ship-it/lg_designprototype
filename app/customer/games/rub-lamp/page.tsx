@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence, useSpring, useMotionValue } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Gift } from 'lucide-react'
 import Link from 'next/link'
 
@@ -153,12 +153,8 @@ function RubLampContent() {
   const firedRef       = useRef(false)
   const isDownRef      = useRef(false)
   const lastXRef       = useRef(0)
-  const touchStartXRef = useRef(0)
   const lastEmitPxRef  = useRef(0)
   const lastShakePxRef = useRef(0)
-
-  const lampX      = useMotionValue(0)
-  const lampSpring = useSpring(lampX, { stiffness: 320, damping: 26, mass: 0.5 })
 
   const ringFilled  = (charge / 100) * CIRC
   const screenAngle = ((charge / 100) * 360 - 90) * (Math.PI / 180)
@@ -210,7 +206,6 @@ function RubLampContent() {
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     isDownRef.current   = true
     lastXRef.current    = e.clientX
-    touchStartXRef.current = e.clientX
     setIsRubbing(true)
   }, [])
 
@@ -221,8 +216,6 @@ function RubLampContent() {
     const dx = Math.abs(x - lastXRef.current)
     lastXRef.current = x
     if (dx < 0.5) return
-
-    lampX.set(Math.max(-42, Math.min(42, x - touchStartXRef.current)))
 
     const prev = rubPxRef.current
     rubPxRef.current = Math.min(TOTAL_RUB_PX, prev + dx)
@@ -252,13 +245,12 @@ function RubLampContent() {
     if (newCharge >= 100 && !firedRef.current) {
       triggerClaim()
     }
-  }, [lampX, emitSmoke, triggerClaim])
+  }, [emitSmoke, triggerClaim])
 
   const onPointerUp = useCallback(() => {
     isDownRef.current = false
-    lampX.set(0)
     setIsRubbing(false)
-  }, [lampX])
+  }, [])
 
   const removeParticle = useCallback((id: number) => {
     setParticles(prev => prev.filter(p => p.id !== id))
@@ -330,7 +322,7 @@ function RubLampContent() {
             {ringClaimed && (
               <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(245,158,11,0.20)" strokeWidth="18" />
             )}
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="4" />
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(139,92,246,0.45)" strokeWidth="4" strokeDasharray="8 5" />
             {charge > 0 && (
               <circle
                 cx={CX} cy={CY} r={R}
@@ -409,7 +401,6 @@ function RubLampContent() {
                     : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
                   }
                   style={{
-                    x: lampSpring,
                     filter: charge > 55
                       ? `drop-shadow(0 0 ${10 + (charge - 55) / 3}px rgba(245,158,11,0.95)) drop-shadow(0 0 ${22 + (charge - 55) / 2}px rgba(245,158,11,0.55))`
                       : charge > 20
