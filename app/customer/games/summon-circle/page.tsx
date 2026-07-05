@@ -309,30 +309,37 @@ function SummonCircleContent() {
             style={{ width: CONTAINER, height: CONTAINER }}
           >
             <defs>
-              <filter id="neonBlur" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="9" result="blur" />
+              {/* Ultra-wide atmospheric bloom */}
+              <filter id="bloomWide" x="-130%" y="-130%" width="360%" height="360%">
+                <feGaussianBlur stdDeviation="18" result="blur" />
                 <feMerge><feMergeNode in="blur" /></feMerge>
               </filter>
-              <filter id="dotGlow" x="-200%" y="-200%" width="500%" height="500%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
+              {/* Medium bloom for glow body */}
+              <filter id="bloomMed" x="-90%" y="-90%" width="280%" height="280%">
+                <feGaussianBlur stdDeviation="8" result="blur" />
+                <feMerge><feMergeNode in="blur" /></feMerge>
+              </filter>
+              {/* Tip dot — blur + source for sharp center */}
+              <filter id="tipGlow" x="-300%" y="-300%" width="700%" height="700%">
+                <feGaussianBlur stdDeviation="9" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
               <filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="12" floodColor="#F59E0B" floodOpacity="1" />
+                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#F59E0B" floodOpacity="1" />
               </filter>
             </defs>
 
-            {/* Guide ring — subtle lavender dashes for undrawn portion */}
+            {/* Guide ring — light neutral dashes for undrawn portion */}
             {!claimed && (
               <>
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(150,90,255,0.10)" strokeWidth="22" />
+                  stroke="rgba(120,60,240,0.07)" strokeWidth="28" />
                 <circle cx={CX} cy={CY} r={RING_R} fill="none"
-                  stroke="rgba(180,140,255,0.30)" strokeWidth="2"
-                  strokeDasharray="10 8"
+                  stroke="rgba(215,195,255,0.22)" strokeWidth="1.5"
+                  strokeDasharray="8 10"
                 />
               </>
             )}
@@ -342,64 +349,67 @@ function SummonCircleContent() {
               const rad = (deg - 90) * Math.PI / 180
               return (
                 <line key={deg}
-                  x1={CX + (RING_R - 12) * Math.cos(rad)} y1={CY + (RING_R - 12) * Math.sin(rad)}
-                  x2={CX + (RING_R + 12) * Math.cos(rad)} y2={CY + (RING_R + 12) * Math.sin(rad)}
-                  stroke="rgba(180,140,255,0.45)" strokeWidth="2" strokeLinecap="round"
+                  x1={CX + (RING_R - 10) * Math.cos(rad)} y1={CY + (RING_R - 10) * Math.sin(rad)}
+                  x2={CX + (RING_R + 10) * Math.cos(rad)} y2={CY + (RING_R + 10) * Math.sin(rad)}
+                  stroke="rgba(215,195,255,0.38)" strokeWidth="1.5" strokeLinecap="round"
                 />
               )
             })}
 
-            {/* Progress arc — neon 3-layer plasma glow */}
+            {/* Progress arc — 4-layer plasma */}
             {coverage > 0 && !claimed && (
               <>
-                {/* Outer diffuse bloom */}
+                {/* Layer 1: ultra-wide atmospheric bloom */}
                 <circle
-                  cx={CX} cy={CY} r={RING_R}
-                  fill="none"
-                  stroke={`rgba(255,150,10,${0.20 + coverage * 0.20})`}
-                  strokeWidth="32"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke={`rgba(255,110,0,${0.16 + coverage * 0.24})`}
+                  strokeWidth="46" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
-                  filter="url(#neonBlur)"
+                  filter="url(#bloomWide)"
                 />
-                {/* Mid warm glow */}
+                {/* Layer 2: warm wide glow */}
                 <circle
-                  cx={CX} cy={CY} r={RING_R}
-                  fill="none"
-                  stroke={`rgba(251,191,36,${0.60 + coverage * 0.25})`}
-                  strokeWidth="11"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke={`rgba(251,160,15,${0.48 + coverage * 0.32})`}
+                  strokeWidth="22" strokeLinecap="round"
+                  strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
+                  filter="url(#bloomMed)"
+                />
+                {/* Layer 3: bright gold body */}
+                <circle
+                  cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke={`rgba(253,205,45,${0.88 + coverage * 0.12})`}
+                  strokeWidth="10" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: `${CX}px ${CY}px`,
-                    filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.95))',
+                    transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px`,
+                    filter: 'drop-shadow(0 0 7px rgba(255,170,0,1))',
                   }}
                 />
-                {/* Bright white-gold core */}
+                {/* Layer 4: white-hot core */}
                 <circle
-                  cx={CX} cy={CY} r={RING_R}
-                  fill="none"
-                  stroke="rgba(255,248,220,0.96)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={RING_R} fill="none"
+                  stroke="rgba(255,253,225,0.98)"
+                  strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${coverage * RING_CIRC} ${RING_CIRC}`}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }}
                 />
               </>
             )}
 
-            {/* Moving tip dot — layered neon */}
+            {/* Tip dot — sunburst layers */}
             {coverage > 0 && !claimed && (() => {
               const a = (-90 + coverage * 360) * (Math.PI / 180)
               const tx = CX + RING_R * Math.cos(a)
               const ty = CY + RING_R * Math.sin(a)
               return (
                 <>
-                  <circle cx={tx} cy={ty} r={20} fill="rgba(255,190,30,0.22)" filter="url(#neonBlur)" />
-                  <circle cx={tx} cy={ty} r={9} fill="#FBBF24" filter="url(#dotGlow)" />
-                  <circle cx={tx} cy={ty} r={4} fill="rgba(255,255,245,0.96)" />
+                  <circle cx={tx} cy={ty} r={32} fill="rgba(255,160,10,0.26)" filter="url(#bloomWide)" />
+                  <circle cx={tx} cy={ty} r={16} fill="rgba(255,210,40,0.72)" filter="url(#bloomMed)" />
+                  <circle cx={tx} cy={ty} r={9} fill="#FBBF24" filter="url(#tipGlow)" />
+                  <circle cx={tx} cy={ty} r={4.5} fill="rgba(255,255,245,0.98)" />
                 </>
               )
             })()}
@@ -420,17 +430,20 @@ function SummonCircleContent() {
               </>
             )}
 
-            {/* Completed ring — full neon glow */}
+            {/* Completed ring — full 4-layer neon */}
             {claimed && (
               <>
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(255,150,10,0.28)" strokeWidth="32"
-                  filter="url(#neonBlur)" />
+                  fill="none" stroke="rgba(255,110,0,0.22)" strokeWidth="46"
+                  filter="url(#bloomWide)" />
+                <circle cx={CX} cy={CY} r={RING_R}
+                  fill="none" stroke="rgba(251,160,15,0.62)" strokeWidth="22"
+                  filter="url(#bloomMed)" />
                 <circle cx={CX} cy={CY} r={RING_R}
                   fill="none" stroke="#F59E0B" strokeWidth="10"
                   filter="url(#ringGlow)" />
                 <circle cx={CX} cy={CY} r={RING_R}
-                  fill="none" stroke="rgba(255,248,220,0.92)" strokeWidth="2.5" />
+                  fill="none" stroke="rgba(255,253,225,0.96)" strokeWidth="2" />
               </>
             )}
           </svg>

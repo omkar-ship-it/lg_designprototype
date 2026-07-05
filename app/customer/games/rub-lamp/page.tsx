@@ -320,99 +320,111 @@ function RubLampContent() {
             style={{ transform: 'rotate(-90deg)' }}
           >
             <defs>
-              <filter id="lampNeonBlur" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="9" result="blur" />
+              <filter id="lampBloomWide" x="-130%" y="-130%" width="360%" height="360%">
+                <feGaussianBlur stdDeviation="14" result="blur" />
+                <feMerge><feMergeNode in="blur" /></feMerge>
+              </filter>
+              <filter id="lampBloomMed" x="-90%" y="-90%" width="280%" height="280%">
+                <feGaussianBlur stdDeviation="7" result="blur" />
                 <feMerge><feMergeNode in="blur" /></feMerge>
               </filter>
               <filter id="lampRingGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="0" stdDeviation="12" floodColor="#F59E0B" floodOpacity="1" />
+                <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#F59E0B" floodOpacity="1" />
               </filter>
             </defs>
 
-            {/* Guide ring — subtle lavender dashes */}
+            {/* Guide ring — light neutral dashes */}
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(150,90,255,0.10)" strokeWidth="22" />
+              stroke="rgba(120,60,240,0.07)" strokeWidth="22" />
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(180,140,255,0.30)" strokeWidth="2" strokeDasharray="10 8" />
+              stroke="rgba(215,195,255,0.22)" strokeWidth="1.5" strokeDasharray="7 9" />
 
-            {/* Progress arc — neon 3-layer plasma */}
+            {/* Progress arc — 4-layer plasma */}
             {charge > 0 && !ringClaimed && (
               <>
                 <circle
-                  cx={CX} cy={CY} r={R}
-                  fill="none"
-                  stroke={`rgba(255,150,10,${0.20 + glowIntensity * 0.20})`}
-                  strokeWidth="28"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={R} fill="none"
+                  stroke={`rgba(255,110,0,${0.16 + glowIntensity * 0.24})`}
+                  strokeWidth="36" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
-                  filter="url(#lampNeonBlur)"
+                  filter="url(#lampBloomWide)"
                 />
                 <circle
-                  cx={CX} cy={CY} r={R}
-                  fill="none"
-                  stroke={`rgba(251,191,36,${0.60 + glowIntensity * 0.25})`}
-                  strokeWidth="11"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={R} fill="none"
+                  stroke={`rgba(251,160,15,${0.48 + glowIntensity * 0.32})`}
+                  strokeWidth="18" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.95))' }}
+                  filter="url(#lampBloomMed)"
                 />
                 <circle
-                  cx={CX} cy={CY} r={R}
-                  fill="none"
-                  stroke="rgba(255,248,220,0.96)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
+                  cx={CX} cy={CY} r={R} fill="none"
+                  stroke={`rgba(253,205,45,${0.88 + glowIntensity * 0.12})`}
+                  strokeWidth="9" strokeLinecap="round"
+                  strokeDasharray={`${ringFilled} ${CIRC}`}
+                  style={{ filter: 'drop-shadow(0 0 7px rgba(255,170,0,1))' }}
+                />
+                <circle
+                  cx={CX} cy={CY} r={R} fill="none"
+                  stroke="rgba(255,253,225,0.98)"
+                  strokeWidth="2" strokeLinecap="round"
                   strokeDasharray={`${ringFilled} ${CIRC}`}
                 />
               </>
             )}
 
-            {/* Claimed full ring — neon glow */}
+            {/* Claimed full ring — 4-layer neon */}
             {ringClaimed && (
               <>
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(255,150,10,0.28)" strokeWidth="28"
-                  filter="url(#lampNeonBlur)" />
+                  fill="none" stroke="rgba(255,110,0,0.22)" strokeWidth="36"
+                  filter="url(#lampBloomWide)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="#F59E0B" strokeWidth="10"
+                  fill="none" stroke="rgba(251,160,15,0.62)" strokeWidth="18"
+                  filter="url(#lampBloomMed)" />
+                <circle cx={CX} cy={CY} r={R}
+                  fill="none" stroke="#F59E0B" strokeWidth="9"
                   filter="url(#lampRingGlow)" />
                 <circle cx={CX} cy={CY} r={R}
-                  fill="none" stroke="rgba(255,248,220,0.92)" strokeWidth="2.5" />
+                  fill="none" stroke="rgba(255,253,225,0.96)" strokeWidth="2" />
               </>
             )}
           </svg>
 
-          {/* Tip dot tracking ring — layered neon */}
+          {/* Tip dot — sunburst layers */}
           {charge > 1 && !ringClaimed && (
             <>
-              <div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 42, height: 42,
-                  left: dotX - 21, top: dotY - 21,
-                  background: 'rgba(255,175,20,0.22)',
-                  filter: 'blur(12px)',
-                }}
-              />
+              {/* Outermost atmospheric halo */}
+              <div className="absolute rounded-full pointer-events-none" style={{
+                width: 64, height: 64,
+                left: dotX - 32, top: dotY - 32,
+                background: 'rgba(255,140,0,0.18)',
+                filter: 'blur(18px)',
+              }} />
+              {/* Wide glow */}
+              <div className="absolute rounded-full pointer-events-none" style={{
+                width: 38, height: 38,
+                left: dotX - 19, top: dotY - 19,
+                background: 'rgba(255,200,30,0.40)',
+                filter: 'blur(8px)',
+              }} />
+              {/* Pulsing main dot */}
               <motion.div
                 className="absolute rounded-full pointer-events-none"
                 style={{
-                  width: 18, height: 18,
-                  left: dotX - 9, top: dotY - 9,
+                  width: 20, height: 20,
+                  left: dotX - 10, top: dotY - 10,
                   background: '#FBBF24',
-                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(245,158,11,${0.7 + glowIntensity * 0.3})`,
+                  boxShadow: `0 0 ${14 + glowIntensity * 18}px 5px rgba(245,158,11,${0.75 + glowIntensity * 0.25})`,
                 }}
-                animate={{ scale: [1, 1.25, 1] }}
+                animate={{ scale: [1, 1.28, 1] }}
                 transition={{ duration: 0.4, repeat: Infinity }}
               />
-              <div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 8, height: 8,
-                  left: dotX - 4, top: dotY - 4,
-                  background: 'rgba(255,255,245,0.96)',
-                }}
-              />
+              {/* White-hot core */}
+              <div className="absolute rounded-full pointer-events-none" style={{
+                width: 8, height: 8,
+                left: dotX - 4, top: dotY - 4,
+                background: 'rgba(255,255,245,0.98)',
+              }} />
             </>
           )}
 
