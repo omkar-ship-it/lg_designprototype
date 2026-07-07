@@ -543,28 +543,32 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
-                      {/* Spin / dice / shake: prize preview */}
-                      {(m.type === 'spin' || m.type === 'dice' || m.type === 'shake') && m.prizes && (
-                        <div className="flex flex-wrap gap-1 mb-2.5">
-                          {m.prizes.slice(0, 3).map(p => (
-                            <span key={p} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{p}</span>
-                          ))}
+                      {/* Spin / dice / shake: possible rewards */}
+                      {(m.type === 'spin' || m.type === 'dice' || m.type === 'shake') && m.prizes && m.prizes.length > 0 && (
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Possible Rewards</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {m.prizes.slice(0, 3).map(p => (
+                              <span key={p} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>{p}</span>
+                            ))}
+                          </div>
                         </div>
                       )}
 
                       {/* Lottery: draw date + tickets */}
                       {m.type === 'lottery' && (
-                        <div className="flex items-center gap-3 mb-2.5">
-                          <div className="flex items-center gap-1 text-[11px] text-gray-600 font-medium">
-                            <CalendarDays className="w-3 h-3 text-gray-400" />
-                            <span>Draw: {fmtDate(m.drawDate ?? m.endDate)}</span>
-                          </div>
-                          {(m.userTickets ?? 0) > 0 && (
-                            <div className="flex items-center gap-1 text-[11px] font-bold" style={{ color: meta.cardFrom }}>
-                              <Ticket className="w-3 h-3" />
-                              <span>{m.userTickets} ticket{m.userTickets !== 1 ? 's' : ''}</span>
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700">
+                              <CalendarDays className="w-3.5 h-3.5 shrink-0" style={{ color: meta.cardFrom }} />
+                              <span>Draw on <span className="font-bold" style={{ color: meta.cardFrom }}>{fmtDate(m.drawDate ?? m.endDate)}</span></span>
                             </div>
-                          )}
+                            {(m.userTickets ?? 0) > 0 && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white shrink-0" style={{ color: meta.cardFrom }}>
+                                {m.userTickets} ticket{m.userTickets !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
 
