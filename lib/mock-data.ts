@@ -347,6 +347,37 @@ export const campaigns: Campaign[] = [
       rewardExpiryUnit: 'days',
     },
   },
+  {
+    id: 'camp-12',
+    name: 'Weekend Brunch Combo',
+    mechanic: 'combo',
+    status: 'active',
+    startDate: '2026-06-01',
+    endDate: '2026-08-31',
+    userCap: 100,
+    currentUsers: 0,
+    playsPerUser: 1,
+    participations: 58,
+    rewardsClaimed: 58,
+    redeemedCount: 33,
+    pin: '407',
+    pinExpiresAt: Date.now() + 50000,
+    createdAt: '2026-05-30T09:00:00Z',
+    rewards: [
+      { id: 'r16', name: 'Weekend Brunch Combo', description: 'Coffee + Croissant + Fruit Bowl bundled at a discount', value: '₹350', icon: '🛍️' },
+    ],
+    config: {
+      type: 'combo',
+      items: ['Coffee', 'Croissant', 'Fruit Bowl'],
+      originalPrice: 500,
+      bundlePrice: 350,
+      totalSpots: 100,
+      rewardExpiryMode: 'rolling',
+      rewardExpiryValue: 14,
+      rewardExpiryUnit: 'days',
+      termsAndConditions: 'Dine-in only. Cannot be combined with other offers. Valid once per table.',
+    },
+  },
 ]
 
 export const customers: Customer[] = [

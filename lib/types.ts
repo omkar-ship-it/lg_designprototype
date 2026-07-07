@@ -1,4 +1,4 @@
-export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon' | 'flash' | 'friend' | 'groupunlock'
+export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon' | 'flash' | 'friend' | 'groupunlock' | 'combo'
 export type CampaignStatus = 'active' | 'draft' | 'ended' | 'paused'
 export type RewardType = 'single' | 'range'
 
@@ -25,7 +25,7 @@ export interface Campaign {
   currentUsers: number
   playsPerUser: number
   rewards: Reward[]
-  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig | FlashDealConfig | BringFriendConfig | GroupUnlockConfig
+  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig | FlashDealConfig | BringFriendConfig | GroupUnlockConfig | ComboDealConfig
   pin: string
   pinExpiresAt: number
   participations: number
@@ -169,6 +169,21 @@ export interface GroupUnlockConfig {
   rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
   rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
   rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
+}
+
+export interface ComboDealConfig {
+  type: 'combo'
+  items: string[]                // bundle item/service names, e.g. ["Coffee", "Croissant", "Fruit Bowl"]
+  originalPrice: number          // ₹, sum value of items bought individually (shown struck-through)
+  bundlePrice: number            // ₹, discounted price customer pays for the bundle
+  totalSpots: number             // limited quantity available
+
+  rewardExpiryMode: RewardExpiryMode
+  rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
+  rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
+
+  termsAndConditions: string     // qualifying conditions, redemption instructions, etc.
 }
 
 export interface Customer {
@@ -328,5 +343,13 @@ export interface CustomerBusiness {
     groupJoined?: number
     groupRedeemBefore?: string
     hasReserved?: boolean
+    // combo (package/combo deal)
+    comboItems?: string[]
+    comboOriginalPrice?: number
+    comboBundlePrice?: number
+    comboTotalSpots?: number
+    comboClaimed?: number
+    comboRedeemBefore?: string
+    comboTerms?: string
   }[]
 }

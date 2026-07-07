@@ -23,6 +23,7 @@ export function getMechanicLabel(mechanic: MechanicType): string {
     flash: 'Flash Deal',
     friend: 'Bring a Friend',
     groupunlock: 'Community Offer — Group Unlock',
+    combo: 'Package/Combo Deal',
   }
   return map[mechanic]
 }
@@ -40,6 +41,7 @@ export function getMechanicEmoji(mechanic: MechanicType): string {
     flash: '⚡',
     friend: '👫',
     groupunlock: '🤝',
+    combo: '🛍️',
   }
   return map[mechanic]
 }
@@ -57,6 +59,7 @@ export function getMechanicColor(mechanic: MechanicType): string {
     flash: '#2563EB',
     friend: '#F43F5E',
     groupunlock: '#0D9488',
+    combo: '#4F46E5',
   }
   return map[mechanic]
 }
@@ -105,4 +108,5 @@ export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: strin
   flash:   { label: 'FLASH DEAL',   badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#2563EB', cardTo: '#1E3A8A', emoji: '⚡' },
   friend:  { label: 'BRING A FRIEND', badgeBg: '#FFE4E6', badgeText: '#9F1239', cardFrom: '#F43F5E', cardTo: '#9F1239', emoji: '👫' },
   groupunlock: { label: 'COMMUNITY OFFER', badgeBg: '#CCFBF1', badgeText: '#115E59', cardFrom: '#0D9488', cardTo: '#115E59', emoji: '🤝' },
+  combo:   { label: 'COMBO DEAL',   badgeBg: '#E0E7FF', badgeText: '#3730A3', cardFrom: '#4F46E5', cardTo: '#3730A3', emoji: '🛍️' },
 }

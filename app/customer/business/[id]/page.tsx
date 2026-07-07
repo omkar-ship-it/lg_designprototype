@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, Tag, Users, Handshake } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, Tag, Users, Handshake, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -21,6 +21,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   flash: '/customer/games/flash',
   friend: '/customer/games/friend',
   groupunlock: '/customer/games/groupunlock',
+  combo: '/customer/games/combo',
 }
 
 const MECHANIC_ICONS = {
@@ -35,6 +36,7 @@ const MECHANIC_ICONS = {
   flash:   Zap,
   friend:  Users,
   groupunlock: Handshake,
+  combo:   ShoppingBag,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

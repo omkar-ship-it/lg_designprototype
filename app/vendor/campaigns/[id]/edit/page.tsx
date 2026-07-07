@@ -73,6 +73,11 @@ function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind:
   return `${cfg.targetParticipants} People → ${reward}`
 }
 
+function buildComboSentence(cfg: { items: string[]; originalPrice: number; bundlePrice: number }) {
+  const itemCount = cfg.items.filter(i => i.trim()).length
+  return `${itemCount} Item${itemCount !== 1 ? 's' : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
+}
+
 // ── Reusable locked field ─────────────────────────────────────────────────────
 function LockedField({ label, value, reason }: { label: string; value: string; reason?: string }) {
   return (
@@ -194,6 +199,17 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
         c.rewardExpiryMode === 'fixed'
           ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
           : `Expires ${c.rewardExpiryValue} ${c.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${c.rewardExpiryValue !== 1 ? 's' : ''} after claim`,
+      ]
+    }
+    if (campaign.mechanic === 'combo' && campaign.config.type === 'combo') {
+      const c = campaign.config
+      return [
+        buildComboSentence(c),
+        `Save ₹${Math.max(0, c.originalPrice - c.bundlePrice)} (${c.originalPrice > 0 ? Math.round(((c.originalPrice - c.bundlePrice) / c.originalPrice) * 100) : 0}% off)`,
+        c.rewardExpiryMode === 'fixed'
+          ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
+          : `Expires ${c.rewardExpiryValue} ${c.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${c.rewardExpiryValue !== 1 ? 's' : ''} after claim`,
+        ...(c.termsAndConditions.trim() ? [`T&C: ${c.termsAndConditions.trim()}`] : []),
       ]
     }
     return []
@@ -694,6 +710,113 @@ function DraftGroupUnlockConfig({ config, setConfig }: { config: GroupUnlockDraf
   )
 }
 
+// ── Draft Package/Combo Deal config (inline edit for draft campaigns) ───────
+type ComboDraft = {
+  items: string[]
+  originalPrice: number; bundlePrice: number
+  totalSpots: number
+  rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
+  rewardExpiryValue: number; rewardExpiryUnit: RollingExpiryUnit
+  termsAndConditions: string
+}
+
+function DraftComboConfig({ config, setConfig }: { config: ComboDraft; setConfig: (c: ComboDraft) => void }) {
+  return (
+    <div className="space-y-6">
+      {/* Bundle Items */}
+      <div>
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Bundle Items</p>
+        <div className="space-y-2">
+          {config.items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
+                placeholder="e.g. Coffee"
+                value={item}
+                onChange={e => setConfig({ ...config, items: config.items.map((it, j) => j === i ? e.target.value : it) })}
+              />
+              {config.items.length > 1 && (
+                <button onClick={() => setConfig({ ...config, items: config.items.filter((_, j) => j !== i) })} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
+                  <Trash className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <Button variant="secondary" size="sm" className="mt-2" onClick={() => setConfig({ ...config, items: [...config.items, ''] })}>
+          <Plus className="w-3 h-3" /> Add Item
+        </Button>
+      </div>
+
+      {/* Pricing */}
+      <div className="pt-2 border-t border-v-border">
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Pricing</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Original Price (₹)" type="number" min={1} value={config.originalPrice} onChange={e => setConfig({ ...config, originalPrice: Number(e.target.value) })} />
+          <Input label="Bundle Price (₹)" type="number" min={1} value={config.bundlePrice} onChange={e => setConfig({ ...config, bundlePrice: Number(e.target.value) })} />
+        </div>
+        {config.originalPrice > config.bundlePrice && (
+          <p className="text-xs text-v-success mt-1.5 font-semibold">
+            Customers save ₹{config.originalPrice - config.bundlePrice} ({Math.round(((config.originalPrice - config.bundlePrice) / config.originalPrice) * 100)}% off)
+          </p>
+        )}
+      </div>
+
+      {/* Total Spots */}
+      <div className="pt-2 border-t border-v-border">
+        <Stepper label="Total Spots" hint="spots available" value={config.totalSpots} min={1} max={10000} onChange={v => setConfig({ ...config, totalSpots: v })} />
+      </div>
+
+      {/* Expiry */}
+      <div className="pt-2 border-t border-v-border space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+          <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+            {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+              <button key={m} onClick={() => setConfig({ ...config, rewardExpiryMode: m })}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+              </button>
+            ))}
+          </div>
+          {config.rewardExpiryMode === 'rolling' ? (
+            <div className="flex gap-2 max-w-xs">
+              <div className="flex-1">
+                <Input type="number" min={1} value={config.rewardExpiryValue} onChange={e => setConfig({ ...config, rewardExpiryValue: Number(e.target.value) })} />
+              </div>
+              <div className="w-32 shrink-0">
+                <Select value={config.rewardExpiryUnit} onChange={e => setConfig({ ...config, rewardExpiryUnit: e.target.value as RollingExpiryUnit })}>
+                  <option value="days">Days</option>
+                  <option value="months">Months</option>
+                </Select>
+              </div>
+            </div>
+          ) : (
+            <Input label="Expiry Date" type="date" value={config.rewardExpiryDate} onChange={e => setConfig({ ...config, rewardExpiryDate: e.target.value })} />
+          )}
+        </div>
+      </div>
+
+      {/* Terms & Conditions */}
+      <div className="pt-2 border-t border-v-border">
+        <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Terms &amp; Conditions</label>
+        <textarea
+          className="w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12 transition-all duration-200 min-h-[96px] resize-y"
+          placeholder="e.g. Dine-in only. Cannot be combined with other offers. Valid once per table."
+          value={config.termsAndConditions}
+          onChange={e => setConfig({ ...config, termsAndConditions: e.target.value })}
+        />
+      </div>
+
+      {/* Live preview */}
+      <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+        <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+        <span className="font-bold text-v-purple">{buildComboSentence(config)}</span>
+      </div>
+    </div>
+  )
+}
+
 // ── Status action configs ─────────────────────────────────────────────────────
 const STATUS_TRANSITIONS: Record<CampaignStatus, { label: string; icon: typeof Play; variant: 'primary' | 'secondary' | 'danger' | 'gold'; description: string }[]> = {
   active: [
@@ -781,6 +904,15 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     return { targetParticipants: 20, rewardKind: 'percent' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 14, rewardExpiryUnit: 'days' as RollingExpiryUnit }
   })
 
+  // Package/Combo Deal config for draft editing
+  const [comboDraft, setComboDraft] = useState(() => {
+    if (original.config.type === 'combo') {
+      const c = original.config
+      return { items: c.items, originalPrice: c.originalPrice, bundlePrice: c.bundlePrice, totalSpots: c.totalSpots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryValue: c.rewardExpiryValue ?? 14, rewardExpiryUnit: c.rewardExpiryUnit ?? 'days', termsAndConditions: c.termsAndConditions }
+    }
+    return { items: ['', ''] as string[], originalPrice: 500, bundlePrice: 350, totalSpots: 100, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 14, rewardExpiryUnit: 'days' as RollingExpiryUnit, termsAndConditions: '' }
+  })
+
   // Save state
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [confirmAction, setConfirmAction] = useState<string | null>(null)
@@ -818,6 +950,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const isFlash    = original.mechanic === 'flash'
   const isFriend   = original.mechanic === 'friend'
   const isGroupUnlock = original.mechanic === 'groupunlock'
+  const isCombo    = original.mechanic === 'combo'
 
   return (
     <div className="p-8 max-w-3xl">
@@ -923,14 +1056,18 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-start gap-2.5 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                   No separate user cap for Community Offer — the target number of participants is the cap.
                 </div>
+              ) : isCombo ? (
+                <div className="flex items-start gap-2.5 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                  No separate user cap for Package/Combo Deal — the number of spots set is the cap.
+                </div>
               ) : isBuyXGetY || isFriend ? (
                 <Stepper label="User Cap" hint="users" value={userCap} min={original.currentUsers || 10} max={5000} onChange={setUserCap} />
               ) : (
                 <Slider label="User Cap" displayValue={`${userCap} users`} min={original.currentUsers || 10} max={5000} step={10} value={userCap} onChange={e => setUserCap(Number(e.target.value))} />
               )}
 
-              {/* Plays Per Day — not for stamp, lottery, buy x get y, coupon, flash, friend, or group unlock */}
-              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && !isGroupUnlock && (
+              {/* Plays Per Day — not for stamp, lottery, buy x get y, coupon, flash, friend, group unlock, or combo */}
+              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && !isGroupUnlock && !isCombo && (
                 isLocked ? (
                   <LockedField label="Plays Per User Per Day" value={`${original.playsPerUser} / day`} />
                 ) : (
@@ -938,8 +1075,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Daily Reward Cap — not for stamp, lottery, buy x get y, coupon, flash, friend, or group unlock */}
-              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && !isGroupUnlock && (
+              {/* Daily Reward Cap — not for stamp, lottery, buy x get y, coupon, flash, friend, group unlock, or combo */}
+              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && !isGroupUnlock && !isCombo && (
                 isLocked ? (
                   <LockedField label="Daily Rewards Cap" value={dailyRewardCap === 0 ? 'Unlimited' : `${dailyRewardCap} / day`} />
                 ) : (
@@ -950,8 +1087,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Stamp / Lottery / Buy X Get Y / Coupon / Flash / Friend / Group Unlock notes */}
-              {(isStamp || isLottery || isBuyXGetY || isCoupon || isFlash || isFriend || isGroupUnlock) && !isLocked && (
+              {/* Stamp / Lottery / Buy X Get Y / Coupon / Flash / Friend / Group Unlock / Combo notes */}
+              {(isStamp || isLottery || isBuyXGetY || isCoupon || isFlash || isFriend || isGroupUnlock || isCombo) && !isLocked && (
                 <div className="flex items-start gap-2 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                   {isStamp ? 'Stamp Card has no plays per day or daily reward cap — rewards trigger at stamp positions.' :
                    isLottery ? 'Lottery has no plays per day or daily reward cap — prizes are governed by ticket probabilities.' :
@@ -959,6 +1096,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                    isCoupon ? 'Coupon Codes has no plays per day or daily reward cap — the coupon pool size governs total redemptions.' :
                    isFriend ? 'Bring a Friend has no plays per day or daily reward cap — rewards trigger automatically once the friend minimum is met.' :
                    isGroupUnlock ? 'Community Offer has no plays per day or daily reward cap — the reward unlocks for everyone once the target participant count is reached.' :
+                   isCombo ? 'Package/Combo Deal has no plays per day or daily reward cap — the spot count governs total redemptions.' :
                    'Flash Deal has no plays per day or daily reward cap — the spot count governs total redemptions.'}
                 </div>
               )}
@@ -1067,6 +1205,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )}
                 {original.mechanic === 'groupunlock' && (
                   <DraftGroupUnlockConfig config={groupUnlockDraft} setConfig={setGroupUnlockDraft} />
+                )}
+                {original.mechanic === 'combo' && (
+                  <DraftComboConfig config={comboDraft} setConfig={setComboDraft} />
                 )}
               </div>
             )}

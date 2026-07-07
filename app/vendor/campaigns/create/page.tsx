@@ -21,6 +21,7 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'flash', desc: 'A short, urgent window with limited spots — first come, first served.', tags: ['Urgency', 'FOMO'] },
   { type: 'friend', desc: 'Customer brings a minimum number of friends along to unlock a reward.', tags: ['Referral', 'Social proof'] },
   { type: 'groupunlock', desc: 'A reward stays locked until a pre-determined number of people reserve a spot.', tags: ['Community', 'Collective goal'] },
+  { type: 'combo', desc: 'Bundle services or items together at a discounted price — a limited number of spots available.', tags: ['Value', 'Cross-sell'] },
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
@@ -76,6 +77,12 @@ function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind:
     cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
     `Get ${cfg.rewardValue.trim() || 'Free Item'}`
   return `${cfg.targetParticipants} People → ${reward}`
+}
+
+// ── Package/Combo Deal ─────────────────────────────────────────────────────────
+function buildComboSentence(cfg: { items: string[]; originalPrice: number; bundlePrice: number }) {
+  const itemCount = cfg.items.filter(i => i.trim()).length
+  return `${itemCount} Item${itemCount !== 1 ? 's' : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -374,6 +381,19 @@ export default function CreateCampaignPage() {
     rewardExpiryUnit: 'days' as RollingExpiryUnit,
   })
 
+  // Package/Combo Deal
+  const [comboConfig, setComboConfig] = useState({
+    items: ['', ''] as string[],
+    originalPrice: 500,
+    bundlePrice: 350,
+    totalSpots: 100,
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryValue: 14,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+    termsAndConditions: '',
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
@@ -383,6 +403,7 @@ export default function CreateCampaignPage() {
   const isFlash          = mechanic === 'flash'
   const isFriend         = mechanic === 'friend'
   const isGroupUnlock    = mechanic === 'groupunlock'
+  const isCombo          = mechanic === 'combo'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -446,6 +467,9 @@ export default function CreateCampaignPage() {
     }
     if (mechanic === 'groupunlock') {
       return groupUnlockConfig.targetParticipants > 0 && groupUnlockConfig.rewardValue.trim().length > 0
+    }
+    if (mechanic === 'combo') {
+      return comboConfig.items.some(i => i.trim()) && comboConfig.originalPrice > 0 && comboConfig.bundlePrice > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -665,6 +689,14 @@ export default function CreateCampaignPage() {
                       <p>Community Offer has no separate user cap — the target number of participants you set (next step) is the cap.</p>
                     </div>
                   )}
+
+                  {/* Package/Combo Deal: no user cap — spot count is the cap */}
+                  {isCombo && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                      <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                      <p>Package/Combo Deal has no separate user cap — the number of spots you set (next step) is the cap.</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* ── Plays per day — shake, spin, dice */}
@@ -713,6 +745,14 @@ export default function CreateCampaignPage() {
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                     <p>Customers reserve a spot via staff PIN, but the reward stays locked for everyone until the target number of participants is reached — no win probability to configure.</p>
+                  </div>
+                )}
+
+                {/* Package/Combo Deal info note */}
+                {isCombo && (
+                  <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                    <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                    <p>Package/Combo Deal rewards trigger automatically on claim — no win probability to configure. Bundle items, pricing, spots, and expiry are set in the next step.</p>
                   </div>
                 )}
               </div>
@@ -1390,6 +1430,108 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* PACKAGE/COMBO DEAL */}
+          {step === 2 && mechanic === 'combo' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Package/Combo Deal — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Bundle a set of items or services together, price the bundle, and set how many spots are available.</p>
+
+              <div className="space-y-6">
+                {/* Bundle Items */}
+                <div>
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Bundle Items</p>
+                  <div className="space-y-2">
+                    {comboConfig.items.map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
+                          placeholder="e.g. Coffee"
+                          value={item}
+                          onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? e.target.value : it) }))}
+                        />
+                        {comboConfig.items.length > 1 && (
+                          <button onClick={() => setComboConfig(p => ({ ...p, items: p.items.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, items: [...p.items, ''] }))}>
+                    <Plus className="w-3 h-3" /> Add Item
+                  </Button>
+                </div>
+
+                {/* Pricing */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Pricing</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input label="Original Price (₹)" type="number" min={1} value={comboConfig.originalPrice} onChange={e => setComboConfig(p => ({ ...p, originalPrice: Number(e.target.value) }))} />
+                    <Input label="Bundle Price (₹)" type="number" min={1} value={comboConfig.bundlePrice} onChange={e => setComboConfig(p => ({ ...p, bundlePrice: Number(e.target.value) }))} />
+                  </div>
+                  {comboConfig.originalPrice > comboConfig.bundlePrice && (
+                    <p className="text-xs text-v-success mt-1.5 font-semibold">
+                      Customers save ₹{comboConfig.originalPrice - comboConfig.bundlePrice} ({Math.round(((comboConfig.originalPrice - comboConfig.bundlePrice) / comboConfig.originalPrice) * 100)}% off)
+                    </p>
+                  )}
+                </div>
+
+                {/* Total Spots */}
+                <div className="pt-2 border-t border-v-border">
+                  <Stepper label="Total Spots" hint="spots available" value={comboConfig.totalSpots} min={1} max={10000} onChange={v => setComboConfig(p => ({ ...p, totalSpots: v }))} />
+                </div>
+
+                {/* Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setComboConfig(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${comboConfig.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {comboConfig.rewardExpiryMode === 'rolling' ? (
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={comboConfig.rewardExpiryValue} onChange={e => setComboConfig(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={comboConfig.rewardExpiryUnit} onChange={e => setComboConfig(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={comboConfig.rewardExpiryDate} onChange={e => setComboConfig(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="pt-2 border-t border-v-border">
+                  <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Terms &amp; Conditions</label>
+                  <textarea
+                    className="w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12 transition-all duration-200 min-h-[96px] resize-y"
+                    placeholder="e.g. Dine-in only. Cannot be combined with other offers. Valid once per table."
+                    value={comboConfig.termsAndConditions}
+                    onChange={e => setComboConfig(p => ({ ...p, termsAndConditions: e.target.value }))}
+                  />
+                  <p className="text-xs text-v-text-3 mt-1.5">Qualifying conditions and redemption instructions shown to customers before they claim.</p>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildComboSentence(comboConfig)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -1408,7 +1550,7 @@ export default function CreateCampaignPage() {
                         return dur
                       })(),
                     },
-                    ...(!isLottery && !isCoupon && !isFlash && !isGroupUnlock ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(!isLottery && !isCoupon && !isFlash && !isGroupUnlock && !isCombo ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
                     ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
                     ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
                     ...(mechanic === 'shake' ? [
@@ -1427,7 +1569,8 @@ export default function CreateCampaignPage() {
                         mechanic === 'coupon'   ? buildCouponSentence(couponConfig) :
                         mechanic === 'flash'    ? buildFlashDealSentence(flashConfig) :
                         mechanic === 'friend'   ? buildBringFriendSentence(friendConfig) :
-                        mechanic === 'groupunlock' ? buildGroupUnlockSentence(groupUnlockConfig) : '—',
+                        mechanic === 'groupunlock' ? buildGroupUnlockSentence(groupUnlockConfig) :
+                        mechanic === 'combo'    ? buildComboSentence(comboConfig) : '—',
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
@@ -1445,6 +1588,10 @@ export default function CreateCampaignPage() {
                     ] : []),
                     ...(isGroupUnlock ? [
                       { label: 'Reward Expiry', value: groupUnlockConfig.rewardExpiryMode === 'fixed' ? (groupUnlockConfig.rewardExpiryDate ? fmtDate(groupUnlockConfig.rewardExpiryDate) : '—') : `${groupUnlockConfig.rewardExpiryValue} ${groupUnlockConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${groupUnlockConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                    ] : []),
+                    ...(isCombo ? [
+                      { label: 'Reward Expiry', value: comboConfig.rewardExpiryMode === 'fixed' ? (comboConfig.rewardExpiryDate ? fmtDate(comboConfig.rewardExpiryDate) : '—') : `${comboConfig.rewardExpiryValue} ${comboConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${comboConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                      { label: 'Terms & Conditions', value: comboConfig.termsAndConditions.trim() || '—' },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">
