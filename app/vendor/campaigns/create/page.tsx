@@ -67,6 +67,7 @@ const DURATION_LOTTERY: { key: DurationMode; label: string; sub: string }[] = [
 
 const TODAY = '2026-06-13'
 function addDays(from: string, n: number)   { const d = new Date(from); d.setDate(d.getDate() + n);    return d.toISOString().split('T')[0] }
+function daysBetween(from: string, to: string) { return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000)) }
 function addMonths(from: string, n: number) { const d = new Date(from); d.setMonth(d.getMonth() + n);  return d.toISOString().split('T')[0] }
 function fmtDate(iso: string) { return iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '' }
 function fmtTime(t: string) { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ap}` }
@@ -287,7 +288,6 @@ export default function CreateCampaignPage() {
     spendAmount: 500,
     rewardKind: 'item' as RewardKind,
     rewardValue: '',
-    totalRewardSlots: 200,
     rewardExpiryMode: 'rolling' as RewardExpiryMode,
     rewardExpiryDate: '',
     rewardExpiryPreset: '7' as RollingExpiryPreset,
@@ -571,7 +571,7 @@ export default function CreateCampaignPage() {
                 {isBuyXGetY && (
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
-                    <p>Buy X Get Y rewards trigger automatically — no win probability to configure. Scarcity, redemption limits, and expiry are set in the next step.</p>
+                    <p>Buy X Get Y rewards trigger automatically — no win probability to configure. Reward type and expiry are set in the next step.</p>
                   </div>
                 )}
               </div>
@@ -885,10 +885,8 @@ export default function CreateCampaignPage() {
                   )}
                 </div>
 
-                {/* Scarcity & Expiry */}
+                {/* Expiry */}
                 <div className="pt-2 border-t border-v-border space-y-4">
-                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
-                  <Stepper label="Total Reward Slots" hint="rewards total" value={buyXGetY.totalRewardSlots} min={10} max={5000} onChange={v => setBuyXGetY(p => ({ ...p, totalRewardSlots: v }))} />
                   <div>
                     <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
                     <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
@@ -908,7 +906,10 @@ export default function CreateCampaignPage() {
                           {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
                         </Select>
                         {buyXGetY.rewardExpiryPreset === 'custom' && (
-                          <Input label="Custom Period (days)" type="number" min={1} max={365} value={buyXGetY.rewardExpiryDays} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDays: Number(e.target.value) }))} />
+                          <div>
+                            <Input label="Custom Expiry Date" type="date" min={TODAY} value={addDays(TODAY, buyXGetY.rewardExpiryDays)} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDays: daysBetween(TODAY, e.target.value) }))} />
+                            <p className="text-[11px] text-v-text-3 mt-1.5">We calculate the day count from today to this date, then apply it after each claim.</p>
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -962,7 +963,6 @@ export default function CreateCampaignPage() {
                         mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) : '—',
                     },
                     ...(isBuyXGetY ? [
-                      { label: 'Total Reward Slots', value: `${buyXGetY.totalRewardSlots} rewards` },
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryDays} days after claim` },
                     ] : []),
                   ].map(item => (

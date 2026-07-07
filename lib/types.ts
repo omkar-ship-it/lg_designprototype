@@ -109,8 +109,6 @@ export interface BuyXGetYConfig {
   rewardKind: RewardKind
   rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
 
-  totalRewardSlots: number      // scarcity cap — total redemptions available across the whole campaign
-
   rewardExpiryMode: RewardExpiryMode
   rewardExpiryDate?: string     // ISO date, when mode === 'fixed'
   rewardExpiryPreset?: RollingExpiryPreset // drives the rolling-period dropdown

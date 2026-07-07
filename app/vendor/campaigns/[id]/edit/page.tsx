@@ -31,6 +31,10 @@ const ROLLING_PERIOD_PRESETS: { key: RollingExpiryPreset; label: string }[] = [
   { key: 'custom', label: 'Custom' },
 ]
 
+const TODAY = '2026-06-13'
+function addDays(from: string, n: number) { const d = new Date(from); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0] }
+function daysBetween(from: string, to: string) { return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000)) }
+
 function buildBuyXGetYSentence(cfg: {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
   rewardKind: RewardKind; rewardValue: string
@@ -126,7 +130,6 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
       const c = campaign.config
       return [
         buildBuyXGetYSentence(c),
-        `${c.totalRewardSlots} reward slots total`,
         c.rewardExpiryMode === 'fixed' ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}` : `Expires ${c.rewardExpiryDays} days after claim`,
       ]
     }
@@ -204,7 +207,7 @@ function DraftSpinConfig({ segments, setSegments }: { segments: { label: string;
 type BuyXGetYDraft = {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
   rewardKind: RewardKind; rewardValue: string
-  totalRewardSlots: number; rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
+  rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
   rewardExpiryPreset: RollingExpiryPreset; rewardExpiryDays: number
 }
 
@@ -256,10 +259,8 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
         )}
       </div>
 
-      {/* Scarcity & Expiry */}
+      {/* Expiry */}
       <div className="pt-2 border-t border-v-border space-y-4">
-        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
-        <Stepper label="Total Reward Slots" hint="rewards total" value={config.totalRewardSlots} min={10} max={5000} onChange={v => setConfig({ ...config, totalRewardSlots: v })} />
         <div>
           <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
           <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
@@ -279,7 +280,10 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
                 {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
               </Select>
               {config.rewardExpiryPreset === 'custom' && (
-                <Input label="Custom Period (days)" type="number" min={1} max={365} value={config.rewardExpiryDays} onChange={e => setConfig({ ...config, rewardExpiryDays: Number(e.target.value) })} />
+                <div>
+                  <Input label="Custom Expiry Date" type="date" min={TODAY} value={addDays(TODAY, config.rewardExpiryDays)} onChange={e => setConfig({ ...config, rewardExpiryDays: daysBetween(TODAY, e.target.value) })} />
+                  <p className="text-[11px] text-v-text-3 mt-1.5">We calculate the day count from today to this date, then apply it after each claim.</p>
+                </div>
               )}
             </div>
           ) : (
@@ -343,9 +347,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [buyXGetYDraft, setBuyXGetYDraft] = useState(() => {
     if (original.config.type === 'buyxgety') {
       const c = original.config
-      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryPreset: c.rewardExpiryPreset ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
+      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryPreset: c.rewardExpiryPreset ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
     }
-    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryPreset: '7' as RollingExpiryPreset, rewardExpiryDays: 7 }
+    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryPreset: '7' as RollingExpiryPreset, rewardExpiryDays: 7 }
   })
 
   // Save state
