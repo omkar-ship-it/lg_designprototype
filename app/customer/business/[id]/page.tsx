@@ -489,26 +489,24 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
-                      {/* Buy X Get Y: progress toward reward */}
-                      {m.type === 'buyxgety' && m.buyProgress !== undefined && m.buyTarget && (
-                        <div className="mb-2.5">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] text-gray-400 font-medium">
-                              {m.buyCondition === 'spend' ? 'Spend Progress' : 'Purchase Progress'}
+                      {/* Buy X Get Y: claim window, spots, redeem window */}
+                      {m.type === 'buyxgety' && (
+                        <div className="mb-2.5 space-y-1">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="flex items-center gap-1 text-gray-500 font-medium">
+                              <CalendarDays className="w-3 h-3 text-gray-400" />
+                              Claim before {fmtDate(m.endDate)}
                             </span>
-                            <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
-                              {m.buyCondition === 'spend' ? `₹${m.buyProgress} / ₹${m.buyTarget}` : `${m.buyProgress} / ${m.buyTarget}`}
-                            </span>
+                            {m.buyTotalSlots !== undefined && m.buyClaimed !== undefined && (
+                              <span className="font-bold" style={{ color: meta.cardFrom }}>
+                                {m.buyClaimed}/{m.buyTotalSlots} claimed
+                              </span>
+                            )}
                           </div>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${Math.min(100, Math.round((m.buyProgress / m.buyTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                            />
-                          </div>
-                          {m.buyReward && (
-                            <p className="text-[10px] text-gray-400 mt-1.5">
-                              Reach the goal for <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.buyReward}</span>
+                          {m.buyRedeemBefore && (
+                            <p className="text-[10px] text-gray-400">
+                              Redeem before <span className="font-semibold text-gray-500">{fmtDate(m.buyRedeemBefore)}</span>
+                              {m.buyReward && <> · <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.buyReward}</span></>}
                             </p>
                           )}
                         </div>

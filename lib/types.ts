@@ -245,9 +245,9 @@ export interface CustomerBusiness {
     drawDate?: string
     userTickets?: number
     // buyxgety
-    buyCondition?: BuyCondition
-    buyProgress?: number
-    buyTarget?: number
     buyReward?: string
+    buyTotalSlots?: number
+    buyClaimed?: number
+    buyRedeemBefore?: string
   }[]
 }

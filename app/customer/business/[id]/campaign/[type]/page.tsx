@@ -336,39 +336,36 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
-            {/* Buy X Get Y — progress hero */}
-            {mechanic.type === 'buyxgety' && mechanic.buyProgress !== undefined && mechanic.buyTarget && (
-              <div className="mb-6">
-                <div className="rounded-3xl overflow-hidden" style={{ boxShadow: `0 16px 48px ${meta.cardFrom}30, 0 0 0 1px ${meta.cardFrom}25` }}>
-                  <div className="relative px-5 py-5 overflow-hidden" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                    <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">💰</span>
-                    <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">
-                      {mechanic.buyCondition === 'spend' ? 'Amount Spent' : 'Purchases Made'}
-                    </p>
-                    <p className="text-4xl font-black text-white leading-none">
-                      {mechanic.buyCondition === 'spend' ? `₹${mechanic.buyProgress}` : mechanic.buyProgress}
-                      <span className="text-base font-semibold text-white/50">
-                        {' '}/ {mechanic.buyCondition === 'spend' ? `₹${mechanic.buyTarget}` : mechanic.buyTarget}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="bg-white px-5 py-4">
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, Math.round((mechanic.buyProgress / mechanic.buyTarget) * 100))}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                      />
-                    </div>
-                    {mechanic.buyReward && (
-                      <p className="text-xs text-gray-500 text-center">
-                        Reach the goal to unlock <span className="font-bold" style={{ color: meta.cardFrom }}>{mechanic.buyReward}</span>
-                      </p>
-                    )}
-                  </div>
+            {/* Buy X Get Y — claim window, spots, redeem window */}
+            {mechanic.type === 'buyxgety' && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
+                  <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
                 </div>
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {mechanic.buyRedeemBefore ? fmtDate(mechanic.buyRedeemBefore) : '—'}
+                  </p>
+                </div>
+                {mechanic.buyTotalSlots !== undefined && mechanic.buyClaimed !== undefined && (
+                  <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Spots Claimed</p>
+                      <p className="text-sm font-bold text-gray-900">{mechanic.buyClaimed} / {mechanic.buyTotalSlots}</p>
+                    </div>
+                    <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
+                      {mechanic.buyTotalSlots - mechanic.buyClaimed} remaining
+                    </p>
+                  </div>
+                )}
+                {mechanic.buyReward && (
+                  <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
+                    <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.buyReward}</p>
+                  </div>
+                )}
               </div>
             )}
 
