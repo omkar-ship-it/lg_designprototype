@@ -318,6 +318,35 @@ export const campaigns: Campaign[] = [
       rewardExpiryUnit: 'days',
     },
   },
+  {
+    id: 'camp-11',
+    name: 'Fill the Table — Community Discount',
+    mechanic: 'groupunlock',
+    status: 'active',
+    startDate: '2026-06-01',
+    endDate: '2026-08-31',
+    userCap: 20,
+    currentUsers: 0,
+    playsPerUser: 1,
+    participations: 12,
+    rewardsClaimed: 0,
+    redeemedCount: 0,
+    pin: '926',
+    pinExpiresAt: Date.now() + 44000,
+    createdAt: '2026-05-30T09:00:00Z',
+    rewards: [
+      { id: 'r15', name: '20% Off', description: 'Unlocks for everyone once 20 people reserve a spot', value: '20%', icon: '🤝' },
+    ],
+    config: {
+      type: 'groupunlock',
+      targetParticipants: 20,
+      rewardKind: 'percent',
+      rewardValue: '20',
+      rewardExpiryMode: 'rolling',
+      rewardExpiryValue: 14,
+      rewardExpiryUnit: 'days',
+    },
+  },
 ]
 
 export const customers: Customer[] = [

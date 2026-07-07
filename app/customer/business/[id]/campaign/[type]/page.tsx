@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, Tag, Zap } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, Tag, Zap, Handshake } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
@@ -18,6 +18,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   coupon: '/customer/games/coupon',
   flash: '/customer/games/flash',
   friend: '/customer/games/friend',
+  groupunlock: '/customer/games/groupunlock',
 }
 
 const MECHANIC_ICONS = {
@@ -31,6 +32,7 @@ const MECHANIC_ICONS = {
   coupon:  Tag,
   flash:   Zap,
   friend:  Users,
+  groupunlock: Handshake,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

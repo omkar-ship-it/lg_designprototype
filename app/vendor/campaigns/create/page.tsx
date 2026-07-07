@@ -20,6 +20,7 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'coupon', desc: 'Generate a limited pool of discount coupons customers can claim and redeem.', tags: ['Scarcity', 'Simplicity'] },
   { type: 'flash', desc: 'A short, urgent window with limited spots — first come, first served.', tags: ['Urgency', 'FOMO'] },
   { type: 'friend', desc: 'Customer brings a minimum number of friends along to unlock a reward.', tags: ['Referral', 'Social proof'] },
+  { type: 'groupunlock', desc: 'A reward stays locked until a pre-determined number of people reserve a spot.', tags: ['Community', 'Collective goal'] },
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
@@ -65,6 +66,16 @@ function buildBringFriendSentence(cfg: { minFriends: number; rewardKind: RewardK
     cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
     `Get ${cfg.rewardValue.trim() || 'Free Item'}`
   return `Bring ${cfg.minFriends} Friend${cfg.minFriends !== 1 ? 's' : ''} → ${reward}`
+}
+
+// ── Community Offer — Group Unlock ─────────────────────────────────────────────
+function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind: RewardKind; rewardValue: string }) {
+  const reward =
+    cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
+    `Get ${cfg.rewardValue.trim() || 'Free Item'}`
+  return `${cfg.targetParticipants} People → ${reward}`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -352,6 +363,17 @@ export default function CreateCampaignPage() {
     rewardExpiryUnit: 'days' as RollingExpiryUnit,
   })
 
+  // Community Offer — Group Unlock
+  const [groupUnlockConfig, setGroupUnlockConfig] = useState({
+    targetParticipants: 20,
+    rewardKind: 'percent' as RewardKind,
+    rewardValue: '',
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryValue: 14,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
@@ -360,6 +382,7 @@ export default function CreateCampaignPage() {
   const isCoupon         = mechanic === 'coupon'
   const isFlash          = mechanic === 'flash'
   const isFriend         = mechanic === 'friend'
+  const isGroupUnlock    = mechanic === 'groupunlock'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -420,6 +443,9 @@ export default function CreateCampaignPage() {
     }
     if (mechanic === 'friend') {
       return friendConfig.minFriends > 0 && friendConfig.rewardValue.trim().length > 0
+    }
+    if (mechanic === 'groupunlock') {
+      return groupUnlockConfig.targetParticipants > 0 && groupUnlockConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -631,6 +657,14 @@ export default function CreateCampaignPage() {
                       <p>Flash Deal has no separate user cap — the number of spots you set (next step) is the cap.</p>
                     </div>
                   )}
+
+                  {/* Community Offer: no user cap — target participant count is the cap */}
+                  {isGroupUnlock && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                      <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                      <p>Community Offer has no separate user cap — the target number of participants you set (next step) is the cap.</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* ── Plays per day — shake, spin, dice */}
@@ -671,6 +705,14 @@ export default function CreateCampaignPage() {
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                     <p>Bring a Friend rewards trigger automatically once the minimum friend count is met — no win probability to configure. Reward type and expiry are set in the next step.</p>
+                  </div>
+                )}
+
+                {/* Community Offer info note */}
+                {isGroupUnlock && (
+                  <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                    <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                    <p>Customers reserve a spot via staff PIN, but the reward stays locked for everyone until the target number of participants is reached — no win probability to configure.</p>
                   </div>
                 )}
               </div>
@@ -1272,6 +1314,82 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* COMMUNITY OFFER — GROUP UNLOCK */}
+          {step === 2 && mechanic === 'groupunlock' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Community Offer — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Set how many people need to reserve a spot before the reward unlocks for everyone, then define the reward.</p>
+
+              <div className="space-y-6">
+                {/* Target Participants */}
+                <div>
+                  <Stepper label="Target Participants" hint="people required" value={groupUnlockConfig.targetParticipants} min={2} max={2000} onChange={v => setGroupUnlockConfig(p => ({ ...p, targetParticipants: v }))} />
+                </div>
+
+                {/* Reward */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+                  <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+                      <button key={k} onClick={() => setGroupUnlockConfig(p => ({ ...p, rewardKind: k, rewardValue: '' }))}
+                        className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${groupUnlockConfig.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {groupUnlockConfig.rewardKind === 'flat' && (
+                    <Input label="Discount Amount (₹)" type="number" min={1} value={groupUnlockConfig.rewardValue} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {groupUnlockConfig.rewardKind === 'percent' && (
+                    <Input label="Discount %" type="number" min={1} max={100} value={groupUnlockConfig.rewardValue} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {groupUnlockConfig.rewardKind === 'item' && (
+                    <Input label="Reward Description" placeholder="e.g. Free item or service" value={groupUnlockConfig.rewardValue} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {groupUnlockConfig.rewardKind === 'points' && (
+                    <Input label="Points Awarded" type="number" min={1} value={groupUnlockConfig.rewardValue} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                </div>
+
+                {/* Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setGroupUnlockConfig(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${groupUnlockConfig.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {groupUnlockConfig.rewardExpiryMode === 'rolling' ? (
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={groupUnlockConfig.rewardExpiryValue} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={groupUnlockConfig.rewardExpiryUnit} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={groupUnlockConfig.rewardExpiryDate} onChange={e => setGroupUnlockConfig(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildGroupUnlockSentence(groupUnlockConfig)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -1290,7 +1408,7 @@ export default function CreateCampaignPage() {
                         return dur
                       })(),
                     },
-                    ...(!isLottery && !isCoupon && !isFlash ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(!isLottery && !isCoupon && !isFlash && !isGroupUnlock ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
                     ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
                     ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
                     ...(mechanic === 'shake' ? [
@@ -1308,7 +1426,8 @@ export default function CreateCampaignPage() {
                         mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) :
                         mechanic === 'coupon'   ? buildCouponSentence(couponConfig) :
                         mechanic === 'flash'    ? buildFlashDealSentence(flashConfig) :
-                        mechanic === 'friend'   ? buildBringFriendSentence(friendConfig) : '—',
+                        mechanic === 'friend'   ? buildBringFriendSentence(friendConfig) :
+                        mechanic === 'groupunlock' ? buildGroupUnlockSentence(groupUnlockConfig) : '—',
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
@@ -1323,6 +1442,9 @@ export default function CreateCampaignPage() {
                     ] : []),
                     ...(isFriend ? [
                       { label: 'Reward Expiry', value: friendConfig.rewardExpiryMode === 'fixed' ? (friendConfig.rewardExpiryDate ? fmtDate(friendConfig.rewardExpiryDate) : '—') : `${friendConfig.rewardExpiryValue} ${friendConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${friendConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                    ] : []),
+                    ...(isGroupUnlock ? [
+                      { label: 'Reward Expiry', value: groupUnlockConfig.rewardExpiryMode === 'fixed' ? (groupUnlockConfig.rewardExpiryDate ? fmtDate(groupUnlockConfig.rewardExpiryDate) : '—') : `${groupUnlockConfig.rewardExpiryValue} ${groupUnlockConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${groupUnlockConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">
