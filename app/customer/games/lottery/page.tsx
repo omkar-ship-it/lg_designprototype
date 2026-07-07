@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 
-const DRAW_DATE      = '30 Jun 2026'
+const DRAW_DATE      = '31 Jul 2026'
 const JACKPOT_PRIZE  = 'Free Month of Coffee 👑'
-const BUSINESS_NAME  = 'Iron Forge Gym'
-const CAMPAIGN_NAME  = 'Monthly Lucky Draw'
+const BUSINESS_NAME  = 'The Daily Grind'
+const CAMPAIGN_NAME  = 'Daily Grind Draw'
 const INITIAL_TICKETS = 3   // tickets already owned before this visit
 
 type State = 'idle' | 'receiving' | 'received'
@@ -41,7 +41,7 @@ export default function LotteryPage() {
 
   // Count-down to draw date
   const daysUntilDraw = Math.max(0, Math.ceil(
-    (new Date('2026-06-30').getTime() - new Date('2026-06-15').getTime()) / 86400000
+    (new Date('2026-07-31').getTime() - new Date('2026-06-15').getTime()) / 86400000
   ))
 
   return (

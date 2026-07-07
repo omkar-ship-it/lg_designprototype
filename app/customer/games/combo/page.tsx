@@ -4,7 +4,7 @@ import { CalendarDays } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
 
-const BUSINESS_NAME = 'Amber Cafe'
+const BUSINESS_NAME = 'The Daily Grind'
 const BUSINESS_EMOJI = '☕'
 const REWARD_LABEL = 'Free Coffee'
 const REWARD_EMOJI = '🛍️'

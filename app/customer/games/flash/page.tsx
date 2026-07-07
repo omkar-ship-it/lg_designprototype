@@ -4,15 +4,15 @@ import { CalendarDays, Zap } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
 
-const BUSINESS_NAME = 'Iron Forge'
-const BUSINESS_EMOJI = '🏋️'
+const BUSINESS_NAME = 'The Daily Grind'
+const BUSINESS_EMOJI = '☕'
 const REWARD_LABEL = '30% Off'
 const REWARD_EMOJI = '⚡'
-const CLAIM_BEFORE = '2026-06-15'
-const REDEEM_BEFORE = '2026-06-18'
+const CLAIM_BEFORE = '2026-08-31'
+const REDEEM_BEFORE = '2026-09-07'
 const TOTAL_SLOTS = 50
-const CLAIMED = 41
-const TERMS = 'Valid today only, while spots last. One redemption per member. Show this screen at the front desk to redeem.'
+const CLAIMED = 38
+const TERMS = 'Valid 3–5 PM only, while spots last. One redemption per customer. Show this screen at billing to redeem.'
 
 type State = 'idle' | 'earned'
 

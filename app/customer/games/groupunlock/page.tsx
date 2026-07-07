@@ -6,14 +6,14 @@ import { ArrowLeft, CalendarDays, Handshake } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
 
-const BUSINESS_NAME = 'Glam Spa'
-const BUSINESS_EMOJI = '💆'
-const REWARD_LABEL = '30% Off'
+const BUSINESS_NAME = 'The Daily Grind'
+const BUSINESS_EMOJI = '☕'
+const REWARD_LABEL = '25% Off'
 const REWARD_EMOJI = '🤝'
 const RESERVE_BEFORE = '2026-08-31'
 const REDEEM_BEFORE = '2026-09-30'
-const GROUP_TARGET = 20
-const GROUP_JOINED = 14
+const GROUP_TARGET = 30
+const GROUP_JOINED = 18
 
 const R = 80
 const CIRC = 2 * Math.PI * R
