@@ -365,3 +365,36 @@ export function FriendHeartArt({ className = '' }: { className?: string }) {
     </svg>
   )
 }
+
+export function GroupUnlockArt({ className = '' }: { className?: string }) {
+  const badgeCx = 90, badgeCy = 40, badgeR = 26
+
+  return (
+    <svg viewBox="0 0 170 130" className={className} aria-hidden="true">
+      {/* sparkle rays around the badge */}
+      {Array.from({ length: 8 }, (_, i) => {
+        const outer = polarToCartesian(badgeCx, badgeCy, badgeR + 14, i * 45)
+        const inner = polarToCartesian(badgeCx, badgeCy, badgeR + 5, i * 45)
+        return <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y} stroke="#059669" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+      })}
+      <path d={heartPath(30, 24, 4.5)} fill="#059669" opacity="0.3" />
+      <path d={heartPath(150, 78, 5)} fill="#059669" opacity="0.25" />
+
+      {/* left person (lighter) */}
+      <circle cx="26" cy="72" r="15" fill="#A7F3D0" />
+      <path d="M2,128 C2,102 50,102 50,128 Z" fill="#A7F3D0" />
+
+      {/* right person (lighter) */}
+      <circle cx="140" cy="76" r="15" fill="#A7F3D0" />
+      <path d="M116,128 C116,102 164,102 164,128 Z" fill="#A7F3D0" />
+
+      {/* center person (deeper, in front) */}
+      <circle cx="85" cy="66" r="19" fill="#059669" />
+      <path d="M52,128 C52,96 118,96 118,128 Z" fill="#059669" />
+
+      {/* heart badge */}
+      <circle cx={badgeCx} cy={badgeCy} r={badgeR} fill="#FFFFFF" />
+      <path d={heartPath(badgeCx, badgeCy, 12)} fill="#059669" />
+    </svg>
+  )
+}

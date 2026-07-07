@@ -6,7 +6,7 @@ import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
-import { SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt, FlashClockArt, LotteryDrawArt, SpendGetArt, FriendHeartArt } from '@/components/customer/mechanic-cover-art'
+import { SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt, FlashClockArt, LotteryDrawArt, SpendGetArt, FriendHeartArt, GroupUnlockArt } from '@/components/customer/mechanic-cover-art'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
@@ -43,6 +43,8 @@ const MECHANIC_ICONS = {
 
 interface HeroCover {
   headline: string
+  headlineAccent?: string
+  accentColor?: string
   tagline: string
   bgFrom: string
   bgTo: string
@@ -115,6 +117,16 @@ const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   friend: {
     headline: 'Better Together', tagline: 'Invite a friend along — you both get rewarded!',
     bgFrom: '#FFE4E9', bgTo: '#FFC1CC', textColor: '#9F1239', layout: 'side', art: FriendHeartArt,
+  },
+  groupunlock: {
+    headline: 'Stronger Together,', headlineAccent: 'Better Rewards!', accentColor: '#059669',
+    tagline: 'Enjoy exclusive rewards as a valued community member.',
+    bgFrom: '#ECFDF5', bgTo: '#D1FAE5', textColor: '#064E3B', layout: 'side', art: GroupUnlockArt,
+    features: [
+      { icon: UserPlus, label: 'Be Part of the Community' },
+      { icon: Gift, label: 'Exclusive Rewards' },
+      { icon: TicketPercent, label: 'Special Offers' },
+    ],
   },
 }
 
@@ -556,7 +568,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       if (hero && hero.layout === 'side') {
                         return (
                           <div
-                            className="relative h-40 overflow-hidden flex items-center"
+                            className={`relative overflow-hidden ${hero.features ? 'h-64' : 'h-40'}`}
                             style={{ background: `linear-gradient(135deg, ${hero.bgFrom}, ${hero.bgTo})` }}
                           >
                             <span className="absolute top-6 right-24 w-1.5 h-1.5 rounded-full" style={{ background: hero.textColor, opacity: 0.25 }} />
@@ -576,11 +588,17 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                               {STATUS_STYLES[m.status]?.label}
                             </span>
 
-                            <div className="flex items-center justify-between w-full pl-4 pr-6 pt-4">
-                              <div className="max-w-[48%]">
-                                <p className="text-lg font-extrabold leading-tight mb-1" style={{ color: hero.textColor }}>
+                            <div className={`flex items-center justify-between w-full pl-4 pr-6 pt-4 ${hero.features ? '' : 'h-full'}`}>
+                              <div className="max-w-[52%]">
+                                <p className="text-lg font-extrabold leading-tight" style={{ color: hero.textColor }}>
                                   {hero.headline}
                                 </p>
+                                {hero.headlineAccent && (
+                                  <p className="text-lg font-extrabold leading-tight mb-1" style={{ color: hero.accentColor ?? hero.textColor }}>
+                                    {hero.headlineAccent}
+                                  </p>
+                                )}
+                                {!hero.headlineAccent && <div className="mb-1" />}
                                 <p className="text-[11px] leading-snug opacity-80" style={{ color: hero.textColor }}>
                                   {hero.tagline}
                                 </p>
@@ -596,7 +614,22 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                               )}
                             </div>
 
-                            <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
+                            {hero.features && (
+                              <div className="absolute bottom-3 left-4 right-4 rounded-xl bg-white/40 backdrop-blur-sm px-2 py-2 flex items-center justify-center gap-1">
+                                {hero.features.map((f, fi) => (
+                                  <div key={fi} className="flex items-center gap-1.5 flex-1 min-w-0">
+                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ background: hero.accentColor ?? hero.textColor }}>
+                                      <f.icon className="w-3.5 h-3.5 text-white" />
+                                    </div>
+                                    <span className="text-[9px] leading-tight font-medium" style={{ color: hero.textColor }}>
+                                      {f.label}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className={`absolute ${hero.features ? 'top-14' : 'bottom-3'} right-3 w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm`}>
                               {meta.emoji}
                             </div>
                           </div>
