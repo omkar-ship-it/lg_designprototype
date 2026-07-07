@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, FerrisWheel, 
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
+import { HERO_COVER } from '@/components/customer/hero-cover-data'
 import type { MechanicType } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
@@ -57,6 +58,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const biz      = customerBusinesses.find(b => b.id === id) ?? customerBusinesses[0]
   const mechanic = biz.mechanics.find(m => m.type === type) ?? biz.mechanics[0]
   const meta     = MECHANIC_META[mechanic.type as MechanicType]
+  const hero     = HERO_COVER[mechanic.type as MechanicType]
+  const Art      = hero?.art
 
   // OTP state
   const [showOTP, setShowOTP] = useState(false)
@@ -102,46 +105,165 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-white pb-24">
 
       {/* Cover */}
-      <div
-        className="relative h-56 overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-      >
-        <MechanicPattern type={mechanic.type as MechanicType} opacity={0.14} />
-        <motion.span
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] opacity-15 select-none pointer-events-none"
-          animate={{ y: [0, -10, 0], rotate: [0, 4, -4, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+      {hero ? (
+        <div
+          className={`relative overflow-hidden ${hero.features ? 'h-80' : 'h-64'}`}
+          style={{ background: `linear-gradient(135deg, ${hero.bgFrom}, ${hero.bgTo})` }}
         >
-          {meta.emoji}
-        </motion.span>
+          <span className="absolute top-24 right-16 w-2 h-2 rounded-full" style={{ background: hero.textColor, opacity: 0.25 }} />
+          <span className="absolute bottom-24 left-10 w-1.5 h-1.5 rounded-full" style={{ background: hero.textColor, opacity: 0.3 }} />
+          <span className="absolute top-32 left-24 w-1 h-1 rounded-full" style={{ background: hero.textColor, opacity: 0.2 }} />
 
-        {/* Back */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/25 backdrop-blur-md flex items-center justify-center z-10"
+          {/* Back */}
+          <button
+            onClick={() => router.back()}
+            className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/25 backdrop-blur-md flex items-center justify-center z-10"
+          >
+            <ArrowLeft className="w-4 h-4 text-white" />
+          </button>
+
+          {/* Badges */}
+          <div className="absolute top-12 right-4 z-10 flex flex-col items-end gap-1.5">
+            <span
+              className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/70"
+              style={{ color: hero.textColor }}
+            >
+              {meta.label}
+            </span>
+            <span
+              className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+              style={{ background: STATUS_STYLES[mechanic.status]?.bg, color: STATUS_STYLES[mechanic.status]?.text }}
+            >
+              {STATUS_STYLES[mechanic.status]?.label}
+            </span>
+          </div>
+
+          {hero.layout === 'side' ? (
+            <div className="relative h-full flex flex-col justify-between pt-24 pb-10 px-5">
+              <div className="flex items-center justify-between">
+                <div className="max-w-[55%]">
+                  <p className="text-2xl font-extrabold leading-tight" style={{ color: hero.textColor }}>
+                    {hero.headline}
+                  </p>
+                  {hero.headlineAccent && (
+                    <p className="text-2xl font-extrabold leading-tight" style={{ color: hero.accentColor ?? hero.textColor }}>
+                      {hero.headlineAccent}
+                    </p>
+                  )}
+                  <p className="text-xs mt-1.5 leading-snug opacity-80" style={{ color: hero.textColor }}>
+                    {hero.tagline}
+                  </p>
+                </div>
+                {Art && (
+                  <motion.div
+                    className="w-36 h-36 shrink-0"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Art className="w-full h-full" />
+                  </motion.div>
+                )}
+              </div>
+
+              {hero.features && (
+                <div className="rounded-xl bg-white/40 backdrop-blur-sm px-3 py-2.5 flex items-center justify-center gap-2">
+                  {hero.features.map((f, fi) => (
+                    <div key={fi} className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ background: hero.accentColor ?? hero.textColor }}>
+                        <f.icon className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-[10px] leading-tight font-medium" style={{ color: hero.textColor }}>
+                        {f.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative h-full flex flex-col items-center justify-center pt-20 pb-10 px-5">
+              <p className="text-2xl font-extrabold text-center leading-tight" style={{ color: hero.textColor }}>
+                {hero.headline}
+              </p>
+              {hero.headlineAccent && (
+                <p className="text-2xl font-extrabold text-center leading-tight" style={{ color: hero.accentColor ?? hero.textColor }}>
+                  {hero.headlineAccent}
+                </p>
+              )}
+              <p className="text-xs text-center leading-snug opacity-90 mt-1.5 mb-2" style={{ color: hero.textColor }}>
+                {hero.tagline}
+              </p>
+              {Art && (
+                <motion.div
+                  className="w-40 h-32 shrink-0"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <Art className="w-full h-full" />
+                </motion.div>
+              )}
+              {hero.features && (
+                <div className="flex items-center justify-center gap-3 mt-3">
+                  {hero.features.map((f, fi) => (
+                    <div key={fi} className="flex flex-col items-center gap-1 w-16">
+                      <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                        <f.icon className="w-3.5 h-3.5" style={{ color: hero.textColor }} />
+                      </div>
+                      <span className="text-[9px] leading-tight text-center opacity-85" style={{ color: hero.textColor }}>
+                        {f.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scallop */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-white rounded-t-[2rem]" />
+        </div>
+      ) : (
+        <div
+          className="relative h-56 overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
         >
-          <ArrowLeft className="w-4 h-4 text-white" />
-        </button>
+          <MechanicPattern type={mechanic.type as MechanicType} opacity={0.14} />
+          <motion.span
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] opacity-15 select-none pointer-events-none"
+            animate={{ y: [0, -10, 0], rotate: [0, 4, -4, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {meta.emoji}
+          </motion.span>
 
-        {/* Mechanic badge */}
-        <span
-          className="absolute top-12 right-4 text-[10px] font-bold px-2.5 py-0.5 rounded-full z-10"
-          style={{ background: meta.badgeBg, color: meta.badgeText }}
-        >
-          {meta.label}
-        </span>
+          {/* Back */}
+          <button
+            onClick={() => router.back()}
+            className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/25 backdrop-blur-md flex items-center justify-center z-10"
+          >
+            <ArrowLeft className="w-4 h-4 text-white" />
+          </button>
 
-        {/* Status badge */}
-        <span
-          className="absolute bottom-6 left-4 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-          style={{ background: STATUS_STYLES[mechanic.status]?.bg, color: STATUS_STYLES[mechanic.status]?.text }}
-        >
-          {STATUS_STYLES[mechanic.status]?.label}
-        </span>
+          {/* Mechanic badge */}
+          <span
+            className="absolute top-12 right-4 text-[10px] font-bold px-2.5 py-0.5 rounded-full z-10"
+            style={{ background: meta.badgeBg, color: meta.badgeText }}
+          >
+            {meta.label}
+          </span>
 
-        {/* Scallop */}
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-white rounded-t-[2rem]" />
-      </div>
+          {/* Status badge */}
+          <span
+            className="absolute bottom-6 left-4 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+            style={{ background: STATUS_STYLES[mechanic.status]?.bg, color: STATUS_STYLES[mechanic.status]?.text }}
+          >
+            {STATUS_STYLES[mechanic.status]?.label}
+          </span>
+
+          {/* Scallop */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-white rounded-t-[2rem]" />
+        </div>
+      )}
 
       {/* Body */}
       <div className="px-5 pt-3">
