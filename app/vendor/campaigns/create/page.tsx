@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Slider, Select } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryPreset } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -20,14 +20,6 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
-const ROLLING_PERIOD_PRESETS: { key: RollingExpiryPreset; label: string }[] = [
-  { key: '7',      label: '7 Days' },
-  { key: '14',     label: '14 Days' },
-  { key: '30',     label: '1 Month' },
-  { key: '90',     label: '3 Months' },
-  { key: 'custom', label: 'Custom' },
-]
-
 function buildBuyXGetYSentence(cfg: {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
   rewardKind: RewardKind; rewardValue: string
@@ -67,7 +59,6 @@ const DURATION_LOTTERY: { key: DurationMode; label: string; sub: string }[] = [
 
 const TODAY = '2026-06-13'
 function addDays(from: string, n: number)   { const d = new Date(from); d.setDate(d.getDate() + n);    return d.toISOString().split('T')[0] }
-function daysBetween(from: string, to: string) { return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000)) }
 function addMonths(from: string, n: number) { const d = new Date(from); d.setMonth(d.getMonth() + n);  return d.toISOString().split('T')[0] }
 function fmtDate(iso: string) { return iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '' }
 function fmtTime(t: string) { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ap}` }
@@ -290,8 +281,8 @@ export default function CreateCampaignPage() {
     rewardValue: '',
     rewardExpiryMode: 'rolling' as RewardExpiryMode,
     rewardExpiryDate: '',
-    rewardExpiryPreset: '7' as RollingExpiryPreset,
-    rewardExpiryDays: 7,
+    rewardExpiryValue: 7,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
   })
 
   const [launched, setLaunched] = useState(false)
@@ -898,19 +889,16 @@ export default function CreateCampaignPage() {
                       ))}
                     </div>
                     {buyXGetY.rewardExpiryMode === 'rolling' ? (
-                      <div className="space-y-3 max-w-xs">
-                        <Select value={buyXGetY.rewardExpiryPreset} onChange={e => {
-                          const preset = e.target.value as typeof buyXGetY.rewardExpiryPreset
-                          setBuyXGetY(p => ({ ...p, rewardExpiryPreset: preset, rewardExpiryDays: preset === 'custom' ? p.rewardExpiryDays : Number(preset) }))
-                        }}>
-                          {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
-                        </Select>
-                        {buyXGetY.rewardExpiryPreset === 'custom' && (
-                          <div>
-                            <Input label="Custom Expiry Date" type="date" min={TODAY} value={addDays(TODAY, buyXGetY.rewardExpiryDays)} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDays: daysBetween(TODAY, e.target.value) }))} />
-                            <p className="text-[11px] text-v-text-3 mt-1.5">We calculate the day count from today to this date, then apply it after each claim.</p>
-                          </div>
-                        )}
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={buyXGetY.rewardExpiryValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={buyXGetY.rewardExpiryUnit} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
                       </div>
                     ) : (
                       <Input label="Expiry Date" type="date" value={buyXGetY.rewardExpiryDate} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
@@ -963,7 +951,7 @@ export default function CreateCampaignPage() {
                         mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) : '—',
                     },
                     ...(isBuyXGetY ? [
-                      { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryDays} days after claim` },
+                      { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">

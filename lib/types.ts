@@ -98,7 +98,7 @@ export interface CheckinConfig {
 }
 
 export type BuyCondition = 'quantity' | 'spend'
-export type RollingExpiryPreset = '7' | '14' | '30' | '90' | 'custom'
+export type RollingExpiryUnit = 'days' | 'months'
 
 export interface BuyXGetYConfig {
   type: 'buyxgety'
@@ -110,9 +110,9 @@ export interface BuyXGetYConfig {
   rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
 
   rewardExpiryMode: RewardExpiryMode
-  rewardExpiryDate?: string     // ISO date, when mode === 'fixed'
-  rewardExpiryPreset?: RollingExpiryPreset // drives the rolling-period dropdown
-  rewardExpiryDays?: number     // resolved total days, when mode === 'rolling'
+  rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
+  rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
 }
 
 export interface Customer {

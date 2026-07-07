@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge, MechanicBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, getMechanicColor, formatDate } from '@/lib/utils'
-import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryPreset } from '@/lib/types'
+import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -22,18 +22,6 @@ const ICONS = ['🎁', '☕', '🧁', '🥪', '🍰', '🏷️', '🎉', '🍳',
 function newReward() {
   return { id: Math.random().toString(36).slice(2), name: '', description: '', icon: '🎁', probability: 10 }
 }
-
-const ROLLING_PERIOD_PRESETS: { key: RollingExpiryPreset; label: string }[] = [
-  { key: '7',      label: '7 Days' },
-  { key: '14',     label: '14 Days' },
-  { key: '30',     label: '1 Month' },
-  { key: '90',     label: '3 Months' },
-  { key: 'custom', label: 'Custom' },
-]
-
-const TODAY = '2026-06-13'
-function addDays(from: string, n: number) { const d = new Date(from); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0] }
-function daysBetween(from: string, to: string) { return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000)) }
 
 function buildBuyXGetYSentence(cfg: {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
@@ -130,7 +118,9 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
       const c = campaign.config
       return [
         buildBuyXGetYSentence(c),
-        c.rewardExpiryMode === 'fixed' ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}` : `Expires ${c.rewardExpiryDays} days after claim`,
+        c.rewardExpiryMode === 'fixed'
+          ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
+          : `Expires ${c.rewardExpiryValue} ${c.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${c.rewardExpiryValue !== 1 ? 's' : ''} after claim`,
       ]
     }
     return []
@@ -208,7 +198,7 @@ type BuyXGetYDraft = {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
   rewardKind: RewardKind; rewardValue: string
   rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
-  rewardExpiryPreset: RollingExpiryPreset; rewardExpiryDays: number
+  rewardExpiryValue: number; rewardExpiryUnit: RollingExpiryUnit
 }
 
 function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; setConfig: (c: BuyXGetYDraft) => void }) {
@@ -272,19 +262,16 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
             ))}
           </div>
           {config.rewardExpiryMode === 'rolling' ? (
-            <div className="space-y-3 max-w-xs">
-              <Select value={config.rewardExpiryPreset} onChange={e => {
-                const preset = e.target.value as RollingExpiryPreset
-                setConfig({ ...config, rewardExpiryPreset: preset, rewardExpiryDays: preset === 'custom' ? config.rewardExpiryDays : Number(preset) })
-              }}>
-                {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
-              </Select>
-              {config.rewardExpiryPreset === 'custom' && (
-                <div>
-                  <Input label="Custom Expiry Date" type="date" min={TODAY} value={addDays(TODAY, config.rewardExpiryDays)} onChange={e => setConfig({ ...config, rewardExpiryDays: daysBetween(TODAY, e.target.value) })} />
-                  <p className="text-[11px] text-v-text-3 mt-1.5">We calculate the day count from today to this date, then apply it after each claim.</p>
-                </div>
-              )}
+            <div className="flex gap-2 max-w-xs">
+              <div className="flex-1">
+                <Input type="number" min={1} value={config.rewardExpiryValue} onChange={e => setConfig({ ...config, rewardExpiryValue: Number(e.target.value) })} />
+              </div>
+              <div className="w-32 shrink-0">
+                <Select value={config.rewardExpiryUnit} onChange={e => setConfig({ ...config, rewardExpiryUnit: e.target.value as RollingExpiryUnit })}>
+                  <option value="days">Days</option>
+                  <option value="months">Months</option>
+                </Select>
+              </div>
             </div>
           ) : (
             <Input label="Expiry Date" type="date" value={config.rewardExpiryDate} onChange={e => setConfig({ ...config, rewardExpiryDate: e.target.value })} />
@@ -347,9 +334,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [buyXGetYDraft, setBuyXGetYDraft] = useState(() => {
     if (original.config.type === 'buyxgety') {
       const c = original.config
-      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryPreset: c.rewardExpiryPreset ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
+      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryValue: c.rewardExpiryValue ?? 7, rewardExpiryUnit: c.rewardExpiryUnit ?? 'days' }
     }
-    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryPreset: '7' as RollingExpiryPreset, rewardExpiryDays: 7 }
+    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 7, rewardExpiryUnit: 'days' as RollingExpiryUnit }
   })
 
   // Save state
