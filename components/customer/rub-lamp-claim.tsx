@@ -277,7 +277,7 @@ export function RubLampClaim({
         <ArrowLeft className="w-4 h-4 text-white" />
       </button>
 
-      <div className="flex-1 flex flex-col items-center px-5 pt-20 pb-8 relative z-10 overflow-y-auto">
+      <div className={`flex-1 flex flex-col items-center px-5 pt-20 relative z-10 overflow-y-auto ${!claimed && children ? 'pb-56' : 'pb-8'}`}>
 
         {/* Title */}
         <div className="text-center mb-5 min-h-[60px] flex flex-col items-center justify-center">
@@ -302,11 +302,6 @@ export function RubLampClaim({
             )}
           </AnimatePresence>
         </div>
-
-        {/* Extra info (claim/redeem window, terms, etc.) */}
-        {!claimed && children && (
-          <div className="w-full max-w-xs mb-5">{children}</div>
-        )}
 
         {/* Ring + Lamp */}
         <div
@@ -583,6 +578,25 @@ export function RubLampClaim({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Info sheet — claim/redeem window, terms, etc. */}
+      <AnimatePresence>
+        {!claimed && children && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+            className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto z-20 rounded-t-3xl overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, rgba(45,10,107,0.97) 0%, rgba(14,6,12,0.99) 100%)', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none' }}
+          >
+            <div className="px-6 pt-4 pb-8">
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

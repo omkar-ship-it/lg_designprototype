@@ -34,30 +34,31 @@ export default function FlashDealPage() {
       title={`Rub the lamp to\nclaim this spot`}
       onComplete={() => setState('earned')}
     >
-      <div className="space-y-3">
-        <div className="flex justify-center">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/15 text-white">
-            <Zap className="w-3 h-3" /> {remaining} spot{remaining !== 1 ? 's' : ''} remaining · {CLAIMED}/{TOTAL_SLOTS} claimed
-          </span>
-        </div>
-        <div className="rounded-2xl px-4 py-3.5" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)' }}>
-          <p className="text-white/70 text-sm font-semibold mb-2 text-center">
-            Flash Deal — {BUSINESS_NAME} {BUSINESS_EMOJI}
+      <p className="text-white font-bold text-base text-center mb-2">
+        Flash Deal — {BUSINESS_NAME} {BUSINESS_EMOJI}
+      </p>
+      <div className="flex justify-center mb-4">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/15 text-white">
+          <Zap className="w-3 h-3" /> {remaining} spot{remaining !== 1 ? 's' : ''} remaining · {CLAIMED}/{TOTAL_SLOTS} claimed
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
+            <CalendarDays className="w-3 h-3" /> Claim Before
           </p>
-          <div className="flex items-center gap-2 text-xs text-white/70 mb-2">
-            <CalendarDays className="w-3.5 h-3.5 text-white/50 shrink-0" />
-            <span>Claim before <span className="font-bold text-white">{fmtDate(CLAIM_BEFORE)}</span></span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-white/70">
-            <CalendarDays className="w-3.5 h-3.5 text-white/50 shrink-0" />
-            <span>Redeem before <span className="font-bold text-white">{fmtDate(REDEEM_BEFORE)}</span></span>
-          </div>
-          <p className="text-xs text-white/40 mt-2 text-center">You will get {REWARD_LABEL}</p>
+          <p className="text-sm font-bold text-white">{fmtDate(CLAIM_BEFORE)}</p>
         </div>
-        <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(0,0,0,0.12)' }}>
-          <p className="text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
-          <p className="text-[11px] text-white/60 leading-relaxed">{TERMS}</p>
+        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
+            <CalendarDays className="w-3 h-3" /> Redeem Before
+          </p>
+          <p className="text-sm font-bold text-white">{fmtDate(REDEEM_BEFORE)}</p>
         </div>
+      </div>
+      <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <p className="text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
+        <p className="text-[11px] text-white/60 leading-relaxed">{TERMS}</p>
       </div>
     </RubLampClaim>
   )

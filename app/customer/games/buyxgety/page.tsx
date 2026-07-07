@@ -29,19 +29,22 @@ export default function BuyXGetYPage() {
       title={`Rub the lamp to\nclaim ${BUSINESS_NAME}'s reward`}
       onComplete={() => setState('earned')}
     >
-      <div className="rounded-2xl px-4 py-3.5" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)' }}>
-        <p className="text-white/70 text-sm font-semibold mb-2 text-center">
-          Buy X, Get Y — {BUSINESS_NAME} {BUSINESS_EMOJI}
-        </p>
-        <div className="flex items-center gap-2 text-xs text-white/70 mb-2">
-          <CalendarDays className="w-3.5 h-3.5 text-white/50 shrink-0" />
-          <span>Claim before <span className="font-bold text-white">{fmtDate(CLAIM_BEFORE)}</span></span>
+      <p className="text-white font-bold text-base text-center mb-4">
+        Buy X, Get Y — {BUSINESS_NAME} {BUSINESS_EMOJI}
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
+            <CalendarDays className="w-3 h-3" /> Claim Before
+          </p>
+          <p className="text-sm font-bold text-white">{fmtDate(CLAIM_BEFORE)}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/70">
-          <CalendarDays className="w-3.5 h-3.5 text-white/50 shrink-0" />
-          <span>Redeem before <span className="font-bold text-white">{fmtDate(REDEEM_BEFORE)}</span></span>
+        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
+            <CalendarDays className="w-3 h-3" /> Redeem Before
+          </p>
+          <p className="text-sm font-bold text-white">{fmtDate(REDEEM_BEFORE)}</p>
         </div>
-        <p className="text-xs text-white/40 mt-2 text-center">You will get {REWARD_LABEL}</p>
       </div>
     </RubLampClaim>
   )
