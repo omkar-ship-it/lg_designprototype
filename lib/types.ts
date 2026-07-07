@@ -171,16 +171,21 @@ export interface GroupUnlockConfig {
   rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
 }
 
-export interface ComboItem {
-  name: string
-  free: boolean                  // included in the bundle at no extra cost
-}
+export type ComboVariant = 'discount' | 'freeitem'
 
 export interface ComboDealConfig {
   type: 'combo'
-  items: ComboItem[]             // bundle item/service names, e.g. [{ name: "Coffee", free: false }, { name: "Fruit Bowl", free: true }]
+  variant: ComboVariant
+
+  // variant === 'discount' — bundle a set of items at one discounted price
+  items: string[]                // bundle item/service names, e.g. ["Coffee", "Croissant", "Fruit Bowl"]
   originalPrice: number          // ₹, sum value of items bought individually (shown struck-through)
   bundlePrice: number            // ₹, discounted price customer pays for the bundle
+
+  // variant === 'freeitem' — take items 1-3, get item 4 free
+  paidItems: string[]             // items the customer pays for, e.g. ["Coffee", "Coffee", "Coffee"]
+  freeItems: string[]             // items given free with the paid items, e.g. ["Coffee"]
+
   totalSpots: number             // limited quantity available
 
   rewardExpiryMode: RewardExpiryMode
@@ -349,9 +354,12 @@ export interface CustomerBusiness {
     groupRedeemBefore?: string
     hasReserved?: boolean
     // combo (package/combo deal)
-    comboItems?: ComboItem[]
+    comboVariant?: ComboVariant
+    comboItems?: string[]
     comboOriginalPrice?: number
     comboBundlePrice?: number
+    comboPaidItems?: string[]
+    comboFreeItems?: string[]
     comboTotalSpots?: number
     comboClaimed?: number
     comboRedeemBefore?: string

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Slider, Select } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit, ComboItem } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit, ComboVariant } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -80,11 +80,14 @@ function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind:
 }
 
 // ── Package/Combo Deal ─────────────────────────────────────────────────────────
-function buildComboSentence(cfg: { items: ComboItem[]; originalPrice: number; bundlePrice: number }) {
-  const named = cfg.items.filter(i => i.name.trim())
-  const freeCount = named.filter(i => i.free).length
-  const itemCount = named.length
-  return `${itemCount} Item${itemCount !== 1 ? 's' : ''}${freeCount > 0 ? ` (${freeCount} Free)` : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
+function buildComboSentence(cfg: { variant: ComboVariant; items: string[]; originalPrice: number; bundlePrice: number; paidItems: string[]; freeItems: string[] }) {
+  if (cfg.variant === 'freeitem') {
+    const paid = cfg.paidItems.filter(i => i.trim())
+    const free = cfg.freeItems.filter(i => i.trim())
+    return `Take ${paid.join(', ') || '—'} → Get ${free.join(', ') || '—'} Free`
+  }
+  const itemCount = cfg.items.filter(i => i.trim()).length
+  return `${itemCount} Item${itemCount !== 1 ? 's' : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -385,9 +388,12 @@ export default function CreateCampaignPage() {
 
   // Package/Combo Deal
   const [comboConfig, setComboConfig] = useState({
-    items: [{ name: '', free: false }, { name: '', free: false }] as ComboItem[],
+    variant: 'discount' as ComboVariant,
+    items: ['', ''] as string[],
     originalPrice: 500,
     bundlePrice: 350,
+    paidItems: ['', '', ''] as string[],
+    freeItems: [''] as string[],
     totalSpots: 100,
     rewardExpiryMode: 'rolling' as RewardExpiryMode,
     rewardExpiryDate: '',
@@ -471,7 +477,9 @@ export default function CreateCampaignPage() {
       return groupUnlockConfig.targetParticipants > 0 && groupUnlockConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'combo') {
-      return comboConfig.items.some(i => i.name.trim()) && comboConfig.originalPrice > 0 && comboConfig.bundlePrice > 0
+      return comboConfig.variant === 'freeitem'
+        ? comboConfig.paidItems.some(i => i.trim()) && comboConfig.freeItems.some(i => i.trim())
+        : comboConfig.items.some(i => i.trim()) && comboConfig.originalPrice > 0 && comboConfig.bundlePrice > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -1436,56 +1444,121 @@ export default function CreateCampaignPage() {
           {step === 2 && mechanic === 'combo' && (
             <Card className="p-6">
               <h2 className="text-base font-bold text-v-text mb-1">Package/Combo Deal — Offer Terms</h2>
-              <p className="text-xs text-v-text-3 mb-5">Bundle a set of items or services together, price the bundle, and set how many spots are available.</p>
+              <p className="text-xs text-v-text-3 mb-5">Bundle items or services together — either at one discounted price, or as a &quot;take these, get that free&quot; offer.</p>
 
               <div className="space-y-6">
-                {/* Bundle Items */}
+                {/* Variant */}
                 <div>
-                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Bundle Items</p>
-                  <div className="space-y-2">
-                    {comboConfig.items.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <input
-                          className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
-                          placeholder="e.g. Coffee"
-                          value={item.name}
-                          onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? { ...it, name: e.target.value } : it) }))}
-                        />
-                        <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={item.free}
-                            onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? { ...it, free: e.target.checked } : it) }))}
-                            className="w-3.5 h-3.5 accent-v-purple rounded"
-                          />
-                          <span className="text-xs text-v-text-3">Free</span>
-                        </label>
-                        {comboConfig.items.length > 1 && (
-                          <button onClick={() => setComboConfig(p => ({ ...p, items: p.items.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Combo Type</p>
+                  <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5">
+                    {(['discount', 'freeitem'] as ComboVariant[]).map(v => (
+                      <button key={v} onClick={() => setComboConfig(p => ({ ...p, variant: v }))}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${comboConfig.variant === v ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {v === 'discount' ? 'Discounted Bundle' : 'Take X, Get Y Free'}
+                      </button>
                     ))}
                   </div>
-                  <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, items: [...p.items, { name: '', free: false }] }))}>
-                    <Plus className="w-3 h-3" /> Add Item
-                  </Button>
+                  <p className="text-xs text-v-text-3 mt-1.5">
+                    {comboConfig.variant === 'discount'
+                      ? 'e.g. Coffee + Croissant + Fruit Bowl bundled at a lower price.'
+                      : 'e.g. Take 3 Coffees, get the 4th free.'}
+                  </p>
                 </div>
 
-                {/* Pricing */}
-                <div className="pt-2 border-t border-v-border">
-                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Pricing</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input label="Original Price (₹)" type="number" min={1} value={comboConfig.originalPrice} onChange={e => setComboConfig(p => ({ ...p, originalPrice: Number(e.target.value) }))} />
-                    <Input label="Bundle Price (₹)" type="number" min={1} value={comboConfig.bundlePrice} onChange={e => setComboConfig(p => ({ ...p, bundlePrice: Number(e.target.value) }))} />
-                  </div>
-                  {comboConfig.originalPrice > comboConfig.bundlePrice && (
-                    <p className="text-xs text-v-success mt-1.5 font-semibold">
-                      Customers save ₹{comboConfig.originalPrice - comboConfig.bundlePrice} ({Math.round(((comboConfig.originalPrice - comboConfig.bundlePrice) / comboConfig.originalPrice) * 100)}% off)
-                    </p>
-                  )}
-                </div>
+                {/* Discounted Bundle fields */}
+                {comboConfig.variant === 'discount' && (
+                  <>
+                    <div className="pt-2 border-t border-v-border">
+                      <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Bundle Items</p>
+                      <div className="space-y-2">
+                        {comboConfig.items.map((item, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <input
+                              className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
+                              placeholder="e.g. Coffee"
+                              value={item}
+                              onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? e.target.value : it) }))}
+                            />
+                            {comboConfig.items.length > 1 && (
+                              <button onClick={() => setComboConfig(p => ({ ...p, items: p.items.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, items: [...p.items, ''] }))}>
+                        <Plus className="w-3 h-3" /> Add Item
+                      </Button>
+                    </div>
+
+                    <div className="pt-2 border-t border-v-border">
+                      <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Pricing</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input label="Original Price (₹)" type="number" min={1} value={comboConfig.originalPrice} onChange={e => setComboConfig(p => ({ ...p, originalPrice: Number(e.target.value) }))} />
+                        <Input label="Bundle Price (₹)" type="number" min={1} value={comboConfig.bundlePrice} onChange={e => setComboConfig(p => ({ ...p, bundlePrice: Number(e.target.value) }))} />
+                      </div>
+                      {comboConfig.originalPrice > comboConfig.bundlePrice && (
+                        <p className="text-xs text-v-success mt-1.5 font-semibold">
+                          Customers save ₹{comboConfig.originalPrice - comboConfig.bundlePrice} ({Math.round(((comboConfig.originalPrice - comboConfig.bundlePrice) / comboConfig.originalPrice) * 100)}% off)
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Take X, Get Y Free fields */}
+                {comboConfig.variant === 'freeitem' && (
+                  <>
+                    <div className="pt-2 border-t border-v-border">
+                      <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Paid Items — customer takes these</p>
+                      <div className="space-y-2">
+                        {comboConfig.paidItems.map((item, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <input
+                              className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
+                              placeholder="e.g. Coffee"
+                              value={item}
+                              onChange={e => setComboConfig(p => ({ ...p, paidItems: p.paidItems.map((it, j) => j === i ? e.target.value : it) }))}
+                            />
+                            {comboConfig.paidItems.length > 1 && (
+                              <button onClick={() => setComboConfig(p => ({ ...p, paidItems: p.paidItems.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, paidItems: [...p.paidItems, ''] }))}>
+                        <Plus className="w-3 h-3" /> Add Paid Item
+                      </Button>
+                    </div>
+
+                    <div className="pt-2 border-t border-v-border">
+                      <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Free Items — customer gets these free</p>
+                      <div className="space-y-2">
+                        {comboConfig.freeItems.map((item, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <input
+                              className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
+                              placeholder="e.g. Coffee"
+                              value={item}
+                              onChange={e => setComboConfig(p => ({ ...p, freeItems: p.freeItems.map((it, j) => j === i ? e.target.value : it) }))}
+                            />
+                            {comboConfig.freeItems.length > 1 && (
+                              <button onClick={() => setComboConfig(p => ({ ...p, freeItems: p.freeItems.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, freeItems: [...p.freeItems, ''] }))}>
+                        <Plus className="w-3 h-3" /> Add Free Item
+                      </Button>
+                    </div>
+                  </>
+                )}
 
                 {/* Total Spots */}
                 <div className="pt-2 border-t border-v-border">
