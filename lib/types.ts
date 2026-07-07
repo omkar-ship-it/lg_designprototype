@@ -1,4 +1,4 @@
-export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon' | 'flash'
+export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon' | 'flash' | 'friend'
 export type CampaignStatus = 'active' | 'draft' | 'ended' | 'paused'
 export type RewardType = 'single' | 'range'
 
@@ -25,7 +25,7 @@ export interface Campaign {
   currentUsers: number
   playsPerUser: number
   rewards: Reward[]
-  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig | FlashDealConfig
+  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig | FlashDealConfig | BringFriendConfig
   pin: string
   pinExpiresAt: number
   participations: number
@@ -143,6 +143,19 @@ export interface FlashDealConfig {
   rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
 
   termsAndConditions: string     // qualifying conditions, redemption instructions, etc.
+}
+
+export interface BringFriendConfig {
+  type: 'friend'
+  minFriends: number             // minimum number of friends required to unlock the reward
+
+  rewardKind: RewardKind        // 'flat' | 'percent' | 'item' | 'points'
+  rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
+
+  rewardExpiryMode: RewardExpiryMode
+  rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
+  rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
 }
 
 export interface Customer {
@@ -291,5 +304,10 @@ export interface CustomerBusiness {
     flashClaimed?: number
     flashRedeemBefore?: string
     flashTerms?: string
+    // friend (bring a friend)
+    friendReward?: string
+    friendMinFriends?: number
+    friendsBrought?: number
+    friendRedeemBefore?: string
   }[]
 }

@@ -19,6 +19,7 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'buyxgety', desc: 'Customers buy or spend to unlock a reward — works for repeat purchases, visit counts, or spend thresholds.', tags: ['Perceived value', 'Loss aversion'] },
   { type: 'coupon', desc: 'Generate a limited pool of discount coupons customers can claim and redeem.', tags: ['Scarcity', 'Simplicity'] },
   { type: 'flash', desc: 'A short, urgent window with limited spots — first come, first served.', tags: ['Urgency', 'FOMO'] },
+  { type: 'friend', desc: 'Customer brings a minimum number of friends along to unlock a reward.', tags: ['Referral', 'Social proof'] },
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
@@ -54,6 +55,16 @@ function buildFlashDealSentence(cfg: { totalSlots: number; rewardKind: RewardKin
     cfg.rewardKind === 'points'  ? `${cfg.rewardValue || 0} Points` :
     `${cfg.rewardValue.trim() || 'Free Item'}`
   return `${cfg.totalSlots} Spots → ${reward}`
+}
+
+// ── Bring a Friend ─────────────────────────────────────────────────────────────
+function buildBringFriendSentence(cfg: { minFriends: number; rewardKind: RewardKind; rewardValue: string }) {
+  const reward =
+    cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
+    `Get ${cfg.rewardValue.trim() || 'Free Item'}`
+  return `Bring ${cfg.minFriends} Friend${cfg.minFriends !== 1 ? 's' : ''} → ${reward}`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -330,6 +341,17 @@ export default function CreateCampaignPage() {
     termsAndConditions: '',
   })
 
+  // Bring a Friend
+  const [friendConfig, setFriendConfig] = useState({
+    minFriends: 2,
+    rewardKind: 'item' as RewardKind,
+    rewardValue: '',
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryValue: 7,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
@@ -337,6 +359,7 @@ export default function CreateCampaignPage() {
   const isBuyXGetY       = mechanic === 'buyxgety'
   const isCoupon         = mechanic === 'coupon'
   const isFlash          = mechanic === 'flash'
+  const isFriend         = mechanic === 'friend'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -394,6 +417,9 @@ export default function CreateCampaignPage() {
     }
     if (mechanic === 'flash') {
       return flashConfig.totalSlots > 0 && flashConfig.rewardValue.trim().length > 0
+    }
+    if (mechanic === 'friend') {
+      return friendConfig.minFriends > 0 && friendConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -577,6 +603,11 @@ export default function CreateCampaignPage() {
                     <Stepper label="User Cap" hint="users" value={basics.userCap} min={10} max={5000} onChange={v => setBasics(p => ({ ...p, userCap: v }))} />
                   )}
 
+                  {/* Bring a Friend: single user cap, stepper */}
+                  {isFriend && (
+                    <Stepper label="User Cap" hint="users" value={basics.userCap} min={10} max={5000} onChange={v => setBasics(p => ({ ...p, userCap: v }))} />
+                  )}
+
                   {/* Lottery: no caps */}
                   {isLottery && (
                     <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
@@ -632,6 +663,14 @@ export default function CreateCampaignPage() {
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                     <p>Buy X Get Y rewards trigger automatically — no win probability to configure. Reward type and expiry are set in the next step.</p>
+                  </div>
+                )}
+
+                {/* Bring a Friend info note */}
+                {isFriend && (
+                  <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                    <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                    <p>Bring a Friend rewards trigger automatically once the minimum friend count is met — no win probability to configure. Reward type and expiry are set in the next step.</p>
                   </div>
                 )}
               </div>
@@ -1157,6 +1196,82 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* BRING A FRIEND */}
+          {step === 2 && mechanic === 'friend' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Bring a Friend — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Set the minimum number of friends a customer needs to bring along, then define the reward.</p>
+
+              <div className="space-y-6">
+                {/* Minimum Friends */}
+                <div>
+                  <Stepper label="Minimum Friends" hint="friends required" value={friendConfig.minFriends} min={1} max={20} onChange={v => setFriendConfig(p => ({ ...p, minFriends: v }))} />
+                </div>
+
+                {/* Reward */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+                  <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+                      <button key={k} onClick={() => setFriendConfig(p => ({ ...p, rewardKind: k, rewardValue: '' }))}
+                        className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${friendConfig.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {friendConfig.rewardKind === 'flat' && (
+                    <Input label="Discount Amount (₹)" type="number" min={1} value={friendConfig.rewardValue} onChange={e => setFriendConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {friendConfig.rewardKind === 'percent' && (
+                    <Input label="Discount %" type="number" min={1} max={100} value={friendConfig.rewardValue} onChange={e => setFriendConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {friendConfig.rewardKind === 'item' && (
+                    <Input label="Reward Description" placeholder="e.g. Free item or service" value={friendConfig.rewardValue} onChange={e => setFriendConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {friendConfig.rewardKind === 'points' && (
+                    <Input label="Points Awarded" type="number" min={1} value={friendConfig.rewardValue} onChange={e => setFriendConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                </div>
+
+                {/* Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setFriendConfig(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${friendConfig.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {friendConfig.rewardExpiryMode === 'rolling' ? (
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={friendConfig.rewardExpiryValue} onChange={e => setFriendConfig(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={friendConfig.rewardExpiryUnit} onChange={e => setFriendConfig(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={friendConfig.rewardExpiryDate} onChange={e => setFriendConfig(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildBringFriendSentence(friendConfig)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -1192,7 +1307,8 @@ export default function CreateCampaignPage() {
                         mechanic === 'lottery'  ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` :
                         mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) :
                         mechanic === 'coupon'   ? buildCouponSentence(couponConfig) :
-                        mechanic === 'flash'    ? buildFlashDealSentence(flashConfig) : '—',
+                        mechanic === 'flash'    ? buildFlashDealSentence(flashConfig) :
+                        mechanic === 'friend'   ? buildBringFriendSentence(friendConfig) : '—',
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
@@ -1204,6 +1320,9 @@ export default function CreateCampaignPage() {
                     ...(isFlash ? [
                       { label: 'Reward Expiry', value: flashConfig.rewardExpiryMode === 'fixed' ? (flashConfig.rewardExpiryDate ? fmtDate(flashConfig.rewardExpiryDate) : '—') : `${flashConfig.rewardExpiryValue} ${flashConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${flashConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
                       { label: 'Terms & Conditions', value: flashConfig.termsAndConditions.trim() || '—' },
+                    ] : []),
+                    ...(isFriend ? [
+                      { label: 'Reward Expiry', value: friendConfig.rewardExpiryMode === 'fixed' ? (friendConfig.rewardExpiryDate ? fmtDate(friendConfig.rewardExpiryDate) : '—') : `${friendConfig.rewardExpiryValue} ${friendConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${friendConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">

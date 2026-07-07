@@ -55,6 +55,15 @@ function buildFlashDealSentence(cfg: { totalSlots: number; rewardKind: RewardKin
   return `${cfg.totalSlots} Spots → ${reward}`
 }
 
+function buildBringFriendSentence(cfg: { minFriends: number; rewardKind: RewardKind; rewardValue: string }) {
+  const reward =
+    cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
+    `Get ${cfg.rewardValue.trim() || 'Free Item'}`
+  return `Bring ${cfg.minFriends} Friend${cfg.minFriends !== 1 ? 's' : ''} → ${reward}`
+}
+
 // ── Reusable locked field ─────────────────────────────────────────────────────
 function LockedField({ label, value, reason }: { label: string; value: string; reason?: string }) {
   return (
@@ -158,6 +167,15 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
           ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
           : `Expires ${c.rewardExpiryValue} ${c.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${c.rewardExpiryValue !== 1 ? 's' : ''} after claim`,
         ...(c.termsAndConditions.trim() ? [`T&C: ${c.termsAndConditions.trim()}`] : []),
+      ]
+    }
+    if (campaign.mechanic === 'friend' && campaign.config.type === 'friend') {
+      const c = campaign.config
+      return [
+        buildBringFriendSentence(c),
+        c.rewardExpiryMode === 'fixed'
+          ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
+          : `Expires ${c.rewardExpiryValue} ${c.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${c.rewardExpiryValue !== 1 ? 's' : ''} after claim`,
       ]
     }
     return []
@@ -502,6 +520,84 @@ function DraftFlashDealConfig({ config, setConfig }: { config: FlashDealDraft; s
   )
 }
 
+// ── Draft Bring a Friend config (inline edit for draft campaigns) ───────────
+type BringFriendDraft = {
+  minFriends: number
+  rewardKind: RewardKind; rewardValue: string
+  rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
+  rewardExpiryValue: number; rewardExpiryUnit: RollingExpiryUnit
+}
+
+function DraftBringFriendConfig({ config, setConfig }: { config: BringFriendDraft; setConfig: (c: BringFriendDraft) => void }) {
+  return (
+    <div className="space-y-6">
+      {/* Minimum Friends */}
+      <Stepper label="Minimum Friends" hint="friends required" value={config.minFriends} min={1} max={20} onChange={v => setConfig({ ...config, minFriends: v })} />
+
+      {/* Reward */}
+      <div className="pt-2 border-t border-v-border">
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+        <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+          {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+            <button key={k} onClick={() => setConfig({ ...config, rewardKind: k, rewardValue: '' })}
+              className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${config.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {config.rewardKind === 'flat' && (
+          <Input label="Discount Amount (₹)" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+        {config.rewardKind === 'percent' && (
+          <Input label="Discount %" type="number" min={1} max={100} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+        {config.rewardKind === 'item' && (
+          <Input label="Reward Description" placeholder="e.g. Free item or service" value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+        {config.rewardKind === 'points' && (
+          <Input label="Points Awarded" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+      </div>
+
+      {/* Expiry */}
+      <div className="pt-2 border-t border-v-border space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+          <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+            {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+              <button key={m} onClick={() => setConfig({ ...config, rewardExpiryMode: m })}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+              </button>
+            ))}
+          </div>
+          {config.rewardExpiryMode === 'rolling' ? (
+            <div className="flex gap-2 max-w-xs">
+              <div className="flex-1">
+                <Input type="number" min={1} value={config.rewardExpiryValue} onChange={e => setConfig({ ...config, rewardExpiryValue: Number(e.target.value) })} />
+              </div>
+              <div className="w-32 shrink-0">
+                <Select value={config.rewardExpiryUnit} onChange={e => setConfig({ ...config, rewardExpiryUnit: e.target.value as RollingExpiryUnit })}>
+                  <option value="days">Days</option>
+                  <option value="months">Months</option>
+                </Select>
+              </div>
+            </div>
+          ) : (
+            <Input label="Expiry Date" type="date" value={config.rewardExpiryDate} onChange={e => setConfig({ ...config, rewardExpiryDate: e.target.value })} />
+          )}
+        </div>
+      </div>
+
+      {/* Live preview */}
+      <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+        <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+        <span className="font-bold text-v-purple">{buildBringFriendSentence(config)}</span>
+      </div>
+    </div>
+  )
+}
+
 // ── Status action configs ─────────────────────────────────────────────────────
 const STATUS_TRANSITIONS: Record<CampaignStatus, { label: string; icon: typeof Play; variant: 'primary' | 'secondary' | 'danger' | 'gold'; description: string }[]> = {
   active: [
@@ -571,6 +667,15 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     return { totalSlots: 50, rewardKind: 'percent' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 3, rewardExpiryUnit: 'days' as RollingExpiryUnit, termsAndConditions: '' }
   })
 
+  // Bring a Friend config for draft editing
+  const [friendDraft, setFriendDraft] = useState(() => {
+    if (original.config.type === 'friend') {
+      const c = original.config
+      return { minFriends: c.minFriends, rewardKind: c.rewardKind, rewardValue: c.rewardValue, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryValue: c.rewardExpiryValue ?? 7, rewardExpiryUnit: c.rewardExpiryUnit ?? 'days' }
+    }
+    return { minFriends: 2, rewardKind: 'item' as RewardKind, rewardValue: '', rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 7, rewardExpiryUnit: 'days' as RollingExpiryUnit }
+  })
+
   // Save state
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [confirmAction, setConfirmAction] = useState<string | null>(null)
@@ -606,6 +711,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const isBuyXGetY = original.mechanic === 'buyxgety'
   const isCoupon   = original.mechanic === 'coupon'
   const isFlash    = original.mechanic === 'flash'
+  const isFriend   = original.mechanic === 'friend'
 
   return (
     <div className="p-8 max-w-3xl">
@@ -707,14 +813,14 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-start gap-2.5 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                   No separate user cap for Flash Deal — the number of spots set is the cap.
                 </div>
-              ) : isBuyXGetY ? (
+              ) : isBuyXGetY || isFriend ? (
                 <Stepper label="User Cap" hint="users" value={userCap} min={original.currentUsers || 10} max={5000} onChange={setUserCap} />
               ) : (
                 <Slider label="User Cap" displayValue={`${userCap} users`} min={original.currentUsers || 10} max={5000} step={10} value={userCap} onChange={e => setUserCap(Number(e.target.value))} />
               )}
 
-              {/* Plays Per Day — not for stamp, lottery, buy x get y, coupon, or flash */}
-              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && (
+              {/* Plays Per Day — not for stamp, lottery, buy x get y, coupon, flash, or friend */}
+              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && (
                 isLocked ? (
                   <LockedField label="Plays Per User Per Day" value={`${original.playsPerUser} / day`} />
                 ) : (
@@ -722,8 +828,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Daily Reward Cap — not for stamp, lottery, buy x get y, coupon, or flash */}
-              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && (
+              {/* Daily Reward Cap — not for stamp, lottery, buy x get y, coupon, flash, or friend */}
+              {!isStamp && !isLottery && !isBuyXGetY && !isCoupon && !isFlash && !isFriend && (
                 isLocked ? (
                   <LockedField label="Daily Rewards Cap" value={dailyRewardCap === 0 ? 'Unlimited' : `${dailyRewardCap} / day`} />
                 ) : (
@@ -734,13 +840,14 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Stamp / Lottery / Buy X Get Y / Coupon / Flash notes */}
-              {(isStamp || isLottery || isBuyXGetY || isCoupon || isFlash) && !isLocked && (
+              {/* Stamp / Lottery / Buy X Get Y / Coupon / Flash / Friend notes */}
+              {(isStamp || isLottery || isBuyXGetY || isCoupon || isFlash || isFriend) && !isLocked && (
                 <div className="flex items-start gap-2 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                   {isStamp ? 'Stamp Card has no plays per day or daily reward cap — rewards trigger at stamp positions.' :
                    isLottery ? 'Lottery has no plays per day or daily reward cap — prizes are governed by ticket probabilities.' :
                    isBuyXGetY ? 'Buy X Get Y has no plays per day or daily reward cap — rewards trigger automatically when the purchase condition is met.' :
                    isCoupon ? 'Coupon Codes has no plays per day or daily reward cap — the coupon pool size governs total redemptions.' :
+                   isFriend ? 'Bring a Friend has no plays per day or daily reward cap — rewards trigger automatically once the friend minimum is met.' :
                    'Flash Deal has no plays per day or daily reward cap — the spot count governs total redemptions.'}
                 </div>
               )}
@@ -843,6 +950,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )}
                 {original.mechanic === 'flash' && (
                   <DraftFlashDealConfig config={flashDraft} setConfig={setFlashDraft} />
+                )}
+                {original.mechanic === 'friend' && (
+                  <DraftBringFriendConfig config={friendDraft} setConfig={setFriendDraft} />
                 )}
               </div>
             )}

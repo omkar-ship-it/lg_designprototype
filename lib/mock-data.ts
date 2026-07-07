@@ -289,6 +289,35 @@ export const campaigns: Campaign[] = [
       termsAndConditions: 'Valid today only, while spots last. One redemption per customer. Show this screen at billing to redeem.',
     },
   },
+  {
+    id: 'camp-10',
+    name: 'Bring Your Squad',
+    mechanic: 'friend',
+    status: 'active',
+    startDate: '2026-06-01',
+    endDate: '2026-08-31',
+    userCap: 300,
+    currentUsers: 118,
+    playsPerUser: 1,
+    participations: 118,
+    rewardsClaimed: 46,
+    redeemedCount: 29,
+    pin: '815',
+    pinExpiresAt: Date.now() + 52000,
+    createdAt: '2026-05-30T09:00:00Z',
+    rewards: [
+      { id: 'r14', name: 'Free Dessert', description: 'Bring 2 friends along and get a free dessert', value: 'Free', icon: '👫' },
+    ],
+    config: {
+      type: 'friend',
+      minFriends: 2,
+      rewardKind: 'item',
+      rewardValue: 'Free Dessert',
+      rewardExpiryMode: 'rolling',
+      rewardExpiryValue: 14,
+      rewardExpiryUnit: 'days',
+    },
+  },
 ]
 
 export const customers: Customer[] = [
@@ -513,6 +542,7 @@ export const customerBusinesses: CustomerBusiness[] = [
     { type: 'shake',   label: 'Scratch Card',   description: 'Tactile thrill — peel, reveal, smile.',               status: 'active', startDate: '2026-06-01', endDate: '2026-07-15', participants: 89,  totalRewards: 19,  activeToday: 18, playedToday: false, prizes: ['₹200 Off 🏷️', 'Free Hair Wash 🚿', 'Free Deep Condition 💆'] },
     { type: 'dice',    label: 'Mystery Box',    description: 'Curiosity converts. A surprise gift inside every box.',status: 'ended',  startDate: '2026-03-01', endDate: '2026-05-31', participants: 201, totalRewards: 56,  activeToday: 0,  playedToday: false, prizes: ['Free Serum 💧', '₹300 Off 🏷️', 'Free Treatment 💆'] },
     { type: 'checkin', label: 'Daily Check-in', description: 'Check in every day and earn 100 points per visit.',   status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 98,  totalRewards: 98,  activeToday: 31, playedToday: true,  checkInStreak: 3, totalPoints: 300 },
+    { type: 'friend',  label: 'Bring Your Squad', description: 'Bring 2 friends along for a service and get a free hair wash.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 46, totalRewards: 18, activeToday: 6, playedToday: false, friendReward: 'Free Hair Wash', friendMinFriends: 2, friendsBrought: 1, friendRedeemBefore: '2026-09-14' },
   ]},
   { id: 'biz-ironforge', name: 'Iron Forge', category: 'Gym', tagline: 'Strength built quiet. No grunts, just gains.', rating: 4.6, reviews: 421, distance: '2.3 km', location: 'HSR Layout, Bangalore', phone: '+91 80 3456 7890', openUntil: 'Open until 11 PM', coverImage: 'https://picsum.photos/seed/iron-forge-gym/800/500', coverFrom: '#111827', coverTo: '#374151', coverEmoji: '🏋️', mechanics: [
     { type: 'stamp',   label: 'Stamp Card',      description: 'Complete 10 sessions, get one free.',                 status: 'active', startDate: '2026-01-01', endDate: '2026-12-31', participants: 512, totalRewards: 98,  activeToday: 54, playedToday: false, stampsCollected: 2, totalStamps: 10, finalReward: 'Free Month Membership' },

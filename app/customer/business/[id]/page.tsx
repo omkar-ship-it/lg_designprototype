@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, Tag } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -19,6 +19,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   buyxgety: '/customer/games/buyxgety',
   coupon: '/customer/games/coupon',
   flash: '/customer/games/flash',
+  friend: '/customer/games/friend',
 }
 
 const MECHANIC_ICONS = {
@@ -31,6 +32,7 @@ const MECHANIC_ICONS = {
   buyxgety: Wallet,
   coupon:  Tag,
   flash:   Zap,
+  friend:  Users,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -592,19 +594,52 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
+                      {/* Bring a Friend: friend progress, then reward + redeem window */}
+                      {m.type === 'friend' && (
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            {m.friendReward && (
+                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.friendReward}</span>
+                            )}
+                            {m.friendMinFriends !== undefined && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
+                                {m.friendsBrought ?? 0}/{m.friendMinFriends} friends
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
+                              <span>Claim before</span>
+                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
+                            </div>
+                            {m.friendRedeemBefore && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <div className="flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span>Redeem before</span>
+                                  <span className="font-semibold text-gray-700">{fmtDate(m.friendRedeemBefore)}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Social proof + date row */}
                       <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
                         {(m.activeToday ?? 0) > 0 && (
                           <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
                         )}
-                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && <span className="text-gray-200">·</span>}
-                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
+                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && <span className="text-gray-200">·</span>}
+                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
                       </div>
 
                       {/* Play Now / Claim Now / Played Today */}
                       {m.playedToday ? (
                         <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
-                          ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+                          ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' ? 'Claimed today' : 'Played today'} · Come back tomorrow
                         </div>
                       ) : (
                         <button
@@ -612,7 +647,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
                           style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                         >
-                          {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' ? 'Claim Now' : 'Play Now'}
+                          {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' ? 'Claim Now' : 'Play Now'}
                         </button>
                       )}
                     </div>
