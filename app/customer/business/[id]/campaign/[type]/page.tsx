@@ -3,7 +3,7 @@ import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, TicketPercent, Zap, Handshake, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, FerrisWheel, Dices, Ticket, ArrowRightLeft, TicketPercent, Zap, Handshake, UserPlus, Package } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -28,15 +28,15 @@ const MECHANIC_ICONS = {
   stamp:   Gift,
   shake:   Smartphone,
   checkin: Target,
-  spin:    Sparkles,
+  spin:    FerrisWheel,
   dice:    Dices,
   lottery: Ticket,
-  buyxgety: Wallet,
+  buyxgety: ArrowRightLeft,
   coupon:  TicketPercent,
   flash:   Zap,
-  friend:  Users,
+  friend:  UserPlus,
   groupunlock: Handshake,
-  combo:   ShoppingBag,
+  combo:   Package,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

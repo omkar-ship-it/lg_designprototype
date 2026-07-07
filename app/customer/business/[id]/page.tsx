@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, TicketPercent, Users, Handshake, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, FerrisWheel, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -29,15 +29,15 @@ const MECHANIC_ICONS = {
   stamp:   Gift,
   shake:   Smartphone,
   checkin: Target,
-  spin:    Sparkles,
+  spin:    FerrisWheel,
   dice:    Dices,
   lottery: Ticket,
-  buyxgety: Wallet,
+  buyxgety: ArrowRightLeft,
   coupon:  TicketPercent,
   flash:   Zap,
-  friend:  Users,
+  friend:  UserPlus,
   groupunlock: Handshake,
-  combo:   ShoppingBag,
+  combo:   Package,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -192,6 +192,50 @@ function GroupUnlockCTA({ m, meta, onReserve }: { m: Mechanic; meta: typeof MECH
     >
       Reserve a Spot
     </button>
+  )
+}
+
+// Mechanics with a "claim" CTA (deterministic reward, not a game of chance) — they share one
+// compact info-box layout instead of each having a bespoke, more cluttered block.
+const CLAIM_STYLE_TYPES: MechanicType[] = ['buyxgety', 'coupon', 'flash', 'friend', 'groupunlock', 'combo']
+
+function ClaimInfoBox({
+  meta, reward, progress, claimBefore, redeemBefore, extra,
+}: {
+  meta: typeof MECHANIC_META[MechanicType]
+  reward?: string
+  progress?: { current: number; total: number; label: string }
+  claimBefore: string
+  redeemBefore?: string
+  extra?: React.ReactNode
+}) {
+  const pct = progress ? Math.min(100, Math.round((progress.current / progress.total) * 100)) : 0
+  return (
+    <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+      {(reward || progress) && (
+        <div className="flex items-center justify-between mb-1.5">
+          {reward && <span className="text-sm font-bold" style={{ color: meta.cardFrom }}>{reward}</span>}
+          {progress && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white shrink-0 ml-auto" style={{ color: meta.cardFrom }}>
+              {progress.current}/{progress.total} {progress.label}
+            </span>
+          )}
+        </div>
+      )}
+      {progress && (
+        <div className="h-1.5 rounded-full bg-white overflow-hidden mb-2">
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
+        </div>
+      )}
+      {extra}
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+        <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
+        <span>
+          Claim by <span className="font-semibold text-gray-700">{fmtDate(claimBefore)}</span>
+          {redeemBefore && <> · Redeem by <span className="font-semibold text-gray-700">{fmtDate(redeemBefore)}</span></>}
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -541,194 +585,83 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
-                      {/* Buy X Get Y: reward + claimed, then claim/redeem window */}
+                      {/* Buy X Get Y */}
                       {m.type === 'buyxgety' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          <div className="flex items-center justify-between mb-2">
-                            {m.buyReward && (
-                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.buyReward}</span>
-                            )}
-                            {m.buyTotalSlots !== undefined && m.buyClaimed !== undefined && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                                {m.buyClaimed}/{m.buyTotalSlots} claimed
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Claim before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.buyRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.buyRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <ClaimInfoBox
+                          meta={meta}
+                          reward={m.buyReward}
+                          progress={m.buyTotalSlots !== undefined && m.buyClaimed !== undefined ? { current: m.buyClaimed, total: m.buyTotalSlots, label: 'claimed' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.buyRedeemBefore}
+                        />
                       )}
 
-                      {/* Coupon Codes: reward + claimed, then claim/redeem window */}
+                      {/* Coupon Codes */}
                       {m.type === 'coupon' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          <div className="flex items-center justify-between mb-2">
-                            {m.couponReward && (
-                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.couponReward}</span>
-                            )}
-                            {m.couponTotalSlots !== undefined && m.couponClaimed !== undefined && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                                {m.couponClaimed}/{m.couponTotalSlots} claimed
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Claim before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.couponRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.couponRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <ClaimInfoBox
+                          meta={meta}
+                          reward={m.couponReward}
+                          progress={m.couponTotalSlots !== undefined && m.couponClaimed !== undefined ? { current: m.couponClaimed, total: m.couponTotalSlots, label: 'claimed' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.couponRedeemBefore}
+                        />
                       )}
 
-                      {/* Flash Deal: reward + claimed, then claim/redeem window */}
+                      {/* Flash Sale */}
                       {m.type === 'flash' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          <div className="flex items-center justify-between mb-2">
-                            {m.flashReward && (
-                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.flashReward}</span>
-                            )}
-                            {m.flashTotalSlots !== undefined && m.flashClaimed !== undefined && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                                {m.flashClaimed}/{m.flashTotalSlots} claimed
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Claim before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.flashRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.flashRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <ClaimInfoBox
+                          meta={meta}
+                          reward={m.flashReward}
+                          progress={m.flashTotalSlots !== undefined && m.flashClaimed !== undefined ? { current: m.flashClaimed, total: m.flashTotalSlots, label: 'claimed' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.flashRedeemBefore}
+                        />
                       )}
 
-                      {/* Bring a Friend: friend progress, then reward + redeem window */}
+                      {/* Bring Your Friend */}
                       {m.type === 'friend' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          <div className="flex items-center justify-between mb-2">
-                            {m.friendReward && (
-                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.friendReward}</span>
-                            )}
-                            {m.friendMinFriends !== undefined && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                                {m.friendsBrought ?? 0}/{m.friendMinFriends} friends
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Claim before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.friendRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.friendRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <ClaimInfoBox
+                          meta={meta}
+                          reward={m.friendReward}
+                          progress={m.friendMinFriends !== undefined ? { current: m.friendsBrought ?? 0, total: m.friendMinFriends, label: 'friends' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.friendRedeemBefore}
+                        />
                       )}
 
-                      {/* Community Offer — Group Unlock: shared group progress, then reward + redeem window */}
+                      {/* Community Offer - Group Unlock */}
                       {m.type === 'groupunlock' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          <div className="flex items-center justify-between mb-2">
-                            {m.groupReward && (
-                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.groupReward}</span>
-                            )}
-                            {m.groupTarget !== undefined && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                                {m.groupJoined ?? 0}/{m.groupTarget} joined
-                              </span>
-                            )}
-                          </div>
-                          {m.groupTarget !== undefined && (
-                            <div className="h-1.5 rounded-full bg-white overflow-hidden mb-2">
-                              <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((m.groupJoined ?? 0) / m.groupTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Reserve before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.groupRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.groupRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <ClaimInfoBox
+                          meta={meta}
+                          reward={m.groupReward}
+                          progress={m.groupTarget !== undefined ? { current: m.groupJoined ?? 0, total: m.groupTarget, label: 'joined' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.groupRedeemBefore}
+                        />
                       )}
 
-                      {/* Package/Combo Deal: pricing or take/free items, spots progress, claim/redeem window */}
+                      {/* Bundle/Combo Offers */}
                       {m.type === 'combo' && (
-                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
-                          {m.comboVariant === 'freeitem' ? (
-                            <div className="flex items-center flex-wrap gap-1.5 mb-2.5">
-                              {(m.comboPaidItems ?? []).map((it, idx) => (
-                                <span key={idx} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-gray-600">{it}</span>
-                              ))}
-                              <span className="text-xs text-gray-400 font-bold">+</span>
-                              {(m.comboFreeItems ?? []).map((it, idx) => (
-                                <span key={idx} className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                                  {it} FREE
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <>
-                              <div className="flex items-center justify-between mb-1.5">
+                        <ClaimInfoBox
+                          meta={meta}
+                          progress={m.comboTotalSpots !== undefined ? { current: m.comboClaimed ?? 0, total: m.comboTotalSpots, label: 'claimed' } : undefined}
+                          claimBefore={m.endDate}
+                          redeemBefore={m.comboRedeemBefore}
+                          extra={
+                            m.comboVariant === 'freeitem' ? (
+                              <div className="flex items-center flex-wrap gap-1.5 mb-2">
+                                {(m.comboPaidItems ?? []).map((it, idx) => (
+                                  <span key={idx} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-gray-600">{it}</span>
+                                ))}
+                                <span className="text-xs text-gray-400 font-bold">+</span>
+                                {(m.comboFreeItems ?? []).map((it, idx) => (
+                                  <span key={idx} className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
+                                    {it} FREE
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-baseline gap-1.5">
                                   {m.comboOriginalPrice !== undefined && (
                                     <span className="text-xs text-gray-400 line-through">₹{m.comboOriginalPrice}</span>
@@ -743,57 +676,30 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                                   </span>
                                 )}
                               </div>
-                              {m.comboItems && m.comboItems.length > 0 && (
-                                <p className="text-[11px] text-gray-500 mb-2.5">{m.comboItems.join(' · ')}</p>
-                              )}
-                            </>
-                          )}
-                          {m.comboTotalSpots !== undefined && (
-                            <>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] text-gray-400">Spots claimed</span>
-                                <span className="text-[10px] font-semibold" style={{ color: meta.cardFrom }}>{m.comboClaimed ?? 0}/{m.comboTotalSpots}</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-white overflow-hidden mb-2">
-                                <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((m.comboClaimed ?? 0) / m.comboTotalSpots) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
-                              </div>
-                            </>
-                          )}
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span>Claim before</span>
-                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
-                            </div>
-                            {m.comboRedeemBefore && (
-                              <>
-                                <span className="text-gray-300">|</span>
-                                <div className="flex items-center gap-1">
-                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
-                                  <span>Redeem before</span>
-                                  <span className="font-semibold text-gray-700">{fmtDate(m.comboRedeemBefore)}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                            )
+                          }
+                        />
                       )}
 
-                      {/* Social proof + date row */}
-                      <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
-                        {(m.activeToday ?? 0) > 0 && (
-                          <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
-                        )}
-                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && m.type !== 'combo' && <span className="text-gray-200">·</span>}
-                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && m.type !== 'combo' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
-                      </div>
+                      {/* Social proof + date row — claim-style mechanics already show this in their info box above */}
+                      {!CLAIM_STYLE_TYPES.includes(m.type) && (
+                        <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
+                          {(m.activeToday ?? 0) > 0 && (
+                            <>
+                              <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
+                              <span className="text-gray-200">·</span>
+                            </>
+                          )}
+                          <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                        </div>
+                      )}
 
                       {/* Play Now / Claim Now / Played Today */}
                       {m.type === 'groupunlock' ? (
                         <GroupUnlockCTA m={m} meta={meta} onReserve={() => openCampaign(m)} />
                       ) : m.playedToday ? (
                         <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
-                          ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' || m.type === 'combo' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+                          ✓ {CLAIM_STYLE_TYPES.includes(m.type) ? 'Claimed today' : 'Played today'} · Come back tomorrow
                         </div>
                       ) : (
                         <button
@@ -801,7 +707,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
                           style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                         >
-                          {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' || m.type === 'combo' ? 'Claim Now' : 'Play Now'}
+                          {CLAIM_STYLE_TYPES.includes(m.type) ? 'Claim Now' : 'Play Now'}
                         </button>
                       )}
                     </div>
