@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, Tag, Users, Handshake, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet, TicketPercent, Users, Handshake, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -32,7 +32,7 @@ const MECHANIC_ICONS = {
   dice:    Dices,
   lottery: Ticket,
   buyxgety: Wallet,
-  coupon:  Tag,
+  coupon:  TicketPercent,
   flash:   Zap,
   friend:  Users,
   groupunlock: Handshake,

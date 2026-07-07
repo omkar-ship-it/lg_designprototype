@@ -3,7 +3,7 @@ import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, Tag, Zap, Handshake, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, TicketPercent, Zap, Handshake, ShoppingBag } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
@@ -31,7 +31,7 @@ const MECHANIC_ICONS = {
   dice:    Dices,
   lottery: Ticket,
   buyxgety: Wallet,
-  coupon:  Tag,
+  coupon:  TicketPercent,
   flash:   Zap,
   friend:  Users,
   groupunlock: Handshake,
