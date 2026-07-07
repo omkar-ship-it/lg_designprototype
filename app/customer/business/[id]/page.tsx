@@ -2,10 +2,11 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, FerrisWheel, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, FerrisWheel, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package, Tag, ShoppingCart, Clock, ShieldCheck, ShoppingBag, Star as StarIcon, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
+import { SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt } from '@/components/customer/mechanic-cover-art'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
@@ -39,6 +40,49 @@ const MECHANIC_ICONS = {
   groupunlock: Handshake,
   combo:   Package,
 } as const
+
+interface HeroCover {
+  headline: string
+  tagline: string
+  bgFrom: string
+  bgTo: string
+  textColor: string
+  layout: 'side' | 'center'
+  badgeBg?: string
+  art?: React.ComponentType<{ className?: string }>
+  features?: { icon: LucideIcon; label: string }[]
+}
+
+const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
+  spin: {
+    headline: 'Spin & Win', tagline: 'Spin the wheel for exciting rewards every time!',
+    bgFrom: '#EDE9FE', bgTo: '#DDD6FE', textColor: '#4C1D95', layout: 'side', art: SpinWheelArt,
+  },
+  dice: {
+    headline: 'Roll & Win', tagline: 'Roll the dice and get rewarded instantly!',
+    bgFrom: '#FCE7F3', bgTo: '#FBCFE8', textColor: '#831843', layout: 'side', art: RollDiceArt,
+  },
+  coupon: {
+    headline: 'Exclusive Savings', tagline: 'Apply your code at checkout and save more.',
+    bgFrom: '#F59E0B', bgTo: '#92400E', textColor: '#FFFFFF', layout: 'center', badgeBg: '#FFFBEB', art: CouponTicketArt,
+    features: [
+      { icon: Tag, label: 'Extra Savings' },
+      { icon: ShoppingCart, label: 'Easy to Use' },
+      { icon: Clock, label: 'Limited Time' },
+      { icon: ShieldCheck, label: 'All Orders' },
+    ],
+  },
+  combo: {
+    headline: 'Bundle & Save', tagline: 'The more you buy, the more you save!',
+    bgFrom: '#6D28D9', bgTo: '#3B0764', textColor: '#FFFFFF', layout: 'center', badgeBg: '#F5F3FF', art: BundleGiftArt,
+    features: [
+      { icon: ShoppingBag, label: 'Buy More' },
+      { icon: Tag, label: 'Extra Rewards' },
+      { icon: Gift, label: 'Exclusive' },
+      { icon: StarIcon, label: 'Best Value' },
+    ],
+  },
+}
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: '#D1FAE5', text: '#065F46', label: 'Active'  },
@@ -471,34 +515,162 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:shadow-purple-100/50 transition-shadow"
                   >
                     {/* Cover */}
-                    <div
-                      className="relative h-32 overflow-hidden"
-                      style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                    >
-                      <MechanicPattern type={m.type} />
-                      <motion.span
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-20 select-none pointer-events-none"
-                        animate={{ y: [0, -6, 0], rotate: [0, 3, -3, 0] }}
-                        transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        {meta.emoji}
-                      </motion.span>
-                      <span
-                        className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                        style={{ background: meta.badgeBg, color: meta.badgeText }}
-                      >
-                        {meta.label}
-                      </span>
-                      <span
-                        className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                        style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
-                      >
-                        {STATUS_STYLES[m.status]?.label}
-                      </span>
-                      <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
-                        {meta.emoji}
-                      </div>
-                    </div>
+                    {(() => {
+                      const hero = HERO_COVER[m.type]
+                      const Art = hero?.art
+
+                      if (hero && hero.layout === 'side') {
+                        return (
+                          <div
+                            className="relative h-40 overflow-hidden flex items-center"
+                            style={{ background: `linear-gradient(135deg, ${hero.bgFrom}, ${hero.bgTo})` }}
+                          >
+                            <span className="absolute top-6 right-24 w-1.5 h-1.5 rounded-full" style={{ background: hero.textColor, opacity: 0.25 }} />
+                            <span className="absolute bottom-10 left-32 w-1 h-1 rounded-full" style={{ background: hero.textColor, opacity: 0.3 }} />
+                            <span className="absolute top-10 left-40 w-1 h-1 rounded-full" style={{ background: hero.textColor, opacity: 0.2 }} />
+
+                            <span
+                              className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/70"
+                              style={{ color: hero.textColor }}
+                            >
+                              {meta.label}
+                            </span>
+                            <span
+                              className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                              style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                            >
+                              {STATUS_STYLES[m.status]?.label}
+                            </span>
+
+                            <div className="flex items-center justify-between w-full pl-4 pr-6 pt-4">
+                              <div className="max-w-[48%]">
+                                <p className="text-lg font-extrabold leading-tight mb-1" style={{ color: hero.textColor }}>
+                                  {hero.headline}
+                                </p>
+                                <p className="text-[11px] leading-snug opacity-80" style={{ color: hero.textColor }}>
+                                  {hero.tagline}
+                                </p>
+                              </div>
+                              {Art && (
+                                <motion.div
+                                  className="w-28 h-28 shrink-0"
+                                  animate={{ y: [0, -4, 0] }}
+                                  transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                                >
+                                  <Art className="w-full h-full" />
+                                </motion.div>
+                              )}
+                            </div>
+
+                            <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
+                              {meta.emoji}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      if (hero && hero.layout === 'center') {
+                        return (
+                          <div
+                            className="relative h-56 overflow-hidden"
+                            style={{ background: `linear-gradient(160deg, ${hero.bgFrom}, ${hero.bgTo})` }}
+                          >
+                            {/* decorative dot grid + sparkles */}
+                            <div className="absolute top-4 left-4 grid grid-cols-4 gap-1 opacity-25">
+                              {Array.from({ length: 12 }, (_, d) => (
+                                <span key={d} className="w-1 h-1 rounded-full bg-white" />
+                              ))}
+                            </div>
+                            <div className="absolute bottom-4 right-4 grid grid-cols-4 gap-1 opacity-20">
+                              {Array.from({ length: 12 }, (_, d) => (
+                                <span key={d} className="w-1 h-1 rounded-full bg-white" />
+                              ))}
+                            </div>
+                            <span className="absolute top-8 right-10 w-1.5 h-1.5 rounded-full bg-white opacity-40" />
+                            <span className="absolute bottom-16 left-8 w-2 h-2 rounded-full border border-white opacity-25" />
+                            <span className="absolute top-20 right-6 text-white opacity-30 text-xs">✦</span>
+
+                            <span
+                              className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                              style={{ background: hero.badgeBg, color: hero.bgTo }}
+                            >
+                              {meta.label}
+                            </span>
+                            <span
+                              className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                              style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                            >
+                              {STATUS_STYLES[m.status]?.label}
+                            </span>
+
+                            <div className="relative h-full flex flex-col items-center justify-center pt-8 pb-3 px-4">
+                              <p className="text-xl font-extrabold text-center leading-tight" style={{ color: hero.textColor }}>
+                                {hero.headline}
+                              </p>
+                              <p className="text-[11px] text-center leading-snug opacity-90 mt-1 mb-2" style={{ color: hero.textColor }}>
+                                {hero.tagline}
+                              </p>
+
+                              {Art && (
+                                <motion.div
+                                  className="w-32 h-24 shrink-0"
+                                  animate={{ y: [0, -3, 0] }}
+                                  transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                                >
+                                  <Art className="w-full h-full" />
+                                </motion.div>
+                              )}
+
+                              {hero.features && (
+                                <div className="flex items-center justify-center gap-2.5 mt-auto pt-2">
+                                  {hero.features.map((f, fi) => (
+                                    <div key={fi} className="flex flex-col items-center gap-1 w-14">
+                                      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                        <f.icon className="w-3 h-3" style={{ color: hero.textColor }} />
+                                      </div>
+                                      <span className="text-[8px] leading-tight text-center opacity-85" style={{ color: hero.textColor }}>
+                                        {f.label}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div
+                          className="relative h-32 overflow-hidden"
+                          style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                        >
+                          <MechanicPattern type={m.type} />
+                          <motion.span
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-20 select-none pointer-events-none"
+                            animate={{ y: [0, -6, 0], rotate: [0, 3, -3, 0] }}
+                            transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            {meta.emoji}
+                          </motion.span>
+                          <span
+                            className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                            style={{ background: meta.badgeBg, color: meta.badgeText }}
+                          >
+                            {meta.label}
+                          </span>
+                          <span
+                            className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                            style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                          >
+                            {STATUS_STYLES[m.status]?.label}
+                          </span>
+                          <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
+                            {meta.emoji}
+                          </div>
+                        </div>
+                      )
+                    })()}
 
                     {/* Info */}
                     <div className="p-4">
