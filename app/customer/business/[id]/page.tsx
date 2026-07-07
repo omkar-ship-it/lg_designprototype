@@ -148,6 +148,50 @@ function RewardCard({ reward }: { reward: ClaimableReward }) {
   )
 }
 
+function GroupUnlockCTA({ m, meta, onReserve }: { m: Mechanic; meta: typeof MECHANIC_META[MechanicType]; onReserve: () => void }) {
+  const groupFull = (m.groupJoined ?? 0) >= (m.groupTarget ?? Infinity)
+
+  if (m.hasReserved && groupFull) {
+    return (
+      <Link
+        href={`/customer/games/${m.type}`}
+        onClick={e => e.stopPropagation()}
+        className="block w-full py-2.5 rounded-xl text-xs font-bold text-white text-center transition-all active:scale-95"
+        style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+      >
+        Claim Now
+      </Link>
+    )
+  }
+  if (m.hasReserved) {
+    return (
+      <Link
+        href={`/customer/games/${m.type}`}
+        onClick={e => e.stopPropagation()}
+        className="block w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-500 transition-all active:scale-95"
+      >
+        ✓ Reserved — View Status
+      </Link>
+    )
+  }
+  if (groupFull) {
+    return (
+      <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
+        Group Full
+      </div>
+    )
+  }
+  return (
+    <button
+      onClick={e => { e.preventDefault(); e.stopPropagation(); onReserve() }}
+      className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+      style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+    >
+      Reserve a Spot
+    </button>
+  )
+}
+
 export default function BusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -629,17 +673,57 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
+                      {/* Community Offer — Group Unlock: shared group progress, then reward + redeem window */}
+                      {m.type === 'groupunlock' && (
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            {m.groupReward && (
+                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.groupReward}</span>
+                            )}
+                            {m.groupTarget !== undefined && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
+                                {m.groupJoined ?? 0}/{m.groupTarget} joined
+                              </span>
+                            )}
+                          </div>
+                          {m.groupTarget !== undefined && (
+                            <div className="h-1.5 rounded-full bg-white overflow-hidden mb-2">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((m.groupJoined ?? 0) / m.groupTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
+                            </div>
+                          )}
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
+                              <span>Reserve before</span>
+                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
+                            </div>
+                            {m.groupRedeemBefore && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <div className="flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span>Redeem before</span>
+                                  <span className="font-semibold text-gray-700">{fmtDate(m.groupRedeemBefore)}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Social proof + date row */}
                       <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
                         {(m.activeToday ?? 0) > 0 && (
                           <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
                         )}
-                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && <span className="text-gray-200">·</span>}
-                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
+                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && <span className="text-gray-200">·</span>}
+                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
                       </div>
 
                       {/* Play Now / Claim Now / Played Today */}
-                      {m.playedToday ? (
+                      {m.type === 'groupunlock' ? (
+                        <GroupUnlockCTA m={m} meta={meta} onReserve={() => openCampaign(m)} />
+                      ) : m.playedToday ? (
                         <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
                           ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' ? 'Claimed today' : 'Played today'} · Come back tomorrow
                         </div>

@@ -1,6 +1,7 @@
 'use client'
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, Tag, Zap, Handshake } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
@@ -492,6 +493,42 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
+            {/* Community Offer — Group Unlock: shared group progress, reserve/redeem window, reward */}
+            {mechanic.type === 'groupunlock' && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reserve Before</p>
+                  <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
+                </div>
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {mechanic.groupRedeemBefore ? fmtDate(mechanic.groupRedeemBefore) : '—'}
+                  </p>
+                </div>
+                {mechanic.groupTarget !== undefined && (
+                  <div className="col-span-2 rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">People Joined</p>
+                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
+                        {Math.max(0, mechanic.groupTarget - (mechanic.groupJoined ?? 0))} more to unlock
+                      </p>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900 mb-2">{mechanic.groupJoined ?? 0} / {mechanic.groupTarget}</p>
+                    <div className="h-1.5 rounded-full bg-white overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((mechanic.groupJoined ?? 0) / mechanic.groupTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
+                    </div>
+                  </div>
+                )}
+                {mechanic.groupReward && (
+                  <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
+                    <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.groupReward}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Duration + players */}
             <div className="bg-gray-50 rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-between mb-1">
@@ -513,7 +550,49 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
         {/* PLAY / CLAIM CTA */}
-        {mechanic.playedToday ? (
+        {mechanic.type === 'groupunlock' ? (
+          (() => {
+            const groupFull = (mechanic.groupJoined ?? 0) >= (mechanic.groupTarget ?? Infinity)
+            if (mechanic.hasReserved && groupFull) {
+              return (
+                <Link
+                  href={`/customer/games/${mechanic.type}`}
+                  className="flex items-center justify-center w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
+                  style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 8px 28px ${meta.cardFrom}55` }}
+                >
+                  Claim Now {meta.emoji}
+                </Link>
+              )
+            }
+            if (mechanic.hasReserved) {
+              return (
+                <Link
+                  href={`/customer/games/${mechanic.type}`}
+                  className="flex items-center justify-center w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-500 bg-gray-100"
+                >
+                  ✓ Reserved — View Status
+                </Link>
+              )
+            }
+            if (groupFull) {
+              return (
+                <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100">
+                  Group Full
+                </div>
+              )
+            }
+            return (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={openOTP}
+                className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
+                style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 8px 28px ${meta.cardFrom}55` }}
+              >
+                Reserve a Spot {meta.emoji}
+              </motion.button>
+            )
+          })()
+        ) : mechanic.playedToday ? (
           <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
             <span>✓</span> {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' ? 'Claimed today' : 'Played today'} · Come back tomorrow
           </div>

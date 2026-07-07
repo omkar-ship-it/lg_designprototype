@@ -598,6 +598,7 @@ export const customerBusinesses: CustomerBusiness[] = [
     { type: 'dice',    label: 'Mystery Box',    description: 'Curiosity converts. A surprise gift inside every box.',status: 'active', startDate: '2026-06-01', endDate: '2026-07-31', participants: 119, totalRewards: 29,  activeToday: 21, playedToday: false, prizes: ['Free Face Mask 🧖', '₹200 Off 🏷️', 'Free Aromatherapy 🕯️'] },
     { type: 'spin',    label: 'Spin the Wheel', description: 'A flick of fortune at every spin.',                  status: 'active', startDate: '2026-06-10', endDate: '2026-07-10', participants: 78,  totalRewards: 21,  activeToday: 13, playedToday: false, prizes: ['Free Pedicure 💅', '30% Off 🏷️', 'Free Eye Treatment 👁️'] },
     { type: 'checkin', label: 'Daily Check-in', description: 'Check in every day and earn 100 points per visit.',  status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 156, totalRewards: 156, activeToday: 43, playedToday: false, checkInStreak: 1, totalPoints: 100 },
+    { type: 'groupunlock', label: 'Community Wellness Day', description: 'Reserve a spot — once 20 people join, everyone unlocks 30% off.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 14, totalRewards: 0, activeToday: 4, playedToday: false, groupReward: '30% Off', groupTarget: 20, groupJoined: 14, groupRedeemBefore: '2026-09-30', hasReserved: true },
   ]},
 ]
 
