@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet, TicketPercent, Zap, Handshake, ShoppingBag } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
+import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import type { MechanicType } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
@@ -105,10 +106,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         className="relative h-56 overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
       >
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
-        />
+        <MechanicPattern type={mechanic.type as MechanicType} opacity={0.14} />
         <motion.span
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] opacity-15 select-none pointer-events-none"
           animate={{ y: [0, -10, 0], rotate: [0, 4, -4, 0] }}
