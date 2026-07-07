@@ -1,4 +1,4 @@
-export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety'
+export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon'
 export type CampaignStatus = 'active' | 'draft' | 'ended' | 'paused'
 export type RewardType = 'single' | 'range'
 
@@ -25,7 +25,7 @@ export interface Campaign {
   currentUsers: number
   playsPerUser: number
   rewards: Reward[]
-  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig
+  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig
   pin: string
   pinExpiresAt: number
   participations: number
@@ -113,6 +113,21 @@ export interface BuyXGetYConfig {
   rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
   rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
   rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
+}
+
+export interface CouponConfig {
+  type: 'coupon'
+  totalCoupons: number          // total coupons available across the campaign (scarcity cap)
+
+  rewardKind: RewardKind        // 'flat' | 'percent' | 'points' for coupons (no 'item')
+  rewardValue: string           // flat "50" (₹) / percent "20" / points "100"
+
+  rewardExpiryMode: RewardExpiryMode
+  rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
+  rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
+
+  termsAndConditions: string     // qualifying conditions, redemption instructions, etc.
 }
 
 export interface Customer {

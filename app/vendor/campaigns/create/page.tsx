@@ -17,6 +17,7 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'dice',    desc: 'Roll the dice — certain faces win. Pure luck, maximum thrill.',              tags: ['Gamble feel', 'Quick'] },
   { type: 'lottery', desc: 'Scratch & reveal a lottery ticket with a jackpot and tiered prizes.',       tags: ['Jackpot', 'Tiered rewards'] },
   { type: 'buyxgety', desc: 'Customers buy or spend to unlock a reward — works for repeat purchases, visit counts, or spend thresholds.', tags: ['Perceived value', 'Loss aversion'] },
+  { type: 'coupon', desc: 'Generate a limited pool of discount coupons customers can claim and redeem.', tags: ['Scarcity', 'Simplicity'] },
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
@@ -33,6 +34,15 @@ function buildBuyXGetYSentence(cfg: {
     cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
     `Get ${cfg.rewardValue.trim() || 'Free Item'}`
   return `${trigger} → ${reward}`
+}
+
+// ── Coupon Codes ───────────────────────────────────────────────────────────────
+function buildCouponSentence(cfg: { totalCoupons: number; rewardKind: RewardKind; rewardValue: string }) {
+  const reward =
+    cfg.rewardKind === 'percent' ? `${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `${cfg.rewardValue || 0} Points` :
+    `₹${cfg.rewardValue || 0} Off`
+  return `${cfg.totalCoupons} Coupons → ${reward}`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -285,11 +295,24 @@ export default function CreateCampaignPage() {
     rewardExpiryUnit: 'days' as RollingExpiryUnit,
   })
 
+  // Coupon Codes
+  const [couponConfig, setCouponConfig] = useState({
+    totalCoupons: 200,
+    rewardKind: 'percent' as RewardKind,
+    rewardValue: '',
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryValue: 14,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+    termsAndConditions: '',
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
   const isStamp          = mechanic === 'stamp'
   const isBuyXGetY       = mechanic === 'buyxgety'
+  const isCoupon         = mechanic === 'coupon'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -341,6 +364,9 @@ export default function CreateCampaignPage() {
       const triggerValid = buyXGetY.condition === 'quantity' ? buyXGetY.buyQuantity > 0 : buyXGetY.spendAmount > 0
       const rewardValid = buyXGetY.rewardValue.trim().length > 0
       return triggerValid && rewardValid
+    }
+    if (mechanic === 'coupon') {
+      return couponConfig.totalCoupons > 0 && couponConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -529,6 +555,14 @@ export default function CreateCampaignPage() {
                     <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                       <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                       <p>Lottery has no user cap — open to all customers. Prize odds are built into the ticket mechanics.</p>
+                    </div>
+                  )}
+
+                  {/* Coupon Codes: no user cap — coupon count is the cap */}
+                  {isCoupon && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                      <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                      <p>Coupon Codes has no separate user cap — the number of coupons you generate (next step) is the cap.</p>
                     </div>
                   )}
                 </div>
@@ -915,6 +949,91 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* COUPON CODES */}
+          {step === 2 && mechanic === 'coupon' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Coupon Codes — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Set how many coupons are available, what they&apos;re worth, and when they expire.</p>
+
+              <div className="space-y-6">
+                {/* No. of Coupons */}
+                <div>
+                  <Stepper label="No. of Coupons" hint="coupons available" value={couponConfig.totalCoupons} min={1} max={10000} onChange={v => setCouponConfig(p => ({ ...p, totalCoupons: v }))} />
+                </div>
+
+                {/* Reward */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Coupon Value</p>
+                  <div className="grid grid-cols-3 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {([['flat', 'Flat ₹'], ['percent', '% Off'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+                      <button key={k} onClick={() => setCouponConfig(p => ({ ...p, rewardKind: k, rewardValue: '' }))}
+                        className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${couponConfig.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {couponConfig.rewardKind === 'flat' && (
+                    <Input label="Discount Amount (₹)" type="number" min={1} value={couponConfig.rewardValue} onChange={e => setCouponConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {couponConfig.rewardKind === 'percent' && (
+                    <Input label="Discount %" type="number" min={1} max={100} value={couponConfig.rewardValue} onChange={e => setCouponConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {couponConfig.rewardKind === 'points' && (
+                    <Input label="Points Awarded" type="number" min={1} value={couponConfig.rewardValue} onChange={e => setCouponConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                </div>
+
+                {/* Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setCouponConfig(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${couponConfig.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {couponConfig.rewardExpiryMode === 'rolling' ? (
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={couponConfig.rewardExpiryValue} onChange={e => setCouponConfig(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={couponConfig.rewardExpiryUnit} onChange={e => setCouponConfig(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={couponConfig.rewardExpiryDate} onChange={e => setCouponConfig(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="pt-2 border-t border-v-border">
+                  <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Terms &amp; Conditions</label>
+                  <textarea
+                    className="w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12 transition-all duration-200 min-h-[96px] resize-y"
+                    placeholder="e.g. Valid on bills above ₹500. One coupon per customer. Not valid with other offers. Show coupon at billing to redeem."
+                    value={couponConfig.termsAndConditions}
+                    onChange={e => setCouponConfig(p => ({ ...p, termsAndConditions: e.target.value }))}
+                  />
+                  <p className="text-xs text-v-text-3 mt-1.5">Qualifying conditions and redemption instructions shown to customers before they claim.</p>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildCouponSentence(couponConfig)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -933,7 +1052,7 @@ export default function CreateCampaignPage() {
                         return dur
                       })(),
                     },
-                    ...(!isLottery ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(!isLottery && !isCoupon ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
                     ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
                     ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
                     ...(mechanic === 'shake' ? [
@@ -948,10 +1067,15 @@ export default function CreateCampaignPage() {
                         mechanic === 'dice'     ? `${diceOutcomes.filter(o => o.isWin).length} of 6 faces win · ${diceWinRate}% win rate` :
                         mechanic === 'stamp'    ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
                         mechanic === 'lottery'  ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` :
-                        mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) : '—',
+                        mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) :
+                        mechanic === 'coupon'   ? buildCouponSentence(couponConfig) : '—',
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                    ] : []),
+                    ...(isCoupon ? [
+                      { label: 'Reward Expiry', value: couponConfig.rewardExpiryMode === 'fixed' ? (couponConfig.rewardExpiryDate ? fmtDate(couponConfig.rewardExpiryDate) : '—') : `${couponConfig.rewardExpiryValue} ${couponConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${couponConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                      { label: 'Terms & Conditions', value: couponConfig.termsAndConditions.trim() || '—' },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">

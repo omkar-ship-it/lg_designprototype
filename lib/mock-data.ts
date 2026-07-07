@@ -229,6 +229,36 @@ export const campaigns: Campaign[] = [
       rewardExpiryUnit: 'months',
     },
   },
+  {
+    id: 'camp-8',
+    name: 'Instagram Launch Codes',
+    mechanic: 'coupon',
+    status: 'active',
+    startDate: '2026-06-15',
+    endDate: '2026-07-15',
+    userCap: 200,
+    currentUsers: 0,
+    playsPerUser: 1,
+    participations: 132,
+    rewardsClaimed: 132,
+    redeemedCount: 74,
+    pin: '277',
+    pinExpiresAt: Date.now() + 55000,
+    createdAt: '2026-06-14T11:00:00Z',
+    rewards: [
+      { id: 'r12', name: '20% Off', description: 'Launch coupon shared via Instagram', value: '20%', icon: '🎫' },
+    ],
+    config: {
+      type: 'coupon',
+      totalCoupons: 200,
+      rewardKind: 'percent',
+      rewardValue: '20',
+      rewardExpiryMode: 'rolling',
+      rewardExpiryValue: 14,
+      rewardExpiryUnit: 'days',
+      termsAndConditions: 'Valid on bills above ₹500. One coupon per customer. Not valid with other offers. Show coupon at billing to redeem.',
+    },
+  },
 ]
 
 export const customers: Customer[] = [
