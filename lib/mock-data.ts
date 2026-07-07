@@ -259,6 +259,36 @@ export const campaigns: Campaign[] = [
       termsAndConditions: 'Valid on bills above ₹500. One coupon per customer. Not valid with other offers. Show coupon at billing to redeem.',
     },
   },
+  {
+    id: 'camp-9',
+    name: 'Today Only — Happy Hour Flash Sale',
+    mechanic: 'flash',
+    status: 'active',
+    startDate: '2026-06-20',
+    endDate: '2026-06-20',
+    userCap: 50,
+    currentUsers: 0,
+    playsPerUser: 1,
+    participations: 41,
+    rewardsClaimed: 41,
+    redeemedCount: 12,
+    pin: '634',
+    pinExpiresAt: Date.now() + 48000,
+    createdAt: '2026-06-19T10:00:00Z',
+    rewards: [
+      { id: 'r13', name: '30% Off', description: 'Today only — while spots last', value: '30%', icon: '⚡' },
+    ],
+    config: {
+      type: 'flash',
+      totalSlots: 50,
+      rewardKind: 'percent',
+      rewardValue: '30',
+      rewardExpiryMode: 'rolling',
+      rewardExpiryValue: 3,
+      rewardExpiryUnit: 'days',
+      termsAndConditions: 'Valid today only, while spots last. One redemption per customer. Show this screen at billing to redeem.',
+    },
+  },
 ]
 
 export const customers: Customer[] = [

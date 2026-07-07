@@ -18,6 +18,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   checkin: '/customer/games/checkin',
   buyxgety: '/customer/games/buyxgety',
   coupon: '/customer/games/coupon',
+  flash: '/customer/games/flash',
 }
 
 const MECHANIC_ICONS = {
@@ -29,6 +30,7 @@ const MECHANIC_ICONS = {
   lottery: Ticket,
   buyxgety: Wallet,
   coupon:  Tag,
+  flash:   Zap,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

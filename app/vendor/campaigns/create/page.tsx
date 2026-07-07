@@ -18,6 +18,7 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'lottery', desc: 'Scratch & reveal a lottery ticket with a jackpot and tiered prizes.',       tags: ['Jackpot', 'Tiered rewards'] },
   { type: 'buyxgety', desc: 'Customers buy or spend to unlock a reward — works for repeat purchases, visit counts, or spend thresholds.', tags: ['Perceived value', 'Loss aversion'] },
   { type: 'coupon', desc: 'Generate a limited pool of discount coupons customers can claim and redeem.', tags: ['Scarcity', 'Simplicity'] },
+  { type: 'flash', desc: 'A short, urgent window with limited spots — first come, first served.', tags: ['Urgency', 'FOMO'] },
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
@@ -43,6 +44,16 @@ function buildCouponSentence(cfg: { totalCoupons: number; rewardKind: RewardKind
     cfg.rewardKind === 'points'  ? `${cfg.rewardValue || 0} Points` :
     `₹${cfg.rewardValue || 0} Off`
   return `${cfg.totalCoupons} Coupons → ${reward}`
+}
+
+// ── Flash Deal ─────────────────────────────────────────────────────────────────
+function buildFlashDealSentence(cfg: { totalSlots: number; rewardKind: RewardKind; rewardValue: string }) {
+  const reward =
+    cfg.rewardKind === 'flat'    ? `₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `${cfg.rewardValue || 0} Points` :
+    `${cfg.rewardValue.trim() || 'Free Item'}`
+  return `${cfg.totalSlots} Spots → ${reward}`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -307,12 +318,25 @@ export default function CreateCampaignPage() {
     termsAndConditions: '',
   })
 
+  // Flash Deal
+  const [flashConfig, setFlashConfig] = useState({
+    totalSlots: 50,
+    rewardKind: 'percent' as RewardKind,
+    rewardValue: '',
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryValue: 3,
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+    termsAndConditions: '',
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
   const isStamp          = mechanic === 'stamp'
   const isBuyXGetY       = mechanic === 'buyxgety'
   const isCoupon         = mechanic === 'coupon'
+  const isFlash          = mechanic === 'flash'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -367,6 +391,9 @@ export default function CreateCampaignPage() {
     }
     if (mechanic === 'coupon') {
       return couponConfig.totalCoupons > 0 && couponConfig.rewardValue.trim().length > 0
+    }
+    if (mechanic === 'flash') {
+      return flashConfig.totalSlots > 0 && flashConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -563,6 +590,14 @@ export default function CreateCampaignPage() {
                     <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                       <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                       <p>Coupon Codes has no separate user cap — the number of coupons you generate (next step) is the cap.</p>
+                    </div>
+                  )}
+
+                  {/* Flash Deal: no user cap — slot count is the cap */}
+                  {isFlash && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                      <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                      <p>Flash Deal has no separate user cap — the number of spots you set (next step) is the cap.</p>
                     </div>
                   )}
                 </div>
@@ -1034,6 +1069,94 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* FLASH DEAL */}
+          {step === 2 && mechanic === 'flash' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Flash Deal — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Short and urgent, with a hard limit on spots — set how many are up for grabs, what they win, and when it expires.</p>
+
+              <div className="space-y-6">
+                {/* Total Spots */}
+                <div>
+                  <Stepper label="Total Spots" hint="spots available" value={flashConfig.totalSlots} min={1} max={5000} onChange={v => setFlashConfig(p => ({ ...p, totalSlots: v }))} />
+                </div>
+
+                {/* Reward */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+                  <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+                      <button key={k} onClick={() => setFlashConfig(p => ({ ...p, rewardKind: k, rewardValue: '' }))}
+                        className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${flashConfig.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {flashConfig.rewardKind === 'flat' && (
+                    <Input label="Discount Amount (₹)" type="number" min={1} value={flashConfig.rewardValue} onChange={e => setFlashConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {flashConfig.rewardKind === 'percent' && (
+                    <Input label="Discount %" type="number" min={1} max={100} value={flashConfig.rewardValue} onChange={e => setFlashConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {flashConfig.rewardKind === 'item' && (
+                    <Input label="Reward Description" placeholder="e.g. Free item or service" value={flashConfig.rewardValue} onChange={e => setFlashConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {flashConfig.rewardKind === 'points' && (
+                    <Input label="Points Awarded" type="number" min={1} value={flashConfig.rewardValue} onChange={e => setFlashConfig(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                </div>
+
+                {/* Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setFlashConfig(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${flashConfig.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {flashConfig.rewardExpiryMode === 'rolling' ? (
+                      <div className="flex gap-2 max-w-xs">
+                        <div className="flex-1">
+                          <Input type="number" min={1} value={flashConfig.rewardExpiryValue} onChange={e => setFlashConfig(p => ({ ...p, rewardExpiryValue: Number(e.target.value) }))} />
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <Select value={flashConfig.rewardExpiryUnit} onChange={e => setFlashConfig(p => ({ ...p, rewardExpiryUnit: e.target.value as RollingExpiryUnit }))}>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={flashConfig.rewardExpiryDate} onChange={e => setFlashConfig(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="pt-2 border-t border-v-border">
+                  <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Terms &amp; Conditions</label>
+                  <textarea
+                    className="w-full bg-white border border-v-border rounded-xl px-4 py-2.5 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple focus:ring-2 focus:ring-v-purple/12 transition-all duration-200 min-h-[96px] resize-y"
+                    placeholder="e.g. Valid today only, while spots last. One redemption per customer. Show this screen at billing to redeem."
+                    value={flashConfig.termsAndConditions}
+                    onChange={e => setFlashConfig(p => ({ ...p, termsAndConditions: e.target.value }))}
+                  />
+                  <p className="text-xs text-v-text-3 mt-1.5">Qualifying conditions and redemption instructions shown to customers before they claim.</p>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildFlashDealSentence(flashConfig)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -1052,7 +1175,7 @@ export default function CreateCampaignPage() {
                         return dur
                       })(),
                     },
-                    ...(!isLottery && !isCoupon ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
+                    ...(!isLottery && !isCoupon && !isFlash ? [{ label: isShakeSpinOrDice ? 'Overall User Cap' : 'User Cap', value: `${basics.userCap} users` }] : []),
                     ...(isShakeSpinOrDice && !isToday ? [{ label: 'Daily User Limit', value: `${basics.perDayUserLimit} / day` }] : []),
                     ...(isShakeSpinOrDice ? [{ label: 'Plays Per User / Day', value: `${basics.playsPerDay}` }] : []),
                     ...(mechanic === 'shake' ? [
@@ -1068,7 +1191,8 @@ export default function CreateCampaignPage() {
                         mechanic === 'stamp'    ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
                         mechanic === 'lottery'  ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` :
                         mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) :
-                        mechanic === 'coupon'   ? buildCouponSentence(couponConfig) : '—',
+                        mechanic === 'coupon'   ? buildCouponSentence(couponConfig) :
+                        mechanic === 'flash'    ? buildFlashDealSentence(flashConfig) : '—',
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryValue} ${buyXGetY.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${buyXGetY.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
@@ -1076,6 +1200,10 @@ export default function CreateCampaignPage() {
                     ...(isCoupon ? [
                       { label: 'Reward Expiry', value: couponConfig.rewardExpiryMode === 'fixed' ? (couponConfig.rewardExpiryDate ? fmtDate(couponConfig.rewardExpiryDate) : '—') : `${couponConfig.rewardExpiryValue} ${couponConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${couponConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
                       { label: 'Terms & Conditions', value: couponConfig.termsAndConditions.trim() || '—' },
+                    ] : []),
+                    ...(isFlash ? [
+                      { label: 'Reward Expiry', value: flashConfig.rewardExpiryMode === 'fixed' ? (flashConfig.rewardExpiryDate ? fmtDate(flashConfig.rewardExpiryDate) : '—') : `${flashConfig.rewardExpiryValue} ${flashConfig.rewardExpiryUnit === 'months' ? 'Month' : 'Day'}${flashConfig.rewardExpiryValue !== 1 ? 's' : ''} after claim` },
+                      { label: 'Terms & Conditions', value: flashConfig.termsAndConditions.trim() || '—' },
                     ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">

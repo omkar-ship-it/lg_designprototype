@@ -1,4 +1,4 @@
-export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon'
+export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety' | 'coupon' | 'flash'
 export type CampaignStatus = 'active' | 'draft' | 'ended' | 'paused'
 export type RewardType = 'single' | 'range'
 
@@ -25,7 +25,7 @@ export interface Campaign {
   currentUsers: number
   playsPerUser: number
   rewards: Reward[]
-  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig
+  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig | CouponConfig | FlashDealConfig
   pin: string
   pinExpiresAt: number
   participations: number
@@ -121,6 +121,21 @@ export interface CouponConfig {
 
   rewardKind: RewardKind        // 'flat' | 'percent' | 'points' for coupons (no 'item')
   rewardValue: string           // flat "50" (₹) / percent "20" / points "100"
+
+  rewardExpiryMode: RewardExpiryMode
+  rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
+  rewardExpiryValue?: number      // e.g. 4 or 7, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
+
+  termsAndConditions: string     // qualifying conditions, redemption instructions, etc.
+}
+
+export interface FlashDealConfig {
+  type: 'flash'
+  totalSlots: number             // limited spots available — first come, first served
+
+  rewardKind: RewardKind        // 'flat' | 'percent' | 'item' | 'points'
+  rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
 
   rewardExpiryMode: RewardExpiryMode
   rewardExpiryDate?: string       // ISO date, when mode === 'fixed'
@@ -270,5 +285,11 @@ export interface CustomerBusiness {
     couponClaimed?: number
     couponRedeemBefore?: string
     couponTerms?: string
+    // flash
+    flashReward?: string
+    flashTotalSlots?: number
+    flashClaimed?: number
+    flashRedeemBefore?: string
+    flashTerms?: string
   }[]
 }

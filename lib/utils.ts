@@ -20,6 +20,7 @@ export function getMechanicLabel(mechanic: MechanicType): string {
     checkin: 'Daily Check-in',
     buyxgety: 'Buy X Get Y',
     coupon: 'Coupon Codes',
+    flash: 'Flash Deal',
   }
   return map[mechanic]
 }
@@ -34,6 +35,7 @@ export function getMechanicEmoji(mechanic: MechanicType): string {
     checkin: '📍',
     buyxgety: '💰',
     coupon: '🎫',
+    flash: '⚡',
   }
   return map[mechanic]
 }
@@ -48,6 +50,7 @@ export function getMechanicColor(mechanic: MechanicType): string {
     checkin: '#1F2937',
     buyxgety: '#F97316',
     coupon: '#CA8A04',
+    flash: '#2563EB',
   }
   return map[mechanic]
 }
@@ -93,4 +96,5 @@ export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: strin
   checkin: { label: 'CHECK-IN',     badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '📍' },
   buyxgety: { label: 'BUY X GET Y', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#F97316', cardTo: '#C2410C', emoji: '💰' },
   coupon:  { label: 'COUPON CODES', badgeBg: '#FEF9C3', badgeText: '#854D0E', cardFrom: '#CA8A04', cardTo: '#854D0E', emoji: '🎫' },
+  flash:   { label: 'FLASH DEAL',   badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#2563EB', cardTo: '#1E3A8A', emoji: '⚡' },
 }
