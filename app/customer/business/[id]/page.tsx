@@ -713,13 +713,81 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
+                      {/* Package/Combo Deal: pricing or take/free items, spots progress, claim/redeem window */}
+                      {m.type === 'combo' && (
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          {m.comboVariant === 'freeitem' ? (
+                            <div className="flex items-center flex-wrap gap-1.5 mb-2.5">
+                              {(m.comboPaidItems ?? []).map((it, idx) => (
+                                <span key={idx} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-gray-600">{it}</span>
+                              ))}
+                              <span className="text-xs text-gray-400 font-bold">+</span>
+                              {(m.comboFreeItems ?? []).map((it, idx) => (
+                                <span key={idx} className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
+                                  {it} FREE
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-baseline gap-1.5">
+                                  {m.comboOriginalPrice !== undefined && (
+                                    <span className="text-xs text-gray-400 line-through">₹{m.comboOriginalPrice}</span>
+                                  )}
+                                  {m.comboBundlePrice !== undefined && (
+                                    <span className="text-sm font-bold" style={{ color: meta.cardFrom }}>₹{m.comboBundlePrice}</span>
+                                  )}
+                                </div>
+                                {m.comboOriginalPrice !== undefined && m.comboBundlePrice !== undefined && m.comboOriginalPrice > m.comboBundlePrice && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
+                                    Save {Math.round(((m.comboOriginalPrice - m.comboBundlePrice) / m.comboOriginalPrice) * 100)}%
+                                  </span>
+                                )}
+                              </div>
+                              {m.comboItems && m.comboItems.length > 0 && (
+                                <p className="text-[11px] text-gray-500 mb-2.5">{m.comboItems.join(' · ')}</p>
+                              )}
+                            </>
+                          )}
+                          {m.comboTotalSpots !== undefined && (
+                            <>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] text-gray-400">Spots claimed</span>
+                                <span className="text-[10px] font-semibold" style={{ color: meta.cardFrom }}>{m.comboClaimed ?? 0}/{m.comboTotalSpots}</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-white overflow-hidden mb-2">
+                                <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((m.comboClaimed ?? 0) / m.comboTotalSpots) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
+                              </div>
+                            </>
+                          )}
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
+                              <span>Claim before</span>
+                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
+                            </div>
+                            {m.comboRedeemBefore && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <div className="flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span>Redeem before</span>
+                                  <span className="font-semibold text-gray-700">{fmtDate(m.comboRedeemBefore)}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Social proof + date row */}
                       <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
                         {(m.activeToday ?? 0) > 0 && (
                           <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
                         )}
-                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && <span className="text-gray-200">·</span>}
-                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
+                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && m.type !== 'combo' && <span className="text-gray-200">·</span>}
+                        {m.type !== 'buyxgety' && m.type !== 'coupon' && m.type !== 'flash' && m.type !== 'friend' && m.type !== 'groupunlock' && m.type !== 'combo' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
                       </div>
 
                       {/* Play Now / Claim Now / Played Today */}
@@ -727,7 +795,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         <GroupUnlockCTA m={m} meta={meta} onReserve={() => openCampaign(m)} />
                       ) : m.playedToday ? (
                         <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
-                          ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+                          ✓ {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' || m.type === 'combo' ? 'Claimed today' : 'Played today'} · Come back tomorrow
                         </div>
                       ) : (
                         <button
@@ -735,7 +803,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
                           style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                         >
-                          {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' ? 'Claim Now' : 'Play Now'}
+                          {m.type === 'buyxgety' || m.type === 'coupon' || m.type === 'flash' || m.type === 'friend' || m.type === 'combo' ? 'Claim Now' : 'Play Now'}
                         </button>
                       )}
                     </div>

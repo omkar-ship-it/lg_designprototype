@@ -531,6 +531,85 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
+            {/* Package/Combo Deal — bundle contents/pricing, claim/redeem window, spots, terms */}
+            {mechanic.type === 'combo' && (
+              <div className="mb-6">
+                <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
+                  {mechanic.comboVariant === 'freeitem' ? (
+                    <>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">The Deal</p>
+                      <div className="flex items-center flex-wrap gap-2">
+                        {(mechanic.comboPaidItems ?? []).map((it, idx) => (
+                          <span key={idx} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 shadow-sm">{it}</span>
+                        ))}
+                        <span className="text-sm text-gray-400 font-bold">+</span>
+                        {(mechanic.comboFreeItems ?? []).map((it, idx) => (
+                          <span key={idx} className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
+                            {it} FREE
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">What&apos;s Included</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {(mechanic.comboItems ?? []).map((it, idx) => (
+                          <span key={idx} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 shadow-sm">{it}</span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-baseline gap-2">
+                          {mechanic.comboOriginalPrice !== undefined && (
+                            <span className="text-sm text-gray-400 line-through">₹{mechanic.comboOriginalPrice}</span>
+                          )}
+                          {mechanic.comboBundlePrice !== undefined && (
+                            <span className="text-xl font-black" style={{ color: meta.cardFrom }}>₹{mechanic.comboBundlePrice}</span>
+                          )}
+                        </div>
+                        {mechanic.comboOriginalPrice !== undefined && mechanic.comboBundlePrice !== undefined && mechanic.comboOriginalPrice > mechanic.comboBundlePrice && (
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-white" style={{ color: meta.cardFrom }}>
+                            Save ₹{mechanic.comboOriginalPrice - mechanic.comboBundlePrice} ({Math.round(((mechanic.comboOriginalPrice - mechanic.comboBundlePrice) / mechanic.comboOriginalPrice) * 100)}%)
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
+                    <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
+                  </div>
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {mechanic.comboRedeemBefore ? fmtDate(mechanic.comboRedeemBefore) : '—'}
+                    </p>
+                  </div>
+                  {mechanic.comboTotalSpots !== undefined && (
+                    <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Spots Claimed</p>
+                        <p className="text-sm font-bold text-gray-900">{mechanic.comboClaimed ?? 0} / {mechanic.comboTotalSpots}</p>
+                      </div>
+                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
+                        {mechanic.comboTotalSpots - (mechanic.comboClaimed ?? 0)} remaining
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {mechanic.comboTerms && (
+                  <div className="bg-gray-50 rounded-2xl p-4">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{mechanic.comboTerms}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Duration + players */}
             <div className="bg-gray-50 rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-between mb-1">
@@ -596,7 +675,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           })()
         ) : mechanic.playedToday ? (
           <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-            <span>✓</span> {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+            <span>✓</span> {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo' ? 'Claimed today' : 'Played today'} · Come back tomorrow
           </div>
         ) : (
           <motion.button
@@ -608,7 +687,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               boxShadow: `0 8px 28px ${meta.cardFrom}55`,
             }}
           >
-            {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' ? 'Claim Now' : 'Play Now'} {meta.emoji}
+            {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo' ? 'Claim Now' : 'Play Now'} {meta.emoji}
           </motion.button>
         )}
       </div>
