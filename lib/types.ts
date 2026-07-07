@@ -98,7 +98,7 @@ export interface CheckinConfig {
 }
 
 export type BuyCondition = 'quantity' | 'spend'
-export type RollingExpiryUnit = 'days' | 'months' | 'custom'
+export type RollingExpiryPreset = '7' | '14' | '30' | '90' | 'custom'
 
 export interface BuyXGetYConfig {
   type: 'buyxgety'
@@ -113,8 +113,8 @@ export interface BuyXGetYConfig {
 
   rewardExpiryMode: RewardExpiryMode
   rewardExpiryDate?: string     // ISO date, when mode === 'fixed'
+  rewardExpiryPreset?: RollingExpiryPreset // drives the rolling-period dropdown
   rewardExpiryDays?: number     // resolved total days, when mode === 'rolling'
-  rewardExpiryUnit?: RollingExpiryUnit // which picker unit was used to set rewardExpiryDays
 }
 
 export interface Customer {

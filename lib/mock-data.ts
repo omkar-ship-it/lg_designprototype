@@ -226,7 +226,7 @@ export const campaigns: Campaign[] = [
       rewardValue: '150',
       totalRewardSlots: 300,
       rewardExpiryMode: 'rolling',
-      rewardExpiryUnit: 'months',
+      rewardExpiryPreset: '30',
       rewardExpiryDays: 30,
     },
   },

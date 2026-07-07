@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, Zap, Plus, Trash2, AlertCircle, CalendarDays, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input, Slider } from '@/components/ui/input'
+import { Input, Slider, Select } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryPreset } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -20,9 +20,11 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
-const REWARD_EXPIRY_UNITS: { key: RollingExpiryUnit; label: string }[] = [
-  { key: 'days',   label: 'Days' },
-  { key: 'months', label: 'Months' },
+const ROLLING_PERIOD_PRESETS: { key: RollingExpiryPreset; label: string }[] = [
+  { key: '7',      label: '7 Days' },
+  { key: '14',     label: '14 Days' },
+  { key: '30',     label: '1 Month' },
+  { key: '90',     label: '3 Months' },
   { key: 'custom', label: 'Custom' },
 ]
 
@@ -288,7 +290,7 @@ export default function CreateCampaignPage() {
     totalRewardSlots: 200,
     rewardExpiryMode: 'rolling' as RewardExpiryMode,
     rewardExpiryDate: '',
-    rewardExpiryUnit: 'days' as RollingExpiryUnit,
+    rewardExpiryPreset: '7' as RollingExpiryPreset,
     rewardExpiryDays: 7,
   })
 
@@ -443,7 +445,7 @@ export default function CreateCampaignPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Campaign Duration</label>
-                    {basics.durationMode !== 'custom' && dates.start && (
+                    {dates.start && dates.end && (
                       <span className="text-xs text-v-purple font-semibold flex items-center gap-1.5">
                         <CalendarDays className="w-3.5 h-3.5" />
                         {isToday ? `Today · ${fmtDate(TODAY)}` : `${fmtDate(dates.start)} → ${fmtDate(dates.end)}`}
@@ -453,7 +455,7 @@ export default function CreateCampaignPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {durationOptions.map(opt => (
-                      <button key={opt.key} onClick={() => setBasics(p => ({ ...p, durationMode: opt.key }))}
+                      <button key={opt.key} onClick={() => setBasics(p => ({ ...p, durationMode: opt.key, activeHoursEnabled: opt.key === 'custom' ? p.activeHoursEnabled : false }))}
                         className={`rounded-xl py-2.5 px-3 text-center border-2 transition-all min-w-[4.5rem] ${basics.durationMode === opt.key ? 'border-v-purple bg-v-surface-3' : 'border-v-border bg-white hover:border-v-border-b'}`}>
                         <div className={`text-sm font-bold ${basics.durationMode === opt.key ? 'text-v-purple' : 'text-v-text'}`}>{opt.label}</div>
                         <div className="text-[10px] text-v-text-3 mt-0.5">{opt.sub}</div>
@@ -462,42 +464,44 @@ export default function CreateCampaignPage() {
                   </div>
                   <AnimatePresence>
                     {basics.durationMode === 'custom' && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 grid grid-cols-2 gap-4 overflow-hidden">
-                        <Input label="Start Date" type="date" value={basics.customStart} onChange={e => setBasics(p => ({ ...p, customStart: e.target.value }))} />
-                        <Input label="End Date"   type="date" value={basics.customEnd}   onChange={e => setBasics(p => ({ ...p, customEnd:   e.target.value }))} />
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 overflow-hidden">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input label="Start Date" type="date" value={basics.customStart} onChange={e => setBasics(p => ({ ...p, customStart: e.target.value }))} />
+                          <Input label="End Date"   type="date" value={basics.customEnd}   onChange={e => setBasics(p => ({ ...p, customEnd:   e.target.value }))} />
+                        </div>
+
+                        {/* Active hours — nested under custom start/end date, not for lottery */}
+                        {!isLottery && (
+                          <div className="mt-4 pt-4 border-t border-v-border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <span className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Active Hours</span>
+                                <p className="text-xs text-v-text-3 mt-0.5">Restrict to specific hours each day (e.g. Lunch Rush)</p>
+                              </div>
+                              <button type="button" onClick={() => setBasics(p => ({ ...p, activeHoursEnabled: !p.activeHoursEnabled }))}
+                                className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${basics.activeHoursEnabled ? 'bg-v-purple' : 'bg-v-border'}`}>
+                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${basics.activeHoursEnabled ? 'left-6' : 'left-1'}`} />
+                              </button>
+                            </div>
+                            <AnimatePresence>
+                              {basics.activeHoursEnabled && (
+                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4 overflow-hidden">
+                                  <div>
+                                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">Start Time</label>
+                                    <input type="time" value={basics.activeStartTime} onChange={e => setBasics(p => ({ ...p, activeStartTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">End Time</label>
+                                    <input type="time" value={basics.activeEndTime} onChange={e => setBasics(p => ({ ...p, activeEndTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
-
-                  {/* Active hours — not for lottery */}
-                  {!isLottery && (
-                    <div className="mt-4 pt-4 border-t border-v-border">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <span className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Active Hours</span>
-                          <p className="text-xs text-v-text-3 mt-0.5">Restrict to specific hours each day (e.g. Lunch Rush)</p>
-                        </div>
-                        <button type="button" onClick={() => setBasics(p => ({ ...p, activeHoursEnabled: !p.activeHoursEnabled }))}
-                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${basics.activeHoursEnabled ? 'bg-v-purple' : 'bg-v-border'}`}>
-                          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${basics.activeHoursEnabled ? 'left-6' : 'left-1'}`} />
-                        </button>
-                      </div>
-                      <AnimatePresence>
-                        {basics.activeHoursEnabled && (
-                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4 overflow-hidden">
-                            <div>
-                              <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">Start Time</label>
-                              <input type="time" value={basics.activeStartTime} onChange={e => setBasics(p => ({ ...p, activeStartTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
-                            </div>
-                            <div>
-                              <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">End Time</label>
-                              <input type="time" value={basics.activeEndTime} onChange={e => setBasics(p => ({ ...p, activeEndTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
                 </div>
 
                 {/* ── Participation ── */}
@@ -839,19 +843,21 @@ export default function CreateCampaignPage() {
                 {/* Trigger */}
                 <div>
                   <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Trigger</p>
-                  <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
-                    {(['quantity', 'spend'] as BuyCondition[]).map(c => (
-                      <button key={c} onClick={() => setBuyXGetY(p => ({ ...p, condition: c }))}
-                        className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${buyXGetY.condition === c ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
-                        {c === 'quantity' ? 'Purchase Count' : 'Spend Amount'}
-                      </button>
-                    ))}
+                  <div className="flex gap-2">
+                    <div className="w-36 shrink-0">
+                      <Select value={buyXGetY.condition} onChange={e => setBuyXGetY(p => ({ ...p, condition: e.target.value as BuyCondition }))}>
+                        <option value="quantity">Purchases</option>
+                        <option value="spend">₹ Spend</option>
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      {buyXGetY.condition === 'quantity' ? (
+                        <Input type="number" min={1} placeholder="e.g. 3" value={buyXGetY.buyQuantity} onChange={e => setBuyXGetY(p => ({ ...p, buyQuantity: Number(e.target.value) }))} />
+                      ) : (
+                        <Input type="number" min={1} placeholder="e.g. 1000" value={buyXGetY.spendAmount} onChange={e => setBuyXGetY(p => ({ ...p, spendAmount: Number(e.target.value) }))} />
+                      )}
+                    </div>
                   </div>
-                  {buyXGetY.condition === 'quantity' ? (
-                    <Input label="Quantity" type="number" min={1} value={buyXGetY.buyQuantity} onChange={e => setBuyXGetY(p => ({ ...p, buyQuantity: Number(e.target.value) }))} />
-                  ) : (
-                    <Input label="Minimum Spend (₹)" type="number" min={1} value={buyXGetY.spendAmount} onChange={e => setBuyXGetY(p => ({ ...p, spendAmount: Number(e.target.value) }))} />
-                  )}
                 </div>
 
                 {/* Reward */}
@@ -894,20 +900,14 @@ export default function CreateCampaignPage() {
                       ))}
                     </div>
                     {buyXGetY.rewardExpiryMode === 'rolling' ? (
-                      <div className="space-y-3">
-                        <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 max-w-xs">
-                          {REWARD_EXPIRY_UNITS.map(u => (
-                            <button key={u.key} onClick={() => setBuyXGetY(p => ({ ...p, rewardExpiryUnit: u.key, rewardExpiryDays: u.key === 'months' ? 30 : u.key === 'days' ? 7 : p.rewardExpiryDays }))}
-                              className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${buyXGetY.rewardExpiryUnit === u.key ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
-                              {u.label}
-                            </button>
-                          ))}
-                        </div>
-                        {buyXGetY.rewardExpiryUnit === 'months' ? (
-                          <Stepper label="Number of Months" hint="months" value={Math.round(buyXGetY.rewardExpiryDays / 30)} min={1} max={12} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v * 30 }))} />
-                        ) : buyXGetY.rewardExpiryUnit === 'days' ? (
-                          <Stepper label="Number of Days" hint="days" value={buyXGetY.rewardExpiryDays} min={1} max={30} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v }))} />
-                        ) : (
+                      <div className="space-y-3 max-w-xs">
+                        <Select value={buyXGetY.rewardExpiryPreset} onChange={e => {
+                          const preset = e.target.value as typeof buyXGetY.rewardExpiryPreset
+                          setBuyXGetY(p => ({ ...p, rewardExpiryPreset: preset, rewardExpiryDays: preset === 'custom' ? p.rewardExpiryDays : Number(preset) }))
+                        }}>
+                          {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+                        </Select>
+                        {buyXGetY.rewardExpiryPreset === 'custom' && (
                           <Input label="Custom Period (days)" type="number" min={1} max={365} value={buyXGetY.rewardExpiryDays} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDays: Number(e.target.value) }))} />
                         )}
                       </div>

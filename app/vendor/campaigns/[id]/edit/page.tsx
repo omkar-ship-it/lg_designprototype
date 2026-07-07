@@ -8,12 +8,12 @@ import {
   Play, Pause, StopCircle, Trash2, Zap, Plus, Trash,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input, Slider } from '@/components/ui/input'
+import { Input, Slider, Select } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { StatusBadge, MechanicBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, getMechanicColor, formatDate } from '@/lib/utils'
-import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
+import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryPreset } from '@/lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -23,9 +23,11 @@ function newReward() {
   return { id: Math.random().toString(36).slice(2), name: '', description: '', icon: '🎁', probability: 10 }
 }
 
-const REWARD_EXPIRY_UNITS: { key: RollingExpiryUnit; label: string }[] = [
-  { key: 'days',   label: 'Days' },
-  { key: 'months', label: 'Months' },
+const ROLLING_PERIOD_PRESETS: { key: RollingExpiryPreset; label: string }[] = [
+  { key: '7',      label: '7 Days' },
+  { key: '14',     label: '14 Days' },
+  { key: '30',     label: '1 Month' },
+  { key: '90',     label: '3 Months' },
   { key: 'custom', label: 'Custom' },
 ]
 
@@ -203,7 +205,7 @@ type BuyXGetYDraft = {
   condition: BuyCondition; buyQuantity: number; spendAmount: number
   rewardKind: RewardKind; rewardValue: string
   totalRewardSlots: number; rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
-  rewardExpiryUnit: RollingExpiryUnit; rewardExpiryDays: number
+  rewardExpiryPreset: RollingExpiryPreset; rewardExpiryDays: number
 }
 
 function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; setConfig: (c: BuyXGetYDraft) => void }) {
@@ -212,19 +214,21 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
       {/* Trigger */}
       <div>
         <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Trigger</p>
-        <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
-          {(['quantity', 'spend'] as BuyCondition[]).map(c => (
-            <button key={c} onClick={() => setConfig({ ...config, condition: c })}
-              className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.condition === c ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
-              {c === 'quantity' ? 'Purchase Count' : 'Spend Amount'}
-            </button>
-          ))}
+        <div className="flex gap-2">
+          <div className="w-36 shrink-0">
+            <Select value={config.condition} onChange={e => setConfig({ ...config, condition: e.target.value as BuyCondition })}>
+              <option value="quantity">Purchases</option>
+              <option value="spend">₹ Spend</option>
+            </Select>
+          </div>
+          <div className="flex-1">
+            {config.condition === 'quantity' ? (
+              <Input type="number" min={1} placeholder="e.g. 3" value={config.buyQuantity} onChange={e => setConfig({ ...config, buyQuantity: Number(e.target.value) })} />
+            ) : (
+              <Input type="number" min={1} placeholder="e.g. 1000" value={config.spendAmount} onChange={e => setConfig({ ...config, spendAmount: Number(e.target.value) })} />
+            )}
+          </div>
         </div>
-        {config.condition === 'quantity' ? (
-          <Input label="Quantity" type="number" min={1} value={config.buyQuantity} onChange={e => setConfig({ ...config, buyQuantity: Number(e.target.value) })} />
-        ) : (
-          <Input label="Minimum Spend (₹)" type="number" min={1} value={config.spendAmount} onChange={e => setConfig({ ...config, spendAmount: Number(e.target.value) })} />
-        )}
       </div>
 
       {/* Reward */}
@@ -267,20 +271,14 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
             ))}
           </div>
           {config.rewardExpiryMode === 'rolling' ? (
-            <div className="space-y-3">
-              <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 max-w-xs">
-                {REWARD_EXPIRY_UNITS.map(u => (
-                  <button key={u.key} onClick={() => setConfig({ ...config, rewardExpiryUnit: u.key, rewardExpiryDays: u.key === 'months' ? 30 : u.key === 'days' ? 7 : config.rewardExpiryDays })}
-                    className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.rewardExpiryUnit === u.key ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
-                    {u.label}
-                  </button>
-                ))}
-              </div>
-              {config.rewardExpiryUnit === 'months' ? (
-                <Stepper label="Number of Months" hint="months" value={Math.round(config.rewardExpiryDays / 30)} min={1} max={12} onChange={v => setConfig({ ...config, rewardExpiryDays: v * 30 })} />
-              ) : config.rewardExpiryUnit === 'days' ? (
-                <Stepper label="Number of Days" hint="days" value={config.rewardExpiryDays} min={1} max={30} onChange={v => setConfig({ ...config, rewardExpiryDays: v })} />
-              ) : (
+            <div className="space-y-3 max-w-xs">
+              <Select value={config.rewardExpiryPreset} onChange={e => {
+                const preset = e.target.value as RollingExpiryPreset
+                setConfig({ ...config, rewardExpiryPreset: preset, rewardExpiryDays: preset === 'custom' ? config.rewardExpiryDays : Number(preset) })
+              }}>
+                {ROLLING_PERIOD_PRESETS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+              </Select>
+              {config.rewardExpiryPreset === 'custom' && (
                 <Input label="Custom Period (days)" type="number" min={1} max={365} value={config.rewardExpiryDays} onChange={e => setConfig({ ...config, rewardExpiryDays: Number(e.target.value) })} />
               )}
             </div>
@@ -345,9 +343,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [buyXGetYDraft, setBuyXGetYDraft] = useState(() => {
     if (original.config.type === 'buyxgety') {
       const c = original.config
-      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryUnit: c.rewardExpiryUnit ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
+      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryPreset: c.rewardExpiryPreset ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
     }
-    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryUnit: 'days' as RollingExpiryUnit, rewardExpiryDays: 7 }
+    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryPreset: '7' as RollingExpiryPreset, rewardExpiryDays: 7 }
   })
 
   // Save state
