@@ -98,24 +98,23 @@ export interface CheckinConfig {
 }
 
 export type BuyCondition = 'quantity' | 'spend'
+export type RollingExpiryUnit = 'days' | 'months' | 'custom'
 
 export interface BuyXGetYConfig {
   type: 'buyxgety'
   condition: BuyCondition
   buyQuantity: number           // used when condition === 'quantity', e.g. 3
-  unitLabel: string             // vendor-defined generic unit, e.g. "visits", "services", "items"
   spendAmount: number           // used when condition === 'spend', in ₹
 
   rewardKind: RewardKind
   rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
-  getQuantity: number           // only relevant when rewardKind === 'item' (e.g. "get 2 free"), default 1
 
   totalRewardSlots: number      // scarcity cap — total redemptions available across the whole campaign
-  redemptionsPerUser: number    // max times one customer can redeem
 
   rewardExpiryMode: RewardExpiryMode
   rewardExpiryDate?: string     // ISO date, when mode === 'fixed'
-  rewardExpiryDays?: number     // days after claim, when mode === 'rolling'
+  rewardExpiryDays?: number     // resolved total days, when mode === 'rolling'
+  rewardExpiryUnit?: RollingExpiryUnit // which picker unit was used to set rewardExpiryDays
 }
 
 export interface Customer {

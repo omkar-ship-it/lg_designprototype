@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge, MechanicBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, getMechanicColor, formatDate } from '@/lib/utils'
-import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode } from '@/lib/types'
+import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -23,18 +23,24 @@ function newReward() {
   return { id: Math.random().toString(36).slice(2), name: '', description: '', icon: '🎁', probability: 10 }
 }
 
+const REWARD_EXPIRY_UNITS: { key: RollingExpiryUnit; label: string }[] = [
+  { key: 'days',   label: 'Days' },
+  { key: 'months', label: 'Months' },
+  { key: 'custom', label: 'Custom' },
+]
+
 function buildBuyXGetYSentence(cfg: {
-  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
-  rewardKind: RewardKind; rewardValue: string; getQuantity: number
+  condition: BuyCondition; buyQuantity: number; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string
 }) {
   const trigger = cfg.condition === 'quantity'
-    ? `Buy ${cfg.buyQuantity} ${cfg.unitLabel.trim() || 'purchases'}`
+    ? `Buy ${cfg.buyQuantity} purchases`
     : `Spend ₹${cfg.spendAmount || 0}`
   const reward =
     cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
     cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
     cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
-    `Get ${cfg.getQuantity > 1 ? `${cfg.getQuantity}× ` : ''}${cfg.rewardValue.trim() || 'Free Item'}`
+    `Get ${cfg.rewardValue.trim() || 'Free Item'}`
   return `${trigger} → ${reward}`
 }
 
@@ -119,7 +125,6 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
       return [
         buildBuyXGetYSentence(c),
         `${c.totalRewardSlots} reward slots total`,
-        `${c.redemptionsPerUser}× per user`,
         c.rewardExpiryMode === 'fixed' ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}` : `Expires ${c.rewardExpiryDays} days after claim`,
       ]
     }
@@ -195,9 +200,10 @@ function DraftSpinConfig({ segments, setSegments }: { segments: { label: string;
 
 // ── Draft Buy X Get Y config (inline edit for draft campaigns) ───────────────
 type BuyXGetYDraft = {
-  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
-  rewardKind: RewardKind; rewardValue: string; getQuantity: number
-  totalRewardSlots: number; rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string; rewardExpiryDays: number
+  condition: BuyCondition; buyQuantity: number; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string
+  totalRewardSlots: number; rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
+  rewardExpiryUnit: RollingExpiryUnit; rewardExpiryDays: number
 }
 
 function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; setConfig: (c: BuyXGetYDraft) => void }) {
@@ -215,10 +221,7 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
           ))}
         </div>
         {config.condition === 'quantity' ? (
-          <div className="grid grid-cols-2 gap-3 items-end">
-            <Stepper label="Quantity" value={config.buyQuantity} min={1} max={50} onChange={v => setConfig({ ...config, buyQuantity: v })} />
-            <Input label="Unit Label" placeholder="e.g. visits, services, items, sessions" value={config.unitLabel} onChange={e => setConfig({ ...config, unitLabel: e.target.value })} />
-          </div>
+          <Input label="Quantity" type="number" min={1} value={config.buyQuantity} onChange={e => setConfig({ ...config, buyQuantity: Number(e.target.value) })} />
         ) : (
           <Input label="Minimum Spend (₹)" type="number" min={1} value={config.spendAmount} onChange={e => setConfig({ ...config, spendAmount: Number(e.target.value) })} />
         )}
@@ -239,13 +242,10 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
           <Input label="Discount Amount (₹)" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
         )}
         {config.rewardKind === 'percent' && (
-          <Slider label="Discount %" displayValue={`${config.rewardValue || 0}%`} min={1} max={100} step={1} value={Number(config.rewardValue) || 0} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+          <Input label="Discount %" type="number" min={1} max={100} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
         )}
         {config.rewardKind === 'item' && (
-          <div className="grid grid-cols-2 gap-3 items-end">
-            <Input label="Reward Description" placeholder="e.g. Free item or service" value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
-            <Stepper label="Get Quantity" value={config.getQuantity} min={1} max={10} onChange={v => setConfig({ ...config, getQuantity: v })} />
-          </div>
+          <Input label="Reward Description" placeholder="e.g. Free item or service" value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
         )}
         {config.rewardKind === 'points' && (
           <Input label="Points Awarded" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
@@ -255,7 +255,7 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
       {/* Scarcity & Expiry */}
       <div className="pt-2 border-t border-v-border space-y-4">
         <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
-        <Slider label="Total Reward Slots" displayValue={`${config.totalRewardSlots} rewards total`} min={10} max={5000} step={10} value={config.totalRewardSlots} onChange={e => setConfig({ ...config, totalRewardSlots: Number(e.target.value) })} />
+        <Stepper label="Total Reward Slots" hint="rewards total" value={config.totalRewardSlots} min={10} max={5000} onChange={v => setConfig({ ...config, totalRewardSlots: v })} />
         <div>
           <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
           <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
@@ -267,7 +267,23 @@ function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; set
             ))}
           </div>
           {config.rewardExpiryMode === 'rolling' ? (
-            <Stepper label="Days After Claim" hint="days" value={config.rewardExpiryDays} min={1} max={90} onChange={v => setConfig({ ...config, rewardExpiryDays: v })} />
+            <div className="space-y-3">
+              <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 max-w-xs">
+                {REWARD_EXPIRY_UNITS.map(u => (
+                  <button key={u.key} onClick={() => setConfig({ ...config, rewardExpiryUnit: u.key, rewardExpiryDays: u.key === 'months' ? 30 : u.key === 'days' ? 7 : config.rewardExpiryDays })}
+                    className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.rewardExpiryUnit === u.key ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                    {u.label}
+                  </button>
+                ))}
+              </div>
+              {config.rewardExpiryUnit === 'months' ? (
+                <Stepper label="Number of Months" hint="months" value={Math.round(config.rewardExpiryDays / 30)} min={1} max={12} onChange={v => setConfig({ ...config, rewardExpiryDays: v * 30 })} />
+              ) : config.rewardExpiryUnit === 'days' ? (
+                <Stepper label="Number of Days" hint="days" value={config.rewardExpiryDays} min={1} max={30} onChange={v => setConfig({ ...config, rewardExpiryDays: v })} />
+              ) : (
+                <Input label="Custom Period (days)" type="number" min={1} max={365} value={config.rewardExpiryDays} onChange={e => setConfig({ ...config, rewardExpiryDays: Number(e.target.value) })} />
+              )}
+            </div>
           ) : (
             <Input label="Expiry Date" type="date" value={config.rewardExpiryDate} onChange={e => setConfig({ ...config, rewardExpiryDate: e.target.value })} />
           )}
@@ -316,9 +332,6 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [userCap,       setUserCap]       = useState(original.userCap)
   const [playsPerDay,   setPlaysPerDay]   = useState(original.playsPerUser)
   const [dailyRewardCap, setDailyRewardCap] = useState(50)
-  const [redemptionsPerUser, setRedemptionsPerUser] = useState(() =>
-    original.config.type === 'buyxgety' ? original.config.redemptionsPerUser : 1
-  )
 
   // Spin segments for draft editing
   const [spinSegments, setSpinSegments] = useState(() => {
@@ -332,9 +345,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [buyXGetYDraft, setBuyXGetYDraft] = useState(() => {
     if (original.config.type === 'buyxgety') {
       const c = original.config
-      return { condition: c.condition, buyQuantity: c.buyQuantity, unitLabel: c.unitLabel, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, getQuantity: c.getQuantity, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
+      return { condition: c.condition, buyQuantity: c.buyQuantity, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryUnit: c.rewardExpiryUnit ?? 'custom', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
     }
-    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, unitLabel: '', spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', getQuantity: 1, totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryDays: 7 }
+    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryUnit: 'days' as RollingExpiryUnit, rewardExpiryDays: 7 }
   })
 
   // Save state
@@ -345,8 +358,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     name !== original.name ||
     endDate !== original.endDate ||
     userCap !== original.userCap ||
-    playsPerDay !== original.playsPerUser ||
-    (original.config.type === 'buyxgety' && redemptionsPerUser !== original.config.redemptionsPerUser)
+    playsPerDay !== original.playsPerUser
 
   const handleSave = () => {
     setSaveState('saving')
@@ -464,6 +476,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-start gap-2.5 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                   No user cap for Lottery campaigns.
                 </div>
+              ) : isBuyXGetY ? (
+                <Stepper label="User Cap" hint="users" value={userCap} min={original.currentUsers || 10} max={5000} onChange={setUserCap} />
               ) : (
                 <Slider label="User Cap" displayValue={`${userCap} users`} min={original.currentUsers || 10} max={5000} step={10} value={userCap} onChange={e => setUserCap(Number(e.target.value))} />
               )}
@@ -486,15 +500,6 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                     <Slider label="Daily Rewards Cap" displayValue={dailyRewardCap === 0 ? 'Unlimited' : `${dailyRewardCap} / day`} min={0} max={500} step={5} value={dailyRewardCap} onChange={e => setDailyRewardCap(Number(e.target.value))} />
                     <p className="text-xs text-v-text-3 mt-1.5">Set to 0 for unlimited.</p>
                   </div>
-                )
-              )}
-
-              {/* Redemptions Per User — buy x get y only */}
-              {isBuyXGetY && (
-                isLocked ? (
-                  <LockedField label="Redemptions Per User" value={`${redemptionsPerUser}× per user`} />
-                ) : (
-                  <Stepper label="Redemptions Per User" hint="times / user" value={redemptionsPerUser} min={1} max={20} onChange={setRedemptionsPerUser} />
                 )
               )}
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Slider } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -20,18 +20,24 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
 ]
 
 // ── Buy X Get Y ────────────────────────────────────────────────────────────────
+const REWARD_EXPIRY_UNITS: { key: RollingExpiryUnit; label: string }[] = [
+  { key: 'days',   label: 'Days' },
+  { key: 'months', label: 'Months' },
+  { key: 'custom', label: 'Custom' },
+]
+
 function buildBuyXGetYSentence(cfg: {
-  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
-  rewardKind: RewardKind; rewardValue: string; getQuantity: number
+  condition: BuyCondition; buyQuantity: number; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string
 }) {
   const trigger = cfg.condition === 'quantity'
-    ? `Buy ${cfg.buyQuantity} ${cfg.unitLabel.trim() || 'purchases'}`
+    ? `Buy ${cfg.buyQuantity} purchases`
     : `Spend ₹${cfg.spendAmount || 0}`
   const reward =
     cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
     cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
     cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
-    `Get ${cfg.getQuantity > 1 ? `${cfg.getQuantity}× ` : ''}${cfg.rewardValue.trim() || 'Free Item'}`
+    `Get ${cfg.rewardValue.trim() || 'Free Item'}`
   return `${trigger} → ${reward}`
 }
 
@@ -276,15 +282,13 @@ export default function CreateCampaignPage() {
   const [buyXGetY, setBuyXGetY] = useState({
     condition: 'quantity' as BuyCondition,
     buyQuantity: 3,
-    unitLabel: '',
     spendAmount: 500,
     rewardKind: 'item' as RewardKind,
     rewardValue: '',
-    getQuantity: 1,
     totalRewardSlots: 200,
-    redemptionsPerUser: 1,
     rewardExpiryMode: 'rolling' as RewardExpiryMode,
     rewardExpiryDate: '',
+    rewardExpiryUnit: 'days' as RollingExpiryUnit,
     rewardExpiryDays: 7,
   })
 
@@ -341,7 +345,7 @@ export default function CreateCampaignPage() {
     if (mechanic === 'dice')  return diceOutcomes.some(o => o.isWin && o.reward.trim())
     if (mechanic === 'lottery') return lotteryConfig.jackpotReward.trim().length > 0
     if (mechanic === 'buyxgety') {
-      const triggerValid = buyXGetY.condition === 'quantity' ? buyXGetY.unitLabel.trim().length > 0 : buyXGetY.spendAmount > 0
+      const triggerValid = buyXGetY.condition === 'quantity' ? buyXGetY.buyQuantity > 0 : buyXGetY.spendAmount > 0
       const rewardValid = buyXGetY.rewardValue.trim().length > 0
       return triggerValid && rewardValid
     }
@@ -515,9 +519,14 @@ export default function CreateCampaignPage() {
                     </>
                   )}
 
-                  {/* Stamp / Buy X Get Y: single user cap */}
-                  {(isStamp || isBuyXGetY) && (
+                  {/* Stamp: single user cap */}
+                  {isStamp && (
                     <Slider label="User Cap" displayValue={`${basics.userCap} users`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
+                  )}
+
+                  {/* Buy X Get Y: single user cap, stepper */}
+                  {isBuyXGetY && (
+                    <Stepper label="User Cap" hint="users" value={basics.userCap} min={10} max={5000} onChange={v => setBasics(p => ({ ...p, userCap: v }))} />
                   )}
 
                   {/* Lottery: no caps */}
@@ -839,10 +848,7 @@ export default function CreateCampaignPage() {
                     ))}
                   </div>
                   {buyXGetY.condition === 'quantity' ? (
-                    <div className="grid grid-cols-2 gap-3 items-end">
-                      <Stepper label="Quantity" value={buyXGetY.buyQuantity} min={1} max={50} onChange={v => setBuyXGetY(p => ({ ...p, buyQuantity: v }))} />
-                      <Input label="Unit Label" placeholder="e.g. visits, services, items, sessions" value={buyXGetY.unitLabel} onChange={e => setBuyXGetY(p => ({ ...p, unitLabel: e.target.value }))} />
-                    </div>
+                    <Input label="Quantity" type="number" min={1} value={buyXGetY.buyQuantity} onChange={e => setBuyXGetY(p => ({ ...p, buyQuantity: Number(e.target.value) }))} />
                   ) : (
                     <Input label="Minimum Spend (₹)" type="number" min={1} value={buyXGetY.spendAmount} onChange={e => setBuyXGetY(p => ({ ...p, spendAmount: Number(e.target.value) }))} />
                   )}
@@ -863,13 +869,10 @@ export default function CreateCampaignPage() {
                     <Input label="Discount Amount (₹)" type="number" min={1} value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
                   )}
                   {buyXGetY.rewardKind === 'percent' && (
-                    <Slider label="Discount %" displayValue={`${buyXGetY.rewardValue || 0}%`} min={1} max={100} step={1} value={Number(buyXGetY.rewardValue) || 0} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
+                    <Input label="Discount %" type="number" min={1} max={100} value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
                   )}
                   {buyXGetY.rewardKind === 'item' && (
-                    <div className="grid grid-cols-2 gap-3 items-end">
-                      <Input label="Reward Description" placeholder="e.g. Free item or service" value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
-                      <Stepper label="Get Quantity" value={buyXGetY.getQuantity} min={1} max={10} onChange={v => setBuyXGetY(p => ({ ...p, getQuantity: v }))} />
-                    </div>
+                    <Input label="Reward Description" placeholder="e.g. Free item or service" value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
                   )}
                   {buyXGetY.rewardKind === 'points' && (
                     <Input label="Points Awarded" type="number" min={1} value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
@@ -879,8 +882,7 @@ export default function CreateCampaignPage() {
                 {/* Scarcity & Expiry */}
                 <div className="pt-2 border-t border-v-border space-y-4">
                   <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
-                  <Slider label="Total Reward Slots" displayValue={`${buyXGetY.totalRewardSlots} rewards total`} min={10} max={5000} step={10} value={buyXGetY.totalRewardSlots} onChange={e => setBuyXGetY(p => ({ ...p, totalRewardSlots: Number(e.target.value) }))} />
-                  <Stepper label="Redemptions Per User" hint="times / user" value={buyXGetY.redemptionsPerUser} min={1} max={20} onChange={v => setBuyXGetY(p => ({ ...p, redemptionsPerUser: v }))} />
+                  <Stepper label="Total Reward Slots" hint="rewards total" value={buyXGetY.totalRewardSlots} min={10} max={5000} onChange={v => setBuyXGetY(p => ({ ...p, totalRewardSlots: v }))} />
                   <div>
                     <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
                     <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
@@ -892,7 +894,23 @@ export default function CreateCampaignPage() {
                       ))}
                     </div>
                     {buyXGetY.rewardExpiryMode === 'rolling' ? (
-                      <Stepper label="Days After Claim" hint="days" value={buyXGetY.rewardExpiryDays} min={1} max={90} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v }))} />
+                      <div className="space-y-3">
+                        <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 max-w-xs">
+                          {REWARD_EXPIRY_UNITS.map(u => (
+                            <button key={u.key} onClick={() => setBuyXGetY(p => ({ ...p, rewardExpiryUnit: u.key, rewardExpiryDays: u.key === 'months' ? 30 : u.key === 'days' ? 7 : p.rewardExpiryDays }))}
+                              className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${buyXGetY.rewardExpiryUnit === u.key ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                              {u.label}
+                            </button>
+                          ))}
+                        </div>
+                        {buyXGetY.rewardExpiryUnit === 'months' ? (
+                          <Stepper label="Number of Months" hint="months" value={Math.round(buyXGetY.rewardExpiryDays / 30)} min={1} max={12} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v * 30 }))} />
+                        ) : buyXGetY.rewardExpiryUnit === 'days' ? (
+                          <Stepper label="Number of Days" hint="days" value={buyXGetY.rewardExpiryDays} min={1} max={30} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v }))} />
+                        ) : (
+                          <Input label="Custom Period (days)" type="number" min={1} max={365} value={buyXGetY.rewardExpiryDays} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDays: Number(e.target.value) }))} />
+                        )}
+                      </div>
                     ) : (
                       <Input label="Expiry Date" type="date" value={buyXGetY.rewardExpiryDate} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
                     )}
@@ -945,7 +963,6 @@ export default function CreateCampaignPage() {
                     },
                     ...(isBuyXGetY ? [
                       { label: 'Total Reward Slots', value: `${buyXGetY.totalRewardSlots} rewards` },
-                      { label: 'Redemptions Per User', value: `${buyXGetY.redemptionsPerUser}× per user` },
                       { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryDays} days after claim` },
                     ] : []),
                   ].map(item => (
