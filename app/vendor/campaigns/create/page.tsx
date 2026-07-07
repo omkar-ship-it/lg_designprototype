@@ -485,36 +485,6 @@ export default function CreateCampaignPage() {
               <div className="space-y-6">
                 <Input label="Campaign Name" placeholder="e.g. Weekend Spin Fiesta" value={basics.name} onChange={e => setBasics(p => ({ ...p, name: e.target.value }))} />
 
-                {/* Active hours — not for lottery */}
-                {!isLottery && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Active Hours</span>
-                        <p className="text-xs text-v-text-3 mt-0.5">Restrict to specific hours each day (e.g. Lunch Rush)</p>
-                      </div>
-                      <button type="button" onClick={() => setBasics(p => ({ ...p, activeHoursEnabled: !p.activeHoursEnabled }))}
-                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${basics.activeHoursEnabled ? 'bg-v-purple' : 'bg-v-border'}`}>
-                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${basics.activeHoursEnabled ? 'left-6' : 'left-1'}`} />
-                      </button>
-                    </div>
-                    <AnimatePresence>
-                      {basics.activeHoursEnabled && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4 overflow-hidden">
-                          <div>
-                            <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">Start Time</label>
-                            <input type="time" value={basics.activeStartTime} onChange={e => setBasics(p => ({ ...p, activeStartTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">End Time</label>
-                            <input type="time" value={basics.activeEndTime} onChange={e => setBasics(p => ({ ...p, activeEndTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
                 {/* Duration */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -547,6 +517,36 @@ export default function CreateCampaignPage() {
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Active hours — not for lottery */}
+                {!isLottery && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <span className="text-xs font-semibold text-v-text-2 uppercase tracking-wider">Active Hours</span>
+                        <p className="text-xs text-v-text-3 mt-0.5">Restrict to specific hours each day (e.g. Lunch Rush)</p>
+                      </div>
+                      <button type="button" onClick={() => setBasics(p => ({ ...p, activeHoursEnabled: !p.activeHoursEnabled }))}
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${basics.activeHoursEnabled ? 'bg-v-purple' : 'bg-v-border'}`}>
+                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${basics.activeHoursEnabled ? 'left-6' : 'left-1'}`} />
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {basics.activeHoursEnabled && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4 overflow-hidden">
+                          <div>
+                            <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">Start Time</label>
+                            <input type="time" value={basics.activeStartTime} onChange={e => setBasics(p => ({ ...p, activeStartTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-1.5 block">End Time</label>
+                            <input type="time" value={basics.activeEndTime} onChange={e => setBasics(p => ({ ...p, activeEndTime: e.target.value }))} className="w-full bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text focus:outline-none focus:border-v-purple" />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {/* ── Participation ── */}
                 <div className="pt-2 border-t border-v-border space-y-4">
