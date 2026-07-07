@@ -199,6 +199,10 @@ function GroupUnlockCTA({ m, meta, onReserve }: { m: Mechanic; meta: typeof MECH
 // compact info-box layout instead of each having a bespoke, more cluttered block.
 const CLAIM_STYLE_TYPES: MechanicType[] = ['buyxgety', 'coupon', 'flash', 'friend', 'groupunlock', 'combo']
 
+// Mechanics whose info box already embeds "playing today" + campaign duration,
+// so the standalone social-proof row underneath would just repeat it.
+const BOXED_ACTIVITY_TYPES: MechanicType[] = [...CLAIM_STYLE_TYPES, 'spin', 'dice', 'shake', 'lottery']
+
 function ClaimInfoBox({
   meta, reward, progress, claimBefore, redeemBefore, extra,
 }: {
@@ -552,6 +556,15 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                               <span key={p} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>{p}</span>
                             ))}
                           </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-2 pt-2 border-t" style={{ borderColor: `${meta.cardFrom}22` }}>
+                            {(m.activeToday ?? 0) > 0 && (
+                              <>
+                                <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.activeToday} playing today</span>
+                                <span className="text-gray-300">·</span>
+                              </>
+                            )}
+                            <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                          </div>
                         </div>
                       )}
 
@@ -568,6 +581,15 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                                 {m.userTickets} ticket{m.userTickets !== 1 ? 's' : ''}
                               </span>
                             )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-2 pt-2 border-t" style={{ borderColor: `${meta.cardFrom}22` }}>
+                            {(m.activeToday ?? 0) > 0 && (
+                              <>
+                                <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.activeToday} playing today</span>
+                                <span className="text-gray-300">·</span>
+                              </>
+                            )}
+                            <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
                           </div>
                         </div>
                       )}
@@ -685,8 +707,8 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         />
                       )}
 
-                      {/* Social proof + date row — claim-style mechanics already show this in their info box above */}
-                      {!CLAIM_STYLE_TYPES.includes(m.type) && (
+                      {/* Social proof + date row — several mechanics already show this in their info box above */}
+                      {!BOXED_ACTIVITY_TYPES.includes(m.type) && (
                         <div className="flex items-center gap-2 mb-3 text-[10px] text-gray-400">
                           {(m.activeToday ?? 0) > 0 && (
                             <>
