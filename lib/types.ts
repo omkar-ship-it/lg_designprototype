@@ -264,5 +264,11 @@ export interface CustomerBusiness {
     buyTotalSlots?: number
     buyClaimed?: number
     buyRedeemBefore?: string
+    // coupon
+    couponReward?: string
+    couponTotalSlots?: number
+    couponClaimed?: number
+    couponRedeemBefore?: string
+    couponTerms?: string
   }[]
 }

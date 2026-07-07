@@ -371,6 +371,47 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
+            {/* Coupon Codes — claim window, spots, redeem window, terms */}
+            {mechanic.type === 'coupon' && (
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
+                    <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
+                  </div>
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {mechanic.couponRedeemBefore ? fmtDate(mechanic.couponRedeemBefore) : '—'}
+                    </p>
+                  </div>
+                  {mechanic.couponTotalSlots !== undefined && mechanic.couponClaimed !== undefined && (
+                    <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Coupons Claimed</p>
+                        <p className="text-sm font-bold text-gray-900">{mechanic.couponClaimed} / {mechanic.couponTotalSlots}</p>
+                      </div>
+                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
+                        {mechanic.couponTotalSlots - mechanic.couponClaimed} remaining
+                      </p>
+                    </div>
+                  )}
+                  {mechanic.couponReward && (
+                    <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
+                      <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.couponReward}</p>
+                    </div>
+                  )}
+                </div>
+                {mechanic.couponTerms && (
+                  <div className="bg-gray-50 rounded-2xl p-4">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{mechanic.couponTerms}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Duration + players */}
             <div className="bg-gray-50 rounded-2xl p-4 mb-6">
               <div className="flex items-center justify-between mb-1">
@@ -394,7 +435,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         {/* PLAY / CLAIM CTA */}
         {mechanic.playedToday ? (
           <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-            <span>✓</span> {mechanic.type === 'buyxgety' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+            <span>✓</span> {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' ? 'Claimed today' : 'Played today'} · Come back tomorrow
           </div>
         ) : (
           <motion.button
@@ -406,7 +447,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               boxShadow: `0 8px 28px ${meta.cardFrom}55`,
             }}
           >
-            {mechanic.type === 'buyxgety' ? 'Claim Now' : 'Play Now'} {meta.emoji}
+            {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' ? 'Claim Now' : 'Play Now'} {meta.emoji}
           </motion.button>
         )}
       </div>
