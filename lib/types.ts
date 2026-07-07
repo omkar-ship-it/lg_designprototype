@@ -171,9 +171,14 @@ export interface GroupUnlockConfig {
   rewardExpiryUnit?: RollingExpiryUnit // 'days' | 'months', when mode === 'rolling'
 }
 
+export interface ComboItem {
+  name: string
+  free: boolean                  // included in the bundle at no extra cost
+}
+
 export interface ComboDealConfig {
   type: 'combo'
-  items: string[]                // bundle item/service names, e.g. ["Coffee", "Croissant", "Fruit Bowl"]
+  items: ComboItem[]             // bundle item/service names, e.g. [{ name: "Coffee", free: false }, { name: "Fruit Bowl", free: true }]
   originalPrice: number          // ₹, sum value of items bought individually (shown struck-through)
   bundlePrice: number            // ₹, discounted price customer pays for the bundle
   totalSpots: number             // limited quantity available
@@ -344,7 +349,7 @@ export interface CustomerBusiness {
     groupRedeemBefore?: string
     hasReserved?: boolean
     // combo (package/combo deal)
-    comboItems?: string[]
+    comboItems?: ComboItem[]
     comboOriginalPrice?: number
     comboBundlePrice?: number
     comboTotalSpots?: number

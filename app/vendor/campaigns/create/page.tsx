@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Slider, Select } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit, ComboItem } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -80,9 +80,11 @@ function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind:
 }
 
 // ── Package/Combo Deal ─────────────────────────────────────────────────────────
-function buildComboSentence(cfg: { items: string[]; originalPrice: number; bundlePrice: number }) {
-  const itemCount = cfg.items.filter(i => i.trim()).length
-  return `${itemCount} Item${itemCount !== 1 ? 's' : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
+function buildComboSentence(cfg: { items: ComboItem[]; originalPrice: number; bundlePrice: number }) {
+  const named = cfg.items.filter(i => i.name.trim())
+  const freeCount = named.filter(i => i.free).length
+  const itemCount = named.length
+  return `${itemCount} Item${itemCount !== 1 ? 's' : ''}${freeCount > 0 ? ` (${freeCount} Free)` : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
 }
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
@@ -383,7 +385,7 @@ export default function CreateCampaignPage() {
 
   // Package/Combo Deal
   const [comboConfig, setComboConfig] = useState({
-    items: ['', ''] as string[],
+    items: [{ name: '', free: false }, { name: '', free: false }] as ComboItem[],
     originalPrice: 500,
     bundlePrice: 350,
     totalSpots: 100,
@@ -469,7 +471,7 @@ export default function CreateCampaignPage() {
       return groupUnlockConfig.targetParticipants > 0 && groupUnlockConfig.rewardValue.trim().length > 0
     }
     if (mechanic === 'combo') {
-      return comboConfig.items.some(i => i.trim()) && comboConfig.originalPrice > 0 && comboConfig.bundlePrice > 0
+      return comboConfig.items.some(i => i.name.trim()) && comboConfig.originalPrice > 0 && comboConfig.bundlePrice > 0
     }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
@@ -1446,9 +1448,18 @@ export default function CreateCampaignPage() {
                         <input
                           className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
                           placeholder="e.g. Coffee"
-                          value={item}
-                          onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? e.target.value : it) }))}
+                          value={item.name}
+                          onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? { ...it, name: e.target.value } : it) }))}
                         />
+                        <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={item.free}
+                            onChange={e => setComboConfig(p => ({ ...p, items: p.items.map((it, j) => j === i ? { ...it, free: e.target.checked } : it) }))}
+                            className="w-3.5 h-3.5 accent-v-purple rounded"
+                          />
+                          <span className="text-xs text-v-text-3">Free</span>
+                        </label>
                         {comboConfig.items.length > 1 && (
                           <button onClick={() => setComboConfig(p => ({ ...p, items: p.items.filter((_, j) => j !== i) }))} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1457,7 +1468,7 @@ export default function CreateCampaignPage() {
                       </div>
                     ))}
                   </div>
-                  <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, items: [...p.items, ''] }))}>
+                  <Button variant="secondary" size="sm" className="mt-2" onClick={() => setComboConfig(p => ({ ...p, items: [...p.items, { name: '', free: false }] }))}>
                     <Plus className="w-3 h-3" /> Add Item
                   </Button>
                 </div>

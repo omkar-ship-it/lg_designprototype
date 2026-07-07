@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge, MechanicBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, getMechanicColor, formatDate } from '@/lib/utils'
-import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit } from '@/lib/types'
+import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode, RollingExpiryUnit, ComboItem } from '@/lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -73,9 +73,11 @@ function buildGroupUnlockSentence(cfg: { targetParticipants: number; rewardKind:
   return `${cfg.targetParticipants} People → ${reward}`
 }
 
-function buildComboSentence(cfg: { items: string[]; originalPrice: number; bundlePrice: number }) {
-  const itemCount = cfg.items.filter(i => i.trim()).length
-  return `${itemCount} Item${itemCount !== 1 ? 's' : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
+function buildComboSentence(cfg: { items: ComboItem[]; originalPrice: number; bundlePrice: number }) {
+  const named = cfg.items.filter(i => i.name.trim())
+  const freeCount = named.filter(i => i.free).length
+  const itemCount = named.length
+  return `${itemCount} Item${itemCount !== 1 ? 's' : ''}${freeCount > 0 ? ` (${freeCount} Free)` : ''} → ₹${cfg.bundlePrice || 0} (was ₹${cfg.originalPrice || 0})`
 }
 
 // ── Reusable locked field ─────────────────────────────────────────────────────
@@ -205,6 +207,7 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
       const c = campaign.config
       return [
         buildComboSentence(c),
+        c.items.filter(i => i.name.trim()).map(i => i.free ? `${i.name} (Free)` : i.name).join(', '),
         `Save ₹${Math.max(0, c.originalPrice - c.bundlePrice)} (${c.originalPrice > 0 ? Math.round(((c.originalPrice - c.bundlePrice) / c.originalPrice) * 100) : 0}% off)`,
         c.rewardExpiryMode === 'fixed'
           ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}`
@@ -712,7 +715,7 @@ function DraftGroupUnlockConfig({ config, setConfig }: { config: GroupUnlockDraf
 
 // ── Draft Package/Combo Deal config (inline edit for draft campaigns) ───────
 type ComboDraft = {
-  items: string[]
+  items: ComboItem[]
   originalPrice: number; bundlePrice: number
   totalSpots: number
   rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string
@@ -732,9 +735,18 @@ function DraftComboConfig({ config, setConfig }: { config: ComboDraft; setConfig
               <input
                 className="flex-1 bg-white border border-v-border rounded-xl px-3 py-2 text-sm text-v-text placeholder:text-v-text-3 focus:outline-none focus:border-v-purple"
                 placeholder="e.g. Coffee"
-                value={item}
-                onChange={e => setConfig({ ...config, items: config.items.map((it, j) => j === i ? e.target.value : it) })}
+                value={item.name}
+                onChange={e => setConfig({ ...config, items: config.items.map((it, j) => j === i ? { ...it, name: e.target.value } : it) })}
               />
+              <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={item.free}
+                  onChange={e => setConfig({ ...config, items: config.items.map((it, j) => j === i ? { ...it, free: e.target.checked } : it) })}
+                  className="w-3.5 h-3.5 accent-v-purple rounded"
+                />
+                <span className="text-xs text-v-text-3">Free</span>
+              </label>
               {config.items.length > 1 && (
                 <button onClick={() => setConfig({ ...config, items: config.items.filter((_, j) => j !== i) })} className="p-2 rounded-lg text-v-text-3 hover:text-v-danger hover:bg-red-50 transition-colors">
                   <Trash className="w-3.5 h-3.5" />
@@ -743,7 +755,7 @@ function DraftComboConfig({ config, setConfig }: { config: ComboDraft; setConfig
             </div>
           ))}
         </div>
-        <Button variant="secondary" size="sm" className="mt-2" onClick={() => setConfig({ ...config, items: [...config.items, ''] })}>
+        <Button variant="secondary" size="sm" className="mt-2" onClick={() => setConfig({ ...config, items: [...config.items, { name: '', free: false }] })}>
           <Plus className="w-3 h-3" /> Add Item
         </Button>
       </div>
@@ -910,7 +922,7 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
       const c = original.config
       return { items: c.items, originalPrice: c.originalPrice, bundlePrice: c.bundlePrice, totalSpots: c.totalSpots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryValue: c.rewardExpiryValue ?? 14, rewardExpiryUnit: c.rewardExpiryUnit ?? 'days', termsAndConditions: c.termsAndConditions }
     }
-    return { items: ['', ''] as string[], originalPrice: 500, bundlePrice: 350, totalSpots: 100, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 14, rewardExpiryUnit: 'days' as RollingExpiryUnit, termsAndConditions: '' }
+    return { items: [{ name: '', free: false }, { name: '', free: false }] as ComboItem[], originalPrice: 500, bundlePrice: 350, totalSpots: 100, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryValue: 14, rewardExpiryUnit: 'days' as RollingExpiryUnit, termsAndConditions: '' }
   })
 
   // Save state

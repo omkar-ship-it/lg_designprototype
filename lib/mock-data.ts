@@ -368,7 +368,11 @@ export const campaigns: Campaign[] = [
     ],
     config: {
       type: 'combo',
-      items: ['Coffee', 'Croissant', 'Fruit Bowl'],
+      items: [
+        { name: 'Coffee', free: false },
+        { name: 'Croissant', free: false },
+        { name: 'Fruit Bowl', free: true },
+      ],
       originalPrice: 500,
       bundlePrice: 350,
       totalSpots: 100,
