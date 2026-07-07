@@ -244,5 +244,10 @@ export interface CustomerBusiness {
     // lottery
     drawDate?: string
     userTickets?: number
+    // buyxgety
+    buyCondition?: BuyCondition
+    buyProgress?: number
+    buyTarget?: number
+    buyReward?: string
   }[]
 }

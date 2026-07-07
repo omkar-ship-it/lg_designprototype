@@ -7,7 +7,6 @@ import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
 
-// NOTE: buyxgety has no customer-facing play screen yet (vendor-side only for now) — link/icon are placeholders.
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   stamp:   '/customer/games/stamp',
   spin:    '/customer/games/spin',
@@ -15,7 +14,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
-  buyxgety: '/customer/games/stamp',
+  buyxgety: '/customer/games/buyxgety',
 }
 
 const MECHANIC_ICONS = {
@@ -333,6 +332,42 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     {mechanic.totalPoints ?? 0}
                     <span className="text-xs font-semibold text-gray-400 ml-1">pts</span>
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Buy X Get Y — progress hero */}
+            {mechanic.type === 'buyxgety' && mechanic.buyProgress !== undefined && mechanic.buyTarget && (
+              <div className="mb-6">
+                <div className="rounded-3xl overflow-hidden" style={{ boxShadow: `0 16px 48px ${meta.cardFrom}30, 0 0 0 1px ${meta.cardFrom}25` }}>
+                  <div className="relative px-5 py-5 overflow-hidden" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
+                    <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">💰</span>
+                    <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">
+                      {mechanic.buyCondition === 'spend' ? 'Amount Spent' : 'Purchases Made'}
+                    </p>
+                    <p className="text-4xl font-black text-white leading-none">
+                      {mechanic.buyCondition === 'spend' ? `₹${mechanic.buyProgress}` : mechanic.buyProgress}
+                      <span className="text-base font-semibold text-white/50">
+                        {' '}/ {mechanic.buyCondition === 'spend' ? `₹${mechanic.buyTarget}` : mechanic.buyTarget}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="bg-white px-5 py-4">
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, Math.round((mechanic.buyProgress / mechanic.buyTarget) * 100))}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                      />
+                    </div>
+                    {mechanic.buyReward && (
+                      <p className="text-xs text-gray-500 text-center">
+                        Reach the goal to unlock <span className="font-bold" style={{ color: meta.cardFrom }}>{mechanic.buyReward}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

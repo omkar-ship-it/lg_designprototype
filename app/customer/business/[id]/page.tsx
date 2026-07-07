@@ -9,7 +9,6 @@ import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
 
-// NOTE: buyxgety has no customer-facing play screen yet (vendor-side only for now) — link/icon are placeholders.
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   stamp:   '/customer/games/stamp',
   spin:    '/customer/games/spin',
@@ -17,7 +16,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
-  buyxgety: '/customer/games/stamp',
+  buyxgety: '/customer/games/buyxgety',
 }
 
 const MECHANIC_ICONS = {
@@ -486,6 +485,31 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                             <div className="flex items-center gap-1 text-[11px] font-semibold text-purple-600">
                               <span>⭐ {m.totalPoints} pts total</span>
                             </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Buy X Get Y: progress toward reward */}
+                      {m.type === 'buyxgety' && m.buyProgress !== undefined && m.buyTarget && (
+                        <div className="mb-2.5">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              {m.buyCondition === 'spend' ? 'Spend Progress' : 'Purchase Progress'}
+                            </span>
+                            <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
+                              {m.buyCondition === 'spend' ? `₹${m.buyProgress} / ₹${m.buyTarget}` : `${m.buyProgress} / ${m.buyTarget}`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${Math.min(100, Math.round((m.buyProgress / m.buyTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
+                            />
+                          </div>
+                          {m.buyReward && (
+                            <p className="text-[10px] text-gray-400 mt-1.5">
+                              Reach the goal for <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.buyReward}</span>
+                            </p>
                           )}
                         </div>
                       )}
