@@ -1,6 +1,10 @@
-export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin'
+export type MechanicType = 'shake' | 'stamp' | 'spin' | 'dice' | 'lottery' | 'checkin' | 'buyxgety'
 export type CampaignStatus = 'active' | 'draft' | 'ended' | 'paused'
 export type RewardType = 'single' | 'range'
+
+// ── Shared reward/expiry typing (introduced for Buy X Get Y, reused by later mechanics) ──
+export type RewardKind = 'flat' | 'percent' | 'item' | 'points'
+export type RewardExpiryMode = 'fixed' | 'rolling'
 
 export interface Reward {
   id: string
@@ -21,7 +25,7 @@ export interface Campaign {
   currentUsers: number
   playsPerUser: number
   rewards: Reward[]
-  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig
+  config: ShakeConfig | StampConfig | SpinConfig | DiceConfig | LotteryConfig | CheckinConfig | BuyXGetYConfig
   pin: string
   pinExpiresAt: number
   participations: number
@@ -91,6 +95,27 @@ export interface CheckinConfig {
   pointsPerCheckIn: number
   maxCheckInsPerDay: number
   checkInsPerUser: number
+}
+
+export type BuyCondition = 'quantity' | 'spend'
+
+export interface BuyXGetYConfig {
+  type: 'buyxgety'
+  condition: BuyCondition
+  buyQuantity: number           // used when condition === 'quantity', e.g. 3
+  unitLabel: string             // vendor-defined generic unit, e.g. "visits", "services", "items"
+  spendAmount: number           // used when condition === 'spend', in ₹
+
+  rewardKind: RewardKind
+  rewardValue: string           // flat "50" (₹) / percent "20" / item free-text description / points "100"
+  getQuantity: number           // only relevant when rewardKind === 'item' (e.g. "get 2 free"), default 1
+
+  totalRewardSlots: number      // scarcity cap — total redemptions available across the whole campaign
+  redemptionsPerUser: number    // max times one customer can redeem
+
+  rewardExpiryMode: RewardExpiryMode
+  rewardExpiryDate?: string     // ISO date, when mode === 'fixed'
+  rewardExpiryDays?: number     // days after claim, when mode === 'rolling'
 }
 
 export interface Customer {

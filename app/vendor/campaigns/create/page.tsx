@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Slider } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { getMechanicLabel, getMechanicEmoji, getMechanicColor } from '@/lib/utils'
-import type { MechanicType } from '@/lib/types'
+import type { MechanicType, BuyCondition, RewardKind, RewardExpiryMode } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
@@ -16,7 +16,24 @@ const MECHANICS: { type: MechanicType; desc: string; tags: string[] }[] = [
   { type: 'spin',    desc: 'Spin a colourful wheel and land on exciting rewards.',                       tags: ['Visual', 'Exciting'] },
   { type: 'dice',    desc: 'Roll the dice — certain faces win. Pure luck, maximum thrill.',              tags: ['Gamble feel', 'Quick'] },
   { type: 'lottery', desc: 'Scratch & reveal a lottery ticket with a jackpot and tiered prizes.',       tags: ['Jackpot', 'Tiered rewards'] },
+  { type: 'buyxgety', desc: 'Customers buy or spend to unlock a reward — works for repeat purchases, visit counts, or spend thresholds.', tags: ['Perceived value', 'Loss aversion'] },
 ]
+
+// ── Buy X Get Y ────────────────────────────────────────────────────────────────
+function buildBuyXGetYSentence(cfg: {
+  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string; getQuantity: number
+}) {
+  const trigger = cfg.condition === 'quantity'
+    ? `Buy ${cfg.buyQuantity} ${cfg.unitLabel.trim() || 'purchases'}`
+    : `Spend ₹${cfg.spendAmount || 0}`
+  const reward =
+    cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
+    `Get ${cfg.getQuantity > 1 ? `${cfg.getQuantity}× ` : ''}${cfg.rewardValue.trim() || 'Free Item'}`
+  return `${trigger} → ${reward}`
+}
 
 const STEPS = ['Mechanic', 'Basics', 'Game Config', 'Review']
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -255,10 +272,27 @@ export default function CreateCampaignPage() {
     ] as { id: string; name: string; reward: string }[],
   })
 
+  // Buy X Get Y
+  const [buyXGetY, setBuyXGetY] = useState({
+    condition: 'quantity' as BuyCondition,
+    buyQuantity: 3,
+    unitLabel: '',
+    spendAmount: 500,
+    rewardKind: 'item' as RewardKind,
+    rewardValue: '',
+    getQuantity: 1,
+    totalRewardSlots: 200,
+    redemptionsPerUser: 1,
+    rewardExpiryMode: 'rolling' as RewardExpiryMode,
+    rewardExpiryDate: '',
+    rewardExpiryDays: 7,
+  })
+
   const [launched, setLaunched] = useState(false)
 
   const isLottery        = mechanic === 'lottery'
   const isStamp          = mechanic === 'stamp'
+  const isBuyXGetY       = mechanic === 'buyxgety'
   const isShakeOrSpin    = mechanic === 'shake' || mechanic === 'spin'
   const isShakeSpinOrDice = mechanic === 'shake' || mechanic === 'spin' || mechanic === 'dice'
   const isToday          = basics.durationMode === 'today'
@@ -306,6 +340,11 @@ export default function CreateCampaignPage() {
     if (mechanic === 'spin')  return spinSegments.some(s => s.isWin && s.reward.trim())
     if (mechanic === 'dice')  return diceOutcomes.some(o => o.isWin && o.reward.trim())
     if (mechanic === 'lottery') return lotteryConfig.jackpotReward.trim().length > 0
+    if (mechanic === 'buyxgety') {
+      const triggerValid = buyXGetY.condition === 'quantity' ? buyXGetY.unitLabel.trim().length > 0 : buyXGetY.spendAmount > 0
+      const rewardValid = buyXGetY.rewardValue.trim().length > 0
+      return triggerValid && rewardValid
+    }
     if (mechanic === 'stamp') {
       const sValid = stampConfig.surpriseMode === 'single' ? stampConfig.surpriseSingle.trim().length > 0 : stampConfig.surprisePool.some(r => r.name) && surprisePoolTotal <= 100
       const bValid = stampConfig.bigMode === 'single' ? stampConfig.bigSingle.trim().length > 0 : stampConfig.bigPool.some(r => r.name) && bigPoolTotal <= 100
@@ -476,8 +515,8 @@ export default function CreateCampaignPage() {
                     </>
                   )}
 
-                  {/* Stamp: single user cap */}
-                  {isStamp && (
+                  {/* Stamp / Buy X Get Y: single user cap */}
+                  {(isStamp || isBuyXGetY) && (
                     <Slider label="User Cap" displayValue={`${basics.userCap} users`} min={10} max={2000} step={10} value={basics.userCap} onChange={e => setBasics(p => ({ ...p, userCap: Number(e.target.value) }))} />
                   )}
 
@@ -512,6 +551,14 @@ export default function CreateCampaignPage() {
                   <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
                     <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
                     <p>Stamp Card rewards fire at specific stamp positions — reward volume is determined by your stamp config, not a cap.</p>
+                  </div>
+                )}
+
+                {/* Buy X Get Y info note */}
+                {isBuyXGetY && (
+                  <div className="flex items-start gap-2.5 p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
+                    <AlertCircle className="w-4 h-4 text-v-purple shrink-0 mt-0.5" />
+                    <p>Buy X Get Y rewards trigger automatically — no win probability to configure. Scarcity, redemption limits, and expiry are set in the next step.</p>
                   </div>
                 )}
               </div>
@@ -773,6 +820,94 @@ export default function CreateCampaignPage() {
             </Card>
           )}
 
+          {/* BUY X GET Y */}
+          {step === 2 && mechanic === 'buyxgety' && (
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-v-text mb-1">Buy X Get Y — Offer Terms</h2>
+              <p className="text-xs text-v-text-3 mb-5">Works across purchase counts or spend thresholds — pick what fits your business, then define the reward.</p>
+
+              <div className="space-y-6">
+                {/* Trigger */}
+                <div>
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Trigger</p>
+                  <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {(['quantity', 'spend'] as BuyCondition[]).map(c => (
+                      <button key={c} onClick={() => setBuyXGetY(p => ({ ...p, condition: c }))}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${buyXGetY.condition === c ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {c === 'quantity' ? 'Purchase Count' : 'Spend Amount'}
+                      </button>
+                    ))}
+                  </div>
+                  {buyXGetY.condition === 'quantity' ? (
+                    <div className="grid grid-cols-2 gap-3 items-end">
+                      <Stepper label="Quantity" value={buyXGetY.buyQuantity} min={1} max={50} onChange={v => setBuyXGetY(p => ({ ...p, buyQuantity: v }))} />
+                      <Input label="Unit Label" placeholder="e.g. visits, services, items, sessions" value={buyXGetY.unitLabel} onChange={e => setBuyXGetY(p => ({ ...p, unitLabel: e.target.value }))} />
+                    </div>
+                  ) : (
+                    <Input label="Minimum Spend (₹)" type="number" min={1} value={buyXGetY.spendAmount} onChange={e => setBuyXGetY(p => ({ ...p, spendAmount: Number(e.target.value) }))} />
+                  )}
+                </div>
+
+                {/* Reward */}
+                <div className="pt-2 border-t border-v-border">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+                  <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+                    {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+                      <button key={k} onClick={() => setBuyXGetY(p => ({ ...p, rewardKind: k, rewardValue: '' }))}
+                        className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${buyXGetY.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {buyXGetY.rewardKind === 'flat' && (
+                    <Input label="Discount Amount (₹)" type="number" min={1} value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {buyXGetY.rewardKind === 'percent' && (
+                    <Slider label="Discount %" displayValue={`${buyXGetY.rewardValue || 0}%`} min={1} max={100} step={1} value={Number(buyXGetY.rewardValue) || 0} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                  {buyXGetY.rewardKind === 'item' && (
+                    <div className="grid grid-cols-2 gap-3 items-end">
+                      <Input label="Reward Description" placeholder="e.g. Free item or service" value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
+                      <Stepper label="Get Quantity" value={buyXGetY.getQuantity} min={1} max={10} onChange={v => setBuyXGetY(p => ({ ...p, getQuantity: v }))} />
+                    </div>
+                  )}
+                  {buyXGetY.rewardKind === 'points' && (
+                    <Input label="Points Awarded" type="number" min={1} value={buyXGetY.rewardValue} onChange={e => setBuyXGetY(p => ({ ...p, rewardValue: e.target.value }))} />
+                  )}
+                </div>
+
+                {/* Scarcity & Expiry */}
+                <div className="pt-2 border-t border-v-border space-y-4">
+                  <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
+                  <Slider label="Total Reward Slots" displayValue={`${buyXGetY.totalRewardSlots} rewards total`} min={10} max={5000} step={10} value={buyXGetY.totalRewardSlots} onChange={e => setBuyXGetY(p => ({ ...p, totalRewardSlots: Number(e.target.value) }))} />
+                  <Stepper label="Redemptions Per User" hint="times / user" value={buyXGetY.redemptionsPerUser} min={1} max={20} onChange={v => setBuyXGetY(p => ({ ...p, redemptionsPerUser: v }))} />
+                  <div>
+                    <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+                    <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+                      {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+                        <button key={m} onClick={() => setBuyXGetY(p => ({ ...p, rewardExpiryMode: m }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${buyXGetY.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                          {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+                        </button>
+                      ))}
+                    </div>
+                    {buyXGetY.rewardExpiryMode === 'rolling' ? (
+                      <Stepper label="Days After Claim" hint="days" value={buyXGetY.rewardExpiryDays} min={1} max={90} onChange={v => setBuyXGetY(p => ({ ...p, rewardExpiryDays: v }))} />
+                    ) : (
+                      <Input label="Expiry Date" type="date" value={buyXGetY.rewardExpiryDate} onChange={e => setBuyXGetY(p => ({ ...p, rewardExpiryDate: e.target.value }))} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Live preview */}
+                <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+                  <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+                  <span className="font-bold text-v-purple">{buildBuyXGetYSentence(buyXGetY)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* ── Step 3: Review & Launch ── */}
           {step === 3 && (
             <div className="space-y-4">
@@ -801,12 +936,18 @@ export default function CreateCampaignPage() {
                     {
                       label: 'Rewards',
                       value:
-                        mechanic === 'shake'   ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} · distributed among ${basics.overallWinRate}% winners` :
-                        mechanic === 'spin'    ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''} · ${spinWinRate}% win rate` :
-                        mechanic === 'dice'    ? `${diceOutcomes.filter(o => o.isWin).length} of 6 faces win · ${diceWinRate}% win rate` :
-                        mechanic === 'stamp'   ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
-                        mechanic === 'lottery' ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` : '—',
+                        mechanic === 'shake'    ? `${shakeRewards.filter(r => r.name).length} reward type${shakeRewards.filter(r => r.name).length !== 1 ? 's' : ''} · distributed among ${basics.overallWinRate}% winners` :
+                        mechanic === 'spin'     ? `${spinSegments.filter(s => s.isWin && s.reward).length} winning segment${spinSegments.filter(s => s.isWin).length !== 1 ? 's' : ''} · ${spinWinRate}% win rate` :
+                        mechanic === 'dice'     ? `${diceOutcomes.filter(o => o.isWin).length} of 6 faces win · ${diceWinRate}% win rate` :
+                        mechanic === 'stamp'    ? `${stampConfig.prefillStamps > 0 ? `${stampConfig.prefillStamps} pre-filled · ` : ''}Surprise (${stampConfig.surpriseFrom}–${stampConfig.surpriseTo}) · Big (${stampConfig.bigRewardFrom}–${stampConfig.bigRewardTo})` :
+                        mechanic === 'lottery'  ? `Jackpot + ${lotteryConfig.prizes.length} prize${lotteryConfig.prizes.length !== 1 ? 's' : ''}` :
+                        mechanic === 'buyxgety' ? buildBuyXGetYSentence(buyXGetY) : '—',
                     },
+                    ...(isBuyXGetY ? [
+                      { label: 'Total Reward Slots', value: `${buyXGetY.totalRewardSlots} rewards` },
+                      { label: 'Redemptions Per User', value: `${buyXGetY.redemptionsPerUser}× per user` },
+                      { label: 'Reward Expiry', value: buyXGetY.rewardExpiryMode === 'fixed' ? (buyXGetY.rewardExpiryDate ? fmtDate(buyXGetY.rewardExpiryDate) : '—') : `${buyXGetY.rewardExpiryDays} days after claim` },
+                    ] : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between py-3 border-b border-v-border last:border-0">
                       <span className="text-sm text-v-text-2">{item.label}</span>

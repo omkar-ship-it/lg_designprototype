@@ -2,11 +2,12 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, Sparkles, Dices, Ticket, Wallet } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType } from '@/lib/types'
 
+// NOTE: buyxgety has no customer-facing play screen yet (vendor-side only for now) — link/icon are placeholders.
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   stamp:   '/customer/games/stamp',
   spin:    '/customer/games/spin',
@@ -14,6 +15,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
+  buyxgety: '/customer/games/stamp',
 }
 
 const MECHANIC_ICONS = {
@@ -23,6 +25,7 @@ const MECHANIC_ICONS = {
   spin:    Sparkles,
   dice:    Dices,
   lottery: Ticket,
+  buyxgety: Wallet,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

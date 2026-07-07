@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge, MechanicBadge } from '@/components/ui/badge'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicLabel, getMechanicColor, formatDate } from '@/lib/utils'
-import type { CampaignStatus } from '@/lib/types'
+import type { CampaignStatus, BuyCondition, RewardKind, RewardExpiryMode } from '@/lib/types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SPIN_COLORS = ['#7C3AED', '#EC4899', '#F59E0B', '#06B6D4', '#22C55E', '#F43F5E', '#8B5CF6', '#10B981']
@@ -21,6 +21,21 @@ const ICONS = ['🎁', '☕', '🧁', '🥪', '🍰', '🏷️', '🎉', '🍳',
 
 function newReward() {
   return { id: Math.random().toString(36).slice(2), name: '', description: '', icon: '🎁', probability: 10 }
+}
+
+function buildBuyXGetYSentence(cfg: {
+  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string; getQuantity: number
+}) {
+  const trigger = cfg.condition === 'quantity'
+    ? `Buy ${cfg.buyQuantity} ${cfg.unitLabel.trim() || 'purchases'}`
+    : `Spend ₹${cfg.spendAmount || 0}`
+  const reward =
+    cfg.rewardKind === 'flat'    ? `Get ₹${cfg.rewardValue || 0} Off` :
+    cfg.rewardKind === 'percent' ? `Get ${cfg.rewardValue || 0}% Off` :
+    cfg.rewardKind === 'points'  ? `Earn ${cfg.rewardValue || 0} Points` :
+    `Get ${cfg.getQuantity > 1 ? `${cfg.getQuantity}× ` : ''}${cfg.rewardValue.trim() || 'Free Item'}`
+  return `${trigger} → ${reward}`
 }
 
 // ── Reusable locked field ─────────────────────────────────────────────────────
@@ -99,6 +114,15 @@ function GameConfigSummary({ campaign }: { campaign: typeof campaigns[0] }) {
     if (campaign.mechanic === 'shake' && campaign.config.type === 'shake') {
       return [`Win probability: ${Math.round((campaign.config.winProbability ?? 0.65) * 100)}%`]
     }
+    if (campaign.mechanic === 'buyxgety' && campaign.config.type === 'buyxgety') {
+      const c = campaign.config
+      return [
+        buildBuyXGetYSentence(c),
+        `${c.totalRewardSlots} reward slots total`,
+        `${c.redemptionsPerUser}× per user`,
+        c.rewardExpiryMode === 'fixed' ? `Expires ${c.rewardExpiryDate ? formatDate(c.rewardExpiryDate) : '—'}` : `Expires ${c.rewardExpiryDays} days after claim`,
+      ]
+    }
     return []
   }
   return (
@@ -169,6 +193,96 @@ function DraftSpinConfig({ segments, setSegments }: { segments: { label: string;
   )
 }
 
+// ── Draft Buy X Get Y config (inline edit for draft campaigns) ───────────────
+type BuyXGetYDraft = {
+  condition: BuyCondition; buyQuantity: number; unitLabel: string; spendAmount: number
+  rewardKind: RewardKind; rewardValue: string; getQuantity: number
+  totalRewardSlots: number; rewardExpiryMode: RewardExpiryMode; rewardExpiryDate: string; rewardExpiryDays: number
+}
+
+function DraftBuyXGetYConfig({ config, setConfig }: { config: BuyXGetYDraft; setConfig: (c: BuyXGetYDraft) => void }) {
+  return (
+    <div className="space-y-6">
+      {/* Trigger */}
+      <div>
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Trigger</p>
+        <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+          {(['quantity', 'spend'] as BuyCondition[]).map(c => (
+            <button key={c} onClick={() => setConfig({ ...config, condition: c })}
+              className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.condition === c ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+              {c === 'quantity' ? 'Purchase Count' : 'Spend Amount'}
+            </button>
+          ))}
+        </div>
+        {config.condition === 'quantity' ? (
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <Stepper label="Quantity" value={config.buyQuantity} min={1} max={50} onChange={v => setConfig({ ...config, buyQuantity: v })} />
+            <Input label="Unit Label" placeholder="e.g. visits, services, items, sessions" value={config.unitLabel} onChange={e => setConfig({ ...config, unitLabel: e.target.value })} />
+          </div>
+        ) : (
+          <Input label="Minimum Spend (₹)" type="number" min={1} value={config.spendAmount} onChange={e => setConfig({ ...config, spendAmount: Number(e.target.value) })} />
+        )}
+      </div>
+
+      {/* Reward */}
+      <div className="pt-2 border-t border-v-border">
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider mb-2">Reward</p>
+        <div className="grid grid-cols-4 rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3">
+          {([['flat', 'Flat ₹'], ['percent', '% Off'], ['item', 'Item/Service'], ['points', 'Points']] as [RewardKind, string][]).map(([k, label]) => (
+            <button key={k} onClick={() => setConfig({ ...config, rewardKind: k, rewardValue: '' })}
+              className={`py-1.5 rounded-md text-[11px] font-semibold transition-all ${config.rewardKind === k ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {config.rewardKind === 'flat' && (
+          <Input label="Discount Amount (₹)" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+        {config.rewardKind === 'percent' && (
+          <Slider label="Discount %" displayValue={`${config.rewardValue || 0}%`} min={1} max={100} step={1} value={Number(config.rewardValue) || 0} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+        {config.rewardKind === 'item' && (
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <Input label="Reward Description" placeholder="e.g. Free item or service" value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+            <Stepper label="Get Quantity" value={config.getQuantity} min={1} max={10} onChange={v => setConfig({ ...config, getQuantity: v })} />
+          </div>
+        )}
+        {config.rewardKind === 'points' && (
+          <Input label="Points Awarded" type="number" min={1} value={config.rewardValue} onChange={e => setConfig({ ...config, rewardValue: e.target.value })} />
+        )}
+      </div>
+
+      {/* Scarcity & Expiry */}
+      <div className="pt-2 border-t border-v-border space-y-4">
+        <p className="text-[11px] font-semibold text-v-text-2 uppercase tracking-wider">Scarcity & Expiry</p>
+        <Slider label="Total Reward Slots" displayValue={`${config.totalRewardSlots} rewards total`} min={10} max={5000} step={10} value={config.totalRewardSlots} onChange={e => setConfig({ ...config, totalRewardSlots: Number(e.target.value) })} />
+        <div>
+          <label className="text-xs font-semibold text-v-text-2 uppercase tracking-wider mb-2 block">Reward Expiry</label>
+          <div className="flex rounded-lg border border-v-border overflow-hidden bg-v-surface-2 p-0.5 gap-0.5 mb-3 max-w-xs">
+            {(['rolling', 'fixed'] as RewardExpiryMode[]).map(m => (
+              <button key={m} onClick={() => setConfig({ ...config, rewardExpiryMode: m })}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${config.rewardExpiryMode === m ? 'bg-white text-v-text shadow-sm' : 'text-v-text-3 hover:text-v-text-2'}`}>
+                {m === 'rolling' ? 'Rolling Period' : 'Fixed Date'}
+              </button>
+            ))}
+          </div>
+          {config.rewardExpiryMode === 'rolling' ? (
+            <Stepper label="Days After Claim" hint="days" value={config.rewardExpiryDays} min={1} max={90} onChange={v => setConfig({ ...config, rewardExpiryDays: v })} />
+          ) : (
+            <Input label="Expiry Date" type="date" value={config.rewardExpiryDate} onChange={e => setConfig({ ...config, rewardExpiryDate: e.target.value })} />
+          )}
+        </div>
+      </div>
+
+      {/* Live preview */}
+      <div className="p-3.5 bg-v-surface-2 border border-v-border rounded-xl text-sm">
+        <span className="text-v-text-3 text-xs block mb-1">Preview</span>
+        <span className="font-bold text-v-purple">{buildBuyXGetYSentence(config)}</span>
+      </div>
+    </div>
+  )
+}
+
 // ── Status action configs ─────────────────────────────────────────────────────
 const STATUS_TRANSITIONS: Record<CampaignStatus, { label: string; icon: typeof Play; variant: 'primary' | 'secondary' | 'danger' | 'gold'; description: string }[]> = {
   active: [
@@ -202,6 +316,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
   const [userCap,       setUserCap]       = useState(original.userCap)
   const [playsPerDay,   setPlaysPerDay]   = useState(original.playsPerUser)
   const [dailyRewardCap, setDailyRewardCap] = useState(50)
+  const [redemptionsPerUser, setRedemptionsPerUser] = useState(() =>
+    original.config.type === 'buyxgety' ? original.config.redemptionsPerUser : 1
+  )
 
   // Spin segments for draft editing
   const [spinSegments, setSpinSegments] = useState(() => {
@@ -209,6 +326,15 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
       return original.config.segments.map(s => ({ label: s.label, color: s.color, isWin: s.isWin, reward: s.reward ?? '' }))
     }
     return [{ label: 'Free Coffee', color: '#7C3AED', isWin: true, reward: 'Free Coffee' }]
+  })
+
+  // Buy X Get Y config for draft editing
+  const [buyXGetYDraft, setBuyXGetYDraft] = useState(() => {
+    if (original.config.type === 'buyxgety') {
+      const c = original.config
+      return { condition: c.condition, buyQuantity: c.buyQuantity, unitLabel: c.unitLabel, spendAmount: c.spendAmount, rewardKind: c.rewardKind, rewardValue: c.rewardValue, getQuantity: c.getQuantity, totalRewardSlots: c.totalRewardSlots, rewardExpiryMode: c.rewardExpiryMode, rewardExpiryDate: c.rewardExpiryDate ?? '', rewardExpiryDays: c.rewardExpiryDays ?? 7 }
+    }
+    return { condition: 'quantity' as BuyCondition, buyQuantity: 3, unitLabel: '', spendAmount: 500, rewardKind: 'item' as RewardKind, rewardValue: '', getQuantity: 1, totalRewardSlots: 200, rewardExpiryMode: 'rolling' as RewardExpiryMode, rewardExpiryDate: '', rewardExpiryDays: 7 }
   })
 
   // Save state
@@ -219,7 +345,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     name !== original.name ||
     endDate !== original.endDate ||
     userCap !== original.userCap ||
-    playsPerDay !== original.playsPerUser
+    playsPerDay !== original.playsPerUser ||
+    (original.config.type === 'buyxgety' && redemptionsPerUser !== original.config.redemptionsPerUser)
 
   const handleSave = () => {
     setSaveState('saving')
@@ -241,8 +368,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
     }, 1200)
   }
 
-  const isStamp   = original.mechanic === 'stamp'
-  const isLottery = original.mechanic === 'lottery'
+  const isStamp    = original.mechanic === 'stamp'
+  const isLottery  = original.mechanic === 'lottery'
+  const isBuyXGetY = original.mechanic === 'buyxgety'
 
   return (
     <div className="p-8 max-w-3xl">
@@ -340,8 +468,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 <Slider label="User Cap" displayValue={`${userCap} users`} min={original.currentUsers || 10} max={5000} step={10} value={userCap} onChange={e => setUserCap(Number(e.target.value))} />
               )}
 
-              {/* Plays Per Day — not for stamp or lottery */}
-              {!isStamp && !isLottery && (
+              {/* Plays Per Day — not for stamp, lottery, or buy x get y */}
+              {!isStamp && !isLottery && !isBuyXGetY && (
                 isLocked ? (
                   <LockedField label="Plays Per User Per Day" value={`${original.playsPerUser} / day`} />
                 ) : (
@@ -349,8 +477,8 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Daily Reward Cap — not for stamp or lottery */}
-              {!isStamp && !isLottery && (
+              {/* Daily Reward Cap — not for stamp, lottery, or buy x get y */}
+              {!isStamp && !isLottery && !isBuyXGetY && (
                 isLocked ? (
                   <LockedField label="Daily Rewards Cap" value={dailyRewardCap === 0 ? 'Unlimited' : `${dailyRewardCap} / day`} />
                 ) : (
@@ -361,10 +489,21 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                 )
               )}
 
-              {/* Stamp / Lottery notes */}
-              {(isStamp || isLottery) && !isLocked && (
+              {/* Redemptions Per User — buy x get y only */}
+              {isBuyXGetY && (
+                isLocked ? (
+                  <LockedField label="Redemptions Per User" value={`${redemptionsPerUser}× per user`} />
+                ) : (
+                  <Stepper label="Redemptions Per User" hint="times / user" value={redemptionsPerUser} min={1} max={20} onChange={setRedemptionsPerUser} />
+                )
+              )}
+
+              {/* Stamp / Lottery / Buy X Get Y notes */}
+              {(isStamp || isLottery || isBuyXGetY) && !isLocked && (
                 <div className="flex items-start gap-2 p-3 bg-v-surface-2 border border-v-border rounded-xl text-xs text-v-text-2">
-                  {isStamp ? 'Stamp Card has no plays per day or daily reward cap — rewards trigger at stamp positions.' : 'Lottery has no plays per day or daily reward cap — prizes are governed by ticket probabilities.'}
+                  {isStamp ? 'Stamp Card has no plays per day or daily reward cap — rewards trigger at stamp positions.' :
+                   isLottery ? 'Lottery has no plays per day or daily reward cap — prizes are governed by ticket probabilities.' :
+                   'Buy X Get Y has no plays per day or daily reward cap — rewards trigger automatically when the purchase condition is met.'}
                 </div>
               )}
             </div>
@@ -458,6 +597,9 @@ export default function EditCampaignPage({ params }: { params: Promise<{ id: str
                     </div>
                   )
                 })()}
+                {original.mechanic === 'buyxgety' && (
+                  <DraftBuyXGetYConfig config={buyXGetYDraft} setConfig={setBuyXGetYDraft} />
+                )}
               </div>
             )}
           </Section>

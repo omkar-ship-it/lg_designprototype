@@ -2,13 +2,14 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, Sparkles, Dices, Zap, Lock, ChevronRight, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
 
+// NOTE: buyxgety has no customer-facing play screen yet (vendor-side only for now) — link/icon are placeholders.
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   stamp:   '/customer/games/stamp',
   spin:    '/customer/games/spin',
@@ -16,6 +17,7 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   dice:    '/customer/games/dice',
   lottery: '/customer/games/lottery',
   checkin: '/customer/games/checkin',
+  buyxgety: '/customer/games/stamp',
 }
 
 const MECHANIC_ICONS = {
@@ -25,6 +27,7 @@ const MECHANIC_ICONS = {
   spin:    Sparkles,
   dice:    Dices,
   lottery: Ticket,
+  buyxgety: Wallet,
 } as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

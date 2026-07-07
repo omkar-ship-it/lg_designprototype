@@ -18,6 +18,7 @@ export function getMechanicLabel(mechanic: MechanicType): string {
     dice: 'Roll a Dice',
     lottery: 'Lottery',
     checkin: 'Daily Check-in',
+    buyxgety: 'Buy X Get Y',
   }
   return map[mechanic]
 }
@@ -30,6 +31,7 @@ export function getMechanicEmoji(mechanic: MechanicType): string {
     dice: '🎲',
     lottery: '🎟️',
     checkin: '📍',
+    buyxgety: '💰',
   }
   return map[mechanic]
 }
@@ -42,6 +44,7 @@ export function getMechanicColor(mechanic: MechanicType): string {
     dice: '#22C55E',
     lottery: '#8B5CF6',
     checkin: '#1F2937',
+    buyxgety: '#F97316',
   }
   return map[mechanic]
 }
@@ -85,4 +88,5 @@ export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: strin
   dice:    { label: 'MYSTERY BOX',  badgeBg: '#FCE7F3', badgeText: '#9D174D', cardFrom: '#BE185D', cardTo: '#831843', emoji: '📦' },
   lottery: { label: 'LOTTERY',      badgeBg: '#FEF9C3', badgeText: '#854D0E', cardFrom: '#EAB308', cardTo: '#A16207', emoji: '🎟️' },
   checkin: { label: 'CHECK-IN',     badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '📍' },
+  buyxgety: { label: 'BUY X GET Y', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#F97316', cardTo: '#C2410C', emoji: '💰' },
 }
