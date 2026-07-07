@@ -389,10 +389,10 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <p className="text-xs text-gray-400 mb-1">Offered by</p>
         <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
-        {/* PLAY CTA */}
+        {/* PLAY / CLAIM CTA */}
         {mechanic.playedToday ? (
           <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-            <span>✓</span> Played today · Come back tomorrow
+            <span>✓</span> {mechanic.type === 'buyxgety' ? 'Claimed today' : 'Played today'} · Come back tomorrow
           </div>
         ) : (
           <motion.button
@@ -404,7 +404,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               boxShadow: `0 8px 28px ${meta.cardFrom}55`,
             }}
           >
-            Play Now {meta.emoji}
+            {mechanic.type === 'buyxgety' ? 'Claim Now' : 'Play Now'} {meta.emoji}
           </motion.button>
         )}
       </div>

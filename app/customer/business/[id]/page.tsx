@@ -489,26 +489,36 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
-                      {/* Buy X Get Y: claim window, spots, redeem window */}
+                      {/* Buy X Get Y: reward + claimed, then claim/redeem window */}
                       {m.type === 'buyxgety' && (
-                        <div className="mb-2.5 space-y-1">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="flex items-center gap-1 text-gray-500 font-medium">
-                              <CalendarDays className="w-3 h-3 text-gray-400" />
-                              Claim before {fmtDate(m.endDate)}
-                            </span>
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            {m.buyReward && (
+                              <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>{m.buyReward}</span>
+                            )}
                             {m.buyTotalSlots !== undefined && m.buyClaimed !== undefined && (
-                              <span className="font-bold" style={{ color: meta.cardFrom }}>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>
                                 {m.buyClaimed}/{m.buyTotalSlots} claimed
                               </span>
                             )}
                           </div>
-                          {m.buyRedeemBefore && (
-                            <p className="text-[10px] text-gray-400">
-                              Redeem before <span className="font-semibold text-gray-500">{fmtDate(m.buyRedeemBefore)}</span>
-                              {m.buyReward && <> · <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.buyReward}</span></>}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
+                              <span>Claim before</span>
+                              <span className="font-semibold text-gray-700">{fmtDate(m.endDate)}</span>
+                            </div>
+                            {m.buyRedeemBefore && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <div className="flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span>Redeem before</span>
+                                  <span className="font-semibold text-gray-700">{fmtDate(m.buyRedeemBefore)}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -517,14 +527,14 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         {(m.activeToday ?? 0) > 0 && (
                           <span className="font-semibold text-gray-500">{m.activeToday} playing today</span>
                         )}
-                        {(m.activeToday ?? 0) > 0 && <span className="text-gray-200">·</span>}
-                        <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                        {(m.activeToday ?? 0) > 0 && m.type !== 'buyxgety' && <span className="text-gray-200">·</span>}
+                        {m.type !== 'buyxgety' && <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>}
                       </div>
 
-                      {/* Play Now / Played Today */}
+                      {/* Play Now / Claim Now / Played Today */}
                       {m.playedToday ? (
                         <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-400">
-                          ✓ Played today · Come back tomorrow
+                          ✓ {m.type === 'buyxgety' ? 'Claimed today' : 'Played today'} · Come back tomorrow
                         </div>
                       ) : (
                         <button
@@ -532,7 +542,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
                           style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                         >
-                          Play Now
+                          {m.type === 'buyxgety' ? 'Claim Now' : 'Play Now'}
                         </button>
                       )}
                     </div>
