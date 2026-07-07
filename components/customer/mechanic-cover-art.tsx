@@ -23,6 +23,10 @@ function burstPath(cx: number, cy: number, rOuter: number, rInner: number, point
   return `M ${pts.join(' L ')} Z`
 }
 
+function heartPath(cx: number, cy: number, s: number) {
+  return `M ${cx},${cy + s * 0.32} C ${cx - s},${cy - s * 0.4} ${cx - s * 0.5},${cy - s} ${cx},${cy - s * 0.32} C ${cx + s * 0.5},${cy - s} ${cx + s},${cy - s * 0.4} ${cx},${cy + s * 0.32} Z`
+}
+
 const WHEEL_SLICES = ['☕', '🏷️', '🧁', '⭐', '🏷️', '🧁']
 
 export function SpinWheelArt({ className = '' }: { className?: string }) {
@@ -215,6 +219,149 @@ export function BundleGiftArt({ className = '' }: { className?: string }) {
         <path d={burstPath(78, 70, 19, 14, 10)} fill="#F59E0B" />
         <path d="M78,63 L80.5,68.5 L86,70 L80.5,71.5 L78,77 L75.5,71.5 L70,70 L75.5,68.5 Z" fill="#FFFFFF" />
       </g>
+    </svg>
+  )
+}
+
+export function FlashClockArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `fc-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+  const cx = 60, cy = 66, r = 38
+
+  return (
+    <svg viewBox="0 0 120 130" className={className} aria-hidden="true">
+      <defs>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#172554" floodOpacity="0.35" />
+        </filter>
+      </defs>
+
+      {/* small bolt accents */}
+      <path d="M14,30 L20,44 L13,44 L19,58 L6,40 L13,40 Z" fill="#FBBF24" opacity="0.55" />
+      <path d="M104,86 L108,95 L103,95 L107,105 L98,92 L103,92 Z" fill="#FBBF24" opacity="0.5" />
+
+      {/* crown buttons */}
+      <rect x="52" y="10" width="16" height="12" rx="3" fill="#1E3A8A" />
+      <rect x="26" y="20" width="10" height="8" rx="2" fill="#1E3A8A" transform="rotate(-35 31 24)" />
+      <rect x="84" y="20" width="10" height="8" rx="2" fill="#1E3A8A" transform="rotate(35 89 24)" />
+
+      <g filter={`url(#${gid}-shadow)`}>
+        <circle cx={cx} cy={cy} r={r + 6} fill="#1E3A8A" />
+        <circle cx={cx} cy={cy} r={r} fill="#FFFFFF" />
+        {Array.from({ length: 12 }, (_, i) => {
+          const outer = polarToCartesian(cx, cy, r - 3, i * 30)
+          const inner = polarToCartesian(cx, cy, r - 8, i * 30)
+          return <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y} stroke="#1E3A8A" strokeWidth="2" strokeLinecap="round" />
+        })}
+        {/* bolt hand */}
+        <path d={`M ${cx + 2},${cy - 22} L ${cx - 10},${cy + 2} L ${cx - 1},${cy + 2} L ${cx - 6},${cy + 24} L ${cx + 12},${cy - 4} L ${cx + 3},${cy - 4} Z`} fill="#F59E0B" />
+        <circle cx={cx} cy={cy} r="4" fill="#1E3A8A" />
+      </g>
+    </svg>
+  )
+}
+
+export function LotteryDrawArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `ld-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+  const cx = 60, cy = 58, r = 34
+  const ballColors = ['#F472B6', '#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#FB923C', '#F87171']
+  const balls = Array.from({ length: 10 }, (_, i) => {
+    const angle = i * 47
+    const dist = (i % 3) * 8 + 6
+    const p = polarToCartesian(cx, cy, dist, angle)
+    return { ...p, color: ballColors[i % ballColors.length], r: 6.5 }
+  })
+
+  return (
+    <svg viewBox="0 0 120 130" className={className} aria-hidden="true">
+      <defs>
+        <clipPath id={`${gid}-clip`}>
+          <circle cx={cx} cy={cy} r={r - 3} />
+        </clipPath>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1C1917" floodOpacity="0.4" />
+        </filter>
+      </defs>
+
+      {/* stand */}
+      <rect x="38" y="106" width="44" height="12" rx="3" fill="#1C1917" />
+      <rect x="55" y="90" width="10" height="20" fill="#78716C" />
+
+      {/* crank */}
+      <line x1={cx + r} y1={cy} x2={cx + r + 10} y2={cy + 6} stroke="#A16207" strokeWidth="3" strokeLinecap="round" />
+      <circle cx={cx + r + 10} cy={cy + 6} r="3" fill="#FBBF24" />
+
+      <g filter={`url(#${gid}-shadow)`}>
+        <circle cx={cx} cy={cy} r={r} fill="#FEF3C7" opacity="0.18" stroke="#FBBF24" strokeWidth="3" />
+        <g clipPath={`url(#${gid}-clip)`}>
+          {balls.map((b, i) => (
+            <circle key={i} cx={b.x} cy={b.y} r={b.r} fill={b.color} />
+          ))}
+        </g>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FBBF24" strokeWidth="2" />
+      </g>
+
+      {/* plaque */}
+      <rect x="32" y="112" width="56" height="14" rx="3" fill="#1C1917" stroke="#FBBF24" strokeWidth="1.5" />
+      <text x="60" y="121.5" fontSize="7" fontWeight="700" fill="#FBBF24" textAnchor="middle">JACKPOT</text>
+    </svg>
+  )
+}
+
+export function SpendGetArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `sg-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+
+  return (
+    <svg viewBox="0 0 170 120" className={className} aria-hidden="true">
+      <defs>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1E1B4B" floodOpacity="0.3" />
+        </filter>
+      </defs>
+
+      <ellipse cx="80" cy="112" rx="55" ry="5" fill="#1E1B4B" opacity="0.15" />
+
+      <g filter={`url(#${gid}-shadow)`}>
+        {/* gift box, tucked behind */}
+        <rect x="86" y="58" width="30" height="26" rx="2" fill="#4338CA" stroke="#1E1B4B" strokeWidth="1.5" />
+        <rect x="86" y="58" width="30" height="7" fill="#312E81" stroke="#1E1B4B" strokeWidth="1.5" />
+        <rect x="98" y="58" width="6" height="26" fill="#FBBF24" />
+
+        {/* bag with X */}
+        <path d="M18,44 L64,44 L70,104 L12,104 Z" fill="#6D28D9" stroke="#1E1B4B" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M28,44 C28,33 54,33 54,44" fill="none" stroke="#1E1B4B" strokeWidth="3" strokeLinecap="round" />
+        <text x="41" y="82" fontSize="26" fontWeight="800" fill="#FBBF24" textAnchor="middle">X</text>
+
+        {/* arrow */}
+        <path d="M74,74 L92,74" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" />
+        <path d="M87,68 L93,74 L87,80" fill="none" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* tag with Y */}
+        <rect x="118" y="68" width="38" height="30" rx="4" fill="#FBBF24" stroke="#1E1B4B" strokeWidth="2" transform="rotate(-6 137 83)" />
+        <circle cx="126" cy="76" r="2.2" fill="#1E1B4B" transform="rotate(-6 137 83)" />
+        <text x="139" y="90" fontSize="20" fontWeight="800" fill="#4338CA" textAnchor="middle" transform="rotate(-6 137 83)">Y</text>
+      </g>
+    </svg>
+  )
+}
+
+export function FriendHeartArt({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 100" className={className} aria-hidden="true">
+      <path d={heartPath(96, 18, 8)} fill="#FB7185" opacity="0.5" />
+      <path d={heartPath(18, 14, 5)} fill="#FB7185" opacity="0.35" />
+
+      <path d={heartPath(60, 26, 13)} fill="#F43F5E" />
+
+      {/* person 1 (back, lighter) */}
+      <circle cx="38" cy="52" r="13" fill="#FECDD3" />
+      <path d="M18,96 C18,74 58,74 58,96 Z" fill="#FECDD3" />
+
+      {/* person 2 (front, deeper) */}
+      <circle cx="76" cy="56" r="15" fill="#FDA4AF" />
+      <path d="M52,98 C52,72 100,72 100,98 Z" fill="#FDA4AF" />
     </svg>
   )
 }

@@ -2,11 +2,11 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, FerrisWheel, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package, Tag, ShoppingCart, Clock, ShieldCheck, ShoppingBag, Star as StarIcon, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, FerrisWheel, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package, Tag, ShoppingCart, Clock, ShieldCheck, ShoppingBag, Star as StarIcon, Wallet, ThumbsUp, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
-import { SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt } from '@/components/customer/mechanic-cover-art'
+import { SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt, FlashClockArt, LotteryDrawArt, SpendGetArt, FriendHeartArt } from '@/components/customer/mechanic-cover-art'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
@@ -81,6 +81,40 @@ const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
       { icon: Gift, label: 'Exclusive' },
       { icon: StarIcon, label: 'Best Value' },
     ],
+  },
+  flash: {
+    headline: 'Flash Sale', tagline: "Amazing offers, limited time — don't miss out!",
+    bgFrom: '#1E3A8A', bgTo: '#172554', textColor: '#FFFFFF', layout: 'center', badgeBg: '#EFF6FF', art: FlashClockArt,
+    features: [
+      { icon: Tag, label: 'Exciting Deals' },
+      { icon: ShoppingBag, label: 'Limited Stock' },
+      { icon: Zap, label: 'Hurry Up' },
+      { icon: ShieldCheck, label: 'Secure Checkout' },
+    ],
+  },
+  lottery: {
+    headline: 'Play & Win Big Prizes!', tagline: 'Join the draw with every visit — you could be next!',
+    bgFrom: '#422006', bgTo: '#1C1917', textColor: '#FDE68A', layout: 'center', badgeBg: '#FEF3C7', art: LotteryDrawArt,
+    features: [
+      { icon: Ticket, label: 'Earn Tickets' },
+      { icon: CalendarDays, label: 'Monthly Draw' },
+      { icon: Gift, label: 'Big Prizes' },
+      { icon: StarIcon, label: 'Lucky Winner' },
+    ],
+  },
+  buyxgety: {
+    headline: 'Spend X, Get Y', tagline: 'Spend or buy a minimum amount and get exciting rewards!',
+    bgFrom: '#4338CA', bgTo: '#1E1B4B', textColor: '#FFFFFF', layout: 'center', badgeBg: '#EEF2FF', art: SpendGetArt,
+    features: [
+      { icon: Wallet, label: 'More You Spend' },
+      { icon: Gift, label: 'Exciting Rewards' },
+      { icon: TicketPercent, label: 'Great Benefits' },
+      { icon: ThumbsUp, label: 'Instant Reward' },
+    ],
+  },
+  friend: {
+    headline: 'Better Together', tagline: 'Invite a friend along — you both get rewarded!',
+    bgFrom: '#FFE4E9', bgTo: '#FFC1CC', textColor: '#9F1239', layout: 'side', art: FriendHeartArt,
   },
 }
 
