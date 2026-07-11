@@ -21,23 +21,27 @@ function daysSince(iso: string) {
   return Math.floor((TODAY_DATE.getTime() - new Date(iso).getTime()) / 86400000)
 }
 
-type Period = 'day' | 'week' | 'month'
+type Period = 'all' | '7d' | 'month' | '3m' | 'year'
 const PERIODS: { key: Period; label: string }[] = [
-  { key: 'day', label: 'Day' },
-  { key: 'week', label: 'Week' },
+  { key: 'all', label: 'All time' },
+  { key: '7d', label: '7 Days' },
   { key: 'month', label: 'Month' },
+  { key: '3m', label: '3 Months' },
+  { key: 'year', label: 'Year' },
 ]
-const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30 }
-const COMPARISON_LABEL: Record<Period, string> = { day: 'yesterday', week: 'last week', month: 'last month' }
+const PERIOD_DAYS: Record<Period, number> = { all: Infinity, '7d': 7, month: 30, '3m': 90, year: 365 }
+const PERIOD_PHRASE: Record<Period, string> = { all: 'all time', '7d': 'the last 7 days', month: 'the last month', '3m': 'the last 3 months', year: 'the last year' }
+const COMPARISON_LABEL: Record<Period, string> = { all: '', '7d': 'last week', month: 'last month', '3m': 'last quarter', year: 'last year' }
 
 // Campaign-level totals (currentUsers/rewardsClaimed/redeemedCount) are lifetime, hand-authored
 // numbers, not derived from the small `customers` sample — so period filtering scales them
 // proportionally rather than re-deriving from per-event data. Design prototype, not live analytics.
-const PERIOD_SCALE: Record<Period, number> = { day: 0.045, week: 0.26, month: 1 }
+// "All time" (1.0) is the reference point; shorter windows are illustrative fractions of it.
+const PERIOD_SCALE: Record<Period, number> = { all: 1, '7d': 0.08, month: 0.28, '3m': 0.55, year: 0.85 }
 
 // Retention has no real cohort-tracking data behind it — synthetic per-period values (design prototype)
-const RETENTION_BY_PERIOD: Record<Period, number> = { day: 34, week: 52, month: 71 }
-const RETENTION_PREV_BY_PERIOD: Record<Period, number> = { day: 30, week: 48, month: 68 }
+const RETENTION_BY_PERIOD: Record<Period, number> = { all: 88, '7d': 40, month: 71, '3m': 78, year: 84 }
+const RETENTION_PREV_BY_PERIOD: Record<Period, number> = { all: 88, '7d': 36, month: 68, '3m': 75, year: 81 }
 
 const activeCampsForLM = campaigns.filter(c => c.status === 'active')
 const LIFETIME_TOTALS = {
@@ -47,8 +51,8 @@ const LIFETIME_TOTALS = {
 }
 
 // ── Trend chip ────────────────────────────────────────────────────────────────
-function Trend({ now, prev, unit = 'pp', invert = false, comparisonLabel = 'last month' }: {
-  now: number; prev: number; unit?: string; invert?: boolean; comparisonLabel?: string
+function Trend({ now, prev, unit = 'pp', invert = false, comparisonLabel }: {
+  now: number; prev: number; unit?: string; invert?: boolean; comparisonLabel: string
 }) {
   const diff = now - prev
   const isUp = invert ? diff < 0 : diff > 0
@@ -65,16 +69,22 @@ function Trend({ now, prev, unit = 'pp', invert = false, comparisonLabel = 'last
   )
 }
 
+// "All time" has no prior period to compare against — show a neutral note instead of a trend chip
+function TrendOrLifetime({ period, ...trendProps }: { period: Period; now: number; prev: number; unit?: string; invert?: boolean }) {
+  if (period === 'all') return <span className="text-[10px] text-v-text-3 font-medium">Lifetime total</span>
+  return <Trend {...trendProps} comparisonLabel={COMPARISON_LABEL[period]} />
+}
+
 // ── Period tabs ───────────────────────────────────────────────────────────────
 function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
   return (
-    <div className="inline-flex items-center gap-0.5 p-1 rounded-xl bg-v-surface-3">
+    <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-v-purple/5 border border-v-purple/10">
       {PERIODS.map(p => (
         <button
           key={p.key}
           onClick={() => onChange(p.key)}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-            value === p.key ? 'bg-white text-v-purple shadow-sm' : 'text-v-text-2 hover:text-v-text'
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap ${
+            value === p.key ? 'bg-white text-v-text shadow-sm' : 'text-v-purple/50 hover:text-v-purple'
           }`}
         >
           {p.label}
@@ -88,7 +98,7 @@ const fadeUp = (i: number) => ({ hidden: { opacity: 0, y: 16 }, show: { opacity:
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const [period, setPeriod] = useState<Period>('month')
+  const [period, setPeriod] = useState<Period>('all')
   const periodDays = PERIOD_DAYS[period]
   const comparisonLabel = COMPARISON_LABEL[period]
 
@@ -100,7 +110,7 @@ export default function DashboardPage() {
   // Last-comparable-period baselines for trend arrows (synthetic — design prototype)
   const LM = {
     totalUsers:   Math.max(0, n - 1),
-    currentUsers: Math.round(customers.filter(c => daysSince(c.lastVisit) <= periodDays + Math.max(1, Math.round(periodDays * 0.15))).length * 0.88),
+    currentUsers: Math.round(customers.filter(c => daysSince(c.lastVisit) <= periodDays + Math.max(1, Math.round((periodDays === Infinity ? 0 : periodDays) * 0.15))).length * 0.88),
     repeatVisitRate: Math.max(0, repeatVisitRate - 8),
     retentionRate: RETENTION_PREV_BY_PERIOD[period],
     totalPlayers:     Math.round(LIFETIME_TOTALS.players * PERIOD_SCALE[period] * 0.9),
@@ -121,7 +131,7 @@ export default function DashboardPage() {
 
       {/* ── Header ── */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between">
+        className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-v-text">Good morning, Brew & Bite ☕</h1>
           <p className="text-v-text-2 text-sm mt-1">Friday, 13 June 2026 · {activeCamps.length} campaigns running</p>
@@ -161,8 +171,8 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-v-text-2">Current Users</span>
             </div>
             <div className="text-4xl font-black text-blue-600 leading-none mb-2">{visitedInPeriod.length}</div>
-            <Trend now={visitedInPeriod.length} prev={LM.currentUsers} unit="" comparisonLabel={comparisonLabel} />
-            <p className="text-xs text-v-text-3 mt-2">active {period === 'day' ? 'today' : `this ${period}`}</p>
+            <TrendOrLifetime period={period} now={visitedInPeriod.length} prev={LM.currentUsers} unit="" />
+            <p className="text-xs text-v-text-3 mt-2">{period === 'all' ? 'active at any point' : `active in ${PERIOD_PHRASE[period]}`}</p>
           </div>
         </Card>
 
@@ -175,8 +185,10 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-v-text-2">Repeat Visits</span>
             </div>
             <div className="text-4xl font-black text-v-purple leading-none mb-2">{repeatVisitRate}%</div>
-            <Trend now={repeatVisitRate} prev={LM.repeatVisitRate} comparisonLabel={comparisonLabel} />
-            <p className="text-xs text-v-text-3 mt-2">{visitedInPeriod.length} of {n} visited {period === 'day' ? 'today' : `this ${period}`}</p>
+            <TrendOrLifetime period={period} now={repeatVisitRate} prev={LM.repeatVisitRate} />
+            <p className="text-xs text-v-text-3 mt-2">
+              {period === 'all' ? `${visitedInPeriod.length} of ${n} have ever visited` : `${visitedInPeriod.length} of ${n} visited in ${PERIOD_PHRASE[period]}`}
+            </p>
           </div>
         </Card>
 
@@ -189,8 +201,10 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-v-text-2">Retention</span>
             </div>
             <div className="text-4xl font-black text-green-600 leading-none mb-2">{retentionRate}%</div>
-            <Trend now={retentionRate} prev={LM.retentionRate} comparisonLabel={comparisonLabel} />
-            <p className="text-xs text-v-text-3 mt-2">of {comparisonLabel}'s customers came back</p>
+            <TrendOrLifetime period={period} now={retentionRate} prev={LM.retentionRate} />
+            <p className="text-xs text-v-text-3 mt-2">
+              {period === 'all' ? 'of all customers have returned at least once' : `of ${comparisonLabel}'s customers came back`}
+            </p>
           </div>
         </Card>
 
@@ -221,7 +235,7 @@ export default function DashboardPage() {
                     <div className="text-3xl font-black leading-none mb-2" style={{ color: m.color }}>{m.value.toLocaleString()}</div>
                     <div className="text-xs font-semibold text-v-text mb-0.5">{m.label}</div>
                     <div className="text-[10px] text-v-text-3 mb-2">{m.sub}</div>
-                    <Trend now={m.value} prev={m.prev} unit="" comparisonLabel={comparisonLabel} />
+                    <TrendOrLifetime period={period} now={m.value} prev={m.prev} unit="" />
                   </div>
                 </motion.div>
               ))}
