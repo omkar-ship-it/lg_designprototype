@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -20,34 +21,66 @@ function daysSince(iso: string) {
   return Math.floor((TODAY_DATE.getTime() - new Date(iso).getTime()) / 86400000)
 }
 
-// Synthetic last-month baselines for trend arrows (design prototype — not derived from real history)
+type Period = 'day' | 'week' | 'month'
+const PERIODS: { key: Period; label: string }[] = [
+  { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+]
+const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30 }
+const COMPARISON_LABEL: Record<Period, string> = { day: 'yesterday', week: 'last week', month: 'last month' }
+
+// Campaign-level totals (currentUsers/rewardsClaimed/redeemedCount) are lifetime, hand-authored
+// numbers, not derived from the small `customers` sample — so period filtering scales them
+// proportionally rather than re-deriving from per-event data. Design prototype, not live analytics.
+const PERIOD_SCALE: Record<Period, number> = { day: 0.045, week: 0.26, month: 1 }
+
+// Retention has no real cohort-tracking data behind it — synthetic per-period values (design prototype)
+const RETENTION_BY_PERIOD: Record<Period, number> = { day: 34, week: 52, month: 71 }
+const RETENTION_PREV_BY_PERIOD: Record<Period, number> = { day: 30, week: 48, month: 68 }
+
 const activeCampsForLM = campaigns.filter(c => c.status === 'active')
-const LM = {
-  totalUsers:   Math.max(0, customers.length - 1),
-  currentUsers: Math.round(customers.filter(c => daysSince(c.lastVisit) <= 30).length * 0.88),
-  repeatVisitRate: 60,
-  retentionRate: 68,
-  totalPlayers:     Math.round(activeCampsForLM.reduce((s, c) => s + c.currentUsers, 0) * 0.9),
-  totalWins:        Math.round(activeCampsForLM.reduce((s, c) => s + c.rewardsClaimed, 0) * 0.85),
-  totalRedemptions: Math.round(activeCampsForLM.reduce((s, c) => s + c.redeemedCount, 0) * 0.9),
+const LIFETIME_TOTALS = {
+  players:     activeCampsForLM.reduce((s, c) => s + c.currentUsers, 0),
+  wins:        activeCampsForLM.reduce((s, c) => s + c.rewardsClaimed, 0),
+  redemptions: activeCampsForLM.reduce((s, c) => s + c.redeemedCount, 0),
 }
 
 // ── Trend chip ────────────────────────────────────────────────────────────────
-function Trend({ now, prev, unit = 'pp', invert = false, suffix = '' }: {
-  now: number; prev: number; unit?: string; invert?: boolean; suffix?: string
+function Trend({ now, prev, unit = 'pp', invert = false, comparisonLabel = 'last month' }: {
+  now: number; prev: number; unit?: string; invert?: boolean; comparisonLabel?: string
 }) {
   const diff = now - prev
   const isUp = invert ? diff < 0 : diff > 0
   if (diff === 0) return (
     <span className="inline-flex items-center gap-0.5 text-[10px] text-v-text-3 font-medium">
-      <Minus className="w-2.5 h-2.5" /> No change vs last month
+      <Minus className="w-2.5 h-2.5" /> No change vs {comparisonLabel}
     </span>
   )
   return (
     <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${isUp ? 'text-v-success' : 'text-v-danger'}`}>
       {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-      {diff > 0 ? '+' : ''}{diff}{unit}{suffix} vs last month
+      {diff > 0 ? '+' : ''}{diff}{unit} vs {comparisonLabel}
     </span>
+  )
+}
+
+// ── Period tabs ───────────────────────────────────────────────────────────────
+function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
+  return (
+    <div className="inline-flex items-center gap-0.5 p-1 rounded-xl bg-v-surface-3">
+      {PERIODS.map(p => (
+        <button
+          key={p.key}
+          onClick={() => onChange(p.key)}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            value === p.key ? 'bg-white text-v-purple shadow-sm' : 'text-v-text-2 hover:text-v-text'
+          }`}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -55,17 +88,33 @@ const fadeUp = (i: number) => ({ hidden: { opacity: 0, y: 16 }, show: { opacity:
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const [period, setPeriod] = useState<Period>('month')
+  const periodDays = PERIOD_DAYS[period]
+  const comparisonLabel = COMPARISON_LABEL[period]
 
   const n = customers.length
-  const visitedLast30 = customers.filter(c => daysSince(c.lastVisit) <= 30)
-  const repeatVisitRate = Math.round((visitedLast30.length / n) * 100)
-  const retentionRate = 71   // synthetic — design prototype
+  const visitedInPeriod = customers.filter(c => daysSince(c.lastVisit) <= periodDays)
+  const repeatVisitRate = Math.round((visitedInPeriod.length / n) * 100)
+  const retentionRate = RETENTION_BY_PERIOD[period]
 
-  // Campaign rollups (active only)
+  // Last-comparable-period baselines for trend arrows (synthetic — design prototype)
+  const LM = {
+    totalUsers:   Math.max(0, n - 1),
+    currentUsers: Math.round(customers.filter(c => daysSince(c.lastVisit) <= periodDays + Math.max(1, Math.round(periodDays * 0.15))).length * 0.88),
+    repeatVisitRate: Math.max(0, repeatVisitRate - 8),
+    retentionRate: RETENTION_PREV_BY_PERIOD[period],
+    totalPlayers:     Math.round(LIFETIME_TOTALS.players * PERIOD_SCALE[period] * 0.9),
+    totalWins:        Math.round(LIFETIME_TOTALS.wins * PERIOD_SCALE[period] * 0.85),
+    totalRedemptions: Math.round(LIFETIME_TOTALS.redemptions * PERIOD_SCALE[period] * 0.9),
+  }
+
+  // Campaign rollups (active only), scaled to the selected period
   const activeCamps = campaigns.filter(c => c.status === 'active')
-  const totalPlayers     = activeCamps.reduce((s, c) => s + c.currentUsers, 0)
-  const totalWins        = activeCamps.reduce((s, c) => s + c.rewardsClaimed, 0)
-  const totalRedemptions = activeCamps.reduce((s, c) => s + c.redeemedCount, 0)
+  const scale = PERIOD_SCALE[period]
+  const scaled = (v: number) => Math.max(0, Math.round(v * scale))
+  const totalPlayers     = scaled(activeCamps.reduce((s, c) => s + c.currentUsers, 0))
+  const totalWins        = scaled(activeCamps.reduce((s, c) => s + c.rewardsClaimed, 0))
+  const totalRedemptions = scaled(activeCamps.reduce((s, c) => s + c.redeemedCount, 0))
 
   return (
     <div className="p-8 max-w-7xl space-y-6">
@@ -77,24 +126,28 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-extrabold text-v-text">Good morning, Brew & Bite ☕</h1>
           <p className="text-v-text-2 text-sm mt-1">Friday, 13 June 2026 · {activeCamps.length} campaigns running</p>
         </div>
-        <Link href="/vendor/campaigns/create">
-          <Button variant="primary"><Plus className="w-4 h-4" /> New Campaign</Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <PeriodTabs value={period} onChange={setPeriod} />
+          <Link href="/vendor/campaigns/create">
+            <Button variant="primary"><Plus className="w-4 h-4" /> New Campaign</Button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* ── Hero: Total Users, Current Users, Repeat Visit Rate, Retention ── */}
       <motion.div variants={fadeUp(1)} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        {/* Total Users */}
+        {/* Total Users — lifetime headcount, doesn't flex with the period tabs */}
         <Card className="p-5 bg-gradient-to-br from-v-surface to-indigo-50 border-indigo-200 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-28 h-28 rounded-full bg-indigo-500/5 -translate-y-1/2 translate-x-1/2" />
           <div className="relative">
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-indigo-600" />
               <span className="text-sm font-semibold text-v-text-2">Total Users</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-semibold">all-time</span>
             </div>
             <div className="text-4xl font-black text-indigo-600 leading-none mb-2">{n}</div>
-            <Trend now={n} prev={LM.totalUsers} unit="" />
+            <Trend now={n} prev={LM.totalUsers} unit="" comparisonLabel="last month" />
             <p className="text-xs text-v-text-3 mt-2">customers who've ever played a campaign</p>
           </div>
         </Card>
@@ -107,9 +160,9 @@ export default function DashboardPage() {
               <UserCheck className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-semibold text-v-text-2">Current Users</span>
             </div>
-            <div className="text-4xl font-black text-blue-600 leading-none mb-2">{visitedLast30.length}</div>
-            <Trend now={visitedLast30.length} prev={LM.currentUsers} unit="" />
-            <p className="text-xs text-v-text-3 mt-2">active in the last 30 days</p>
+            <div className="text-4xl font-black text-blue-600 leading-none mb-2">{visitedInPeriod.length}</div>
+            <Trend now={visitedInPeriod.length} prev={LM.currentUsers} unit="" comparisonLabel={comparisonLabel} />
+            <p className="text-xs text-v-text-3 mt-2">active {period === 'day' ? 'today' : `this ${period}`}</p>
           </div>
         </Card>
 
@@ -122,8 +175,8 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-v-text-2">Repeat Visits</span>
             </div>
             <div className="text-4xl font-black text-v-purple leading-none mb-2">{repeatVisitRate}%</div>
-            <Trend now={repeatVisitRate} prev={LM.repeatVisitRate} />
-            <p className="text-xs text-v-text-3 mt-2">{visitedLast30.length} of {n} visited in last 30 days</p>
+            <Trend now={repeatVisitRate} prev={LM.repeatVisitRate} comparisonLabel={comparisonLabel} />
+            <p className="text-xs text-v-text-3 mt-2">{visitedInPeriod.length} of {n} visited {period === 'day' ? 'today' : `this ${period}`}</p>
           </div>
         </Card>
 
@@ -136,8 +189,8 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-v-text-2">Retention</span>
             </div>
             <div className="text-4xl font-black text-green-600 leading-none mb-2">{retentionRate}%</div>
-            <Trend now={retentionRate} prev={LM.retentionRate} />
-            <p className="text-xs text-v-text-3 mt-2">of last month's customers came back</p>
+            <Trend now={retentionRate} prev={LM.retentionRate} comparisonLabel={comparisonLabel} />
+            <p className="text-xs text-v-text-3 mt-2">of {comparisonLabel}'s customers came back</p>
           </div>
         </Card>
 
@@ -159,16 +212,16 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Total Players',     value: totalPlayers,     prev: LM.totalPlayers,     sub: 'unique players (this cycle)', color: '#7C3AED', bg: 'bg-purple-50', border: 'border-purple-200' },
-                { label: 'Total Wins',         value: totalWins,        prev: LM.totalWins,        sub: 'rewards won',                  color: '#16A34A', bg: 'bg-green-50',  border: 'border-green-200'  },
-                { label: 'Total Redemptions',  value: totalRedemptions, prev: LM.totalRedemptions, sub: 'claimed at the counter',       color: '#D97706', bg: 'bg-amber-50',  border: 'border-amber-200'  },
+                { label: 'Total Players',     value: totalPlayers,     prev: LM.totalPlayers,     sub: 'unique players', color: '#7C3AED', bg: 'bg-purple-50', border: 'border-purple-200' },
+                { label: 'Total Wins',         value: totalWins,        prev: LM.totalWins,        sub: 'rewards won',    color: '#16A34A', bg: 'bg-green-50',  border: 'border-green-200'  },
+                { label: 'Total Redemptions',  value: totalRedemptions, prev: LM.totalRedemptions, sub: 'claimed at the counter', color: '#D97706', bg: 'bg-amber-50', border: 'border-amber-200' },
               ].map((m, i) => (
                 <motion.div key={m.label} variants={fadeUp(3 + i)} initial="hidden" animate="show">
                   <div className={`vendor-card p-5 ${m.bg} border ${m.border}`}>
                     <div className="text-3xl font-black leading-none mb-2" style={{ color: m.color }}>{m.value.toLocaleString()}</div>
                     <div className="text-xs font-semibold text-v-text mb-0.5">{m.label}</div>
                     <div className="text-[10px] text-v-text-3 mb-2">{m.sub}</div>
-                    <Trend now={m.value} prev={m.prev} unit="" />
+                    <Trend now={m.value} prev={m.prev} unit="" comparisonLabel={comparisonLabel} />
                   </div>
                 </motion.div>
               ))}
@@ -198,13 +251,13 @@ export default function DashboardPage() {
                           <MechanicBadge mechanic={c.mechanic} />
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-xs text-v-purple font-bold">{c.currentUsers.toLocaleString()} players</span>
-                          <span className="text-xs text-emerald-600 font-bold">{c.rewardsClaimed.toLocaleString()} wins</span>
-                          <span className="text-xs text-amber-600 font-bold">{c.redeemedCount.toLocaleString()} redeemed</span>
+                          <span className="text-xs text-v-purple font-bold">{scaled(c.currentUsers).toLocaleString()} players</span>
+                          <span className="text-xs text-emerald-600 font-bold">{scaled(c.rewardsClaimed).toLocaleString()} wins</span>
+                          <span className="text-xs text-amber-600 font-bold">{scaled(c.redeemedCount).toLocaleString()} redeemed</span>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
                           <ProgressBar value={c.currentUsers} max={c.userCap} className="flex-1" />
-                          <span className="text-[10px] text-v-text-3 shrink-0">{capPercent(c.currentUsers, c.userCap)}% cap</span>
+                          <span className="text-[10px] text-v-text-3 shrink-0">{capPercent(c.currentUsers, c.userCap)}% cap (all-time)</span>
                         </div>
                       </div>
                       <div className="shrink-0">
