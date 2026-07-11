@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, LayoutList, LayoutGrid, ArrowUpDown,
-  Users, Trophy, TrendingUp, MoreVertical,
+  Users, Trophy, TrendingUp, MoreVertical, Gift,
   Pause, Copy, StopCircle, Eye,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -288,13 +288,52 @@ export default function CampaignsPage() {
 
       {/* ── Date filter ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}
-        className="flex items-center gap-1 bg-v-surface-2 border border-v-border rounded-xl p-1 w-fit mb-5">
+        className="inline-flex items-center gap-1 p-1.5 rounded-full bg-v-purple/5 border border-v-purple/10 w-fit mb-5">
         {DATE_WINDOWS.map(w => (
           <button key={w.key} onClick={() => setDateWindow(w.key)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${dateWindow === w.key ? 'bg-white text-v-text shadow-sm border border-v-border' : 'text-v-text-3 hover:text-v-text-2'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap ${dateWindow === w.key ? 'bg-white text-v-text shadow-sm' : 'text-v-purple/50 hover:text-v-purple'}`}>
             {w.label}
           </button>
         ))}
+      </motion.div>
+
+      {/* ── Consolidated totals ── */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+
+        <Card className="p-5 border border-purple-100 bg-gradient-to-br from-white to-purple-50">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-v-purple" />
+            </div>
+            <span className="text-xs font-semibold text-v-text-2">Total Players</span>
+          </div>
+          <div className="text-4xl font-black text-v-purple leading-none mb-2">{wPlayers.toLocaleString()}</div>
+          <p className="text-xs text-v-text-3">unique players in this window</p>
+        </Card>
+
+        <Card className="p-5 border border-green-100 bg-gradient-to-br from-white to-green-50">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4 text-green-600" />
+            </div>
+            <span className="text-xs font-semibold text-v-text-2">Total Winners</span>
+          </div>
+          <div className="text-4xl font-black text-green-600 leading-none mb-2">{wRewards.toLocaleString()}</div>
+          <p className="text-xs text-v-text-3">rewards won</p>
+        </Card>
+
+        <Card className="p-5 border border-amber-100 bg-gradient-to-br from-white to-amber-50">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+              <Gift className="w-4 h-4 text-amber-600" />
+            </div>
+            <span className="text-xs font-semibold text-v-text-2">Redemptions</span>
+          </div>
+          <div className="text-4xl font-black text-amber-600 leading-none mb-2">{wRedeemed.toLocaleString()}</div>
+          <p className="text-xs text-v-text-3">claimed at the counter</p>
+        </Card>
+
       </motion.div>
 
       {/* ── Metric cards ── */}
