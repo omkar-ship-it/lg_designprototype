@@ -1,5 +1,5 @@
 'use client'
-import { use, useState, useRef } from 'react'
+import { use, useState, useRef, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -148,6 +148,115 @@ function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimD
   )
 }
 
+// Inline PIN entry — digit boxes + on-screen numeric keypad + submit button, embedded directly in a mechanic's card
+function InlineKeypad({ cardFrom, cardTo, digits, pressDigit, pressBackspace, onSubmit, disabled, submitLabel }: {
+  cardFrom: string; cardTo: string; digits: string[]; pressDigit: (d: string) => void; pressBackspace: () => void
+  onSubmit: () => void; disabled: boolean; submitLabel: string
+}) {
+  return (
+    <>
+      <p className="text-sm font-bold text-gray-900 text-center mb-1">Enter the code shared by staff</p>
+      <p className="text-xs text-gray-400 text-center mb-4">3-digit code · refreshes every 2 minutes</p>
+
+      <div className="flex gap-2.5 justify-center mb-4">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black text-gray-900 transition-colors"
+            style={{
+              background: '#F9FAFB',
+              border: digits[i] ? `2px solid ${cardFrom}` : '2px solid #E5E7EB',
+            }}
+          >
+            {digits[i]}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-4 max-w-[220px] mx-auto">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
+          <motion.button
+            key={d}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => pressDigit(d)}
+            className="py-2 rounded-xl text-sm font-bold text-gray-800 bg-gray-50"
+          >
+            {d}
+          </motion.button>
+        ))}
+        <div />
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={() => pressDigit('0')}
+          className="py-2 rounded-xl text-sm font-bold text-gray-800 bg-gray-50"
+        >
+          0
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={pressBackspace}
+          className="py-2 rounded-xl flex items-center justify-center text-gray-500 bg-gray-50"
+        >
+          <Delete className="w-3.5 h-3.5" />
+        </motion.button>
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={onSubmit}
+        disabled={disabled}
+        className="w-full py-4 rounded-2xl font-bold text-base transition-all"
+        style={{
+          background: !disabled ? `linear-gradient(135deg, ${cardFrom}, ${cardTo})` : '#F3F4F6',
+          color: !disabled ? 'white' : '#9CA3AF',
+          boxShadow: !disabled ? `0 8px 28px ${cardFrom}55` : 'none',
+        }}
+      >
+        {submitLabel}
+      </motion.button>
+    </>
+  )
+}
+
+function PlayedTodayNote({ label }: { label: string }) {
+  return (
+    <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-50 flex items-center justify-center gap-2">
+      <span>✓</span> {label} · Come back tomorrow
+    </div>
+  )
+}
+
+// Single white card: mechanic-specific info (children) + duration/players + inline keypad — the shared shell for every non-groupunlock, non-spin mechanic
+function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, participants, playedToday, playedLabel, submitLabel, digits, pressDigit, pressBackspace, onSubmit, disabled }: {
+  cardFrom: string; cardTo: string; children?: ReactNode
+  startDate: string; endDate: string; participants: number
+  playedToday?: boolean; playedLabel: string; submitLabel: string
+  digits: string[]; pressDigit: (d: string) => void; pressBackspace: () => void; onSubmit: () => void; disabled: boolean
+}) {
+  return (
+    <div className="mb-6">
+      <div className="rounded-3xl bg-white px-5 py-5" style={{ boxShadow: `0 16px 48px ${cardFrom}20, 0 0 0 1px ${cardFrom}1A` }}>
+        {children}
+        <DurationPlayersBox cardFrom={cardFrom} startDate={startDate} endDate={endDate} participants={participants} className="mb-5" />
+        {playedToday ? (
+          <PlayedTodayNote label={playedLabel} />
+        ) : (
+          <InlineKeypad
+            cardFrom={cardFrom}
+            cardTo={cardTo}
+            digits={digits}
+            pressDigit={pressDigit}
+            pressBackspace={pressBackspace}
+            onSubmit={onSubmit}
+            disabled={disabled}
+            submitLabel={submitLabel}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string; type: string }> }) {
   const { id, type } = use(params)
   const router = useRouter()
@@ -157,7 +266,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const meta     = MECHANIC_META[mechanic.type as MechanicType]
   const hero     = HERO_COVER[mechanic.type as MechanicType]
   const Art      = hero?.art
-  const isClaimMechanic = mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo'
+  // Every mechanic except stamp/checkin now enters its PIN inline within its own card
+  const usesInlineKeypad = mechanic.type !== 'stamp' && mechanic.type !== 'checkin'
 
   // OTP state
   const [showOTP, setShowOTP] = useState(false)
@@ -190,7 +300,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     if (e.key === 'Backspace' && !digits[i] && i > 0) digitRefs[i - 1].current?.focus()
   }
 
-  // Inline keypad (Spin details page) — pressing a digit fills the first empty slot
+  // Inline keypad — pressing a digit fills the first empty slot
   const pressDigit = (d: string) => {
     const i = digits.findIndex(x => !x)
     if (i === -1) return
@@ -643,51 +753,75 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <>
-            {/* Prizes — dice / shake, wrapped in a tinted card alongside duration/players */}
+            {/* Prizes — dice / shake, in a single card with duration/players + inline keypad */}
             {(mechanic.type === 'dice' || mechanic.type === 'shake') && (
-              <div className="mb-6">
-                <div
-                  className="rounded-3xl bg-white px-5 py-5"
-                  style={{ boxShadow: `0 16px 48px ${meta.cardFrom}20, 0 0 0 1px ${meta.cardFrom}1A` }}
-                >
-                  {mechanic.prizes && mechanic.prizes.length > 0 && (
-                    <>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
-                      <div className="flex flex-wrap gap-2 mb-5">
-                        {mechanic.prizes.map((p, i) => (
-                          <span
-                            key={i}
-                            className="text-sm font-semibold px-3 py-1.5 rounded-full"
-                            style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}
-                          >
-                            {p}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  <DurationPlayersBox cardFrom={meta.cardFrom} startDate={mechanic.startDate} endDate={mechanic.endDate} participants={mechanic.participants} />
-                </div>
-              </div>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Played today"
+                submitLabel={`Play Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                {mechanic.prizes && mechanic.prizes.length > 0 && (
+                  <>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {mechanic.prizes.map((p, i) => (
+                        <span
+                          key={i}
+                          className="text-sm font-semibold px-3 py-1.5 rounded-full"
+                          style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}
+                        >
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </MechanicCard>
             )}
 
-            {/* Lottery — draw date + tickets */}
+            {/* Lottery — draw date + tickets, duration/players + inline keypad, all in one card */}
             {mechanic.type === 'lottery' && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Draw Date</p>
-                  <p className="text-sm font-bold text-gray-800">
-                    {mechanic.drawDate ? fmtDate(mechanic.drawDate) : '—'}
-                  </p>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Played today"
+                submitLabel={`Play Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Draw Date</p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {mechanic.drawDate ? fmtDate(mechanic.drawDate) : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Your Tickets</p>
+                    <p className="text-2xl font-black" style={{ color: meta.cardFrom }}>
+                      {mechanic.userTickets ?? 0}
+                      <span className="text-xs font-semibold text-gray-400 ml-1">tickets</span>
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Your Tickets</p>
-                  <p className="text-2xl font-black" style={{ color: meta.cardFrom }}>
-                    {mechanic.userTickets ?? 0}
-                    <span className="text-xs font-semibold text-gray-400 ml-1">tickets</span>
-                  </p>
-                </div>
-              </div>
+              </MechanicCard>
             )}
 
             {/* Check-in — streak + points */}
@@ -714,90 +848,211 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
             {/* Buy X Get Y — claim window, spots, redeem window */}
             {mechanic.type === 'buyxgety' && (
-              <div className="mb-6">
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.buyRedeemBefore}
-                  progress={mechanic.buyTotalSlots !== undefined && mechanic.buyClaimed !== undefined ? {
-                    label: 'Spots Claimed', current: mechanic.buyClaimed, total: mechanic.buyTotalSlots, remainingLabel: 'remaining',
-                  } : undefined}
-                  reward={mechanic.buyReward}
-                />
-              </div>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Claimed today"
+                submitLabel={`Claim Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="mb-5">
+                  <ClaimRedeemGrid
+                    cardFrom={meta.cardFrom}
+                    cardTo={meta.cardTo}
+                    claimDate={mechanic.endDate}
+                    redeemDate={mechanic.buyRedeemBefore}
+                    progress={mechanic.buyTotalSlots !== undefined && mechanic.buyClaimed !== undefined ? {
+                      label: 'Spots Claimed', current: mechanic.buyClaimed, total: mechanic.buyTotalSlots, remainingLabel: 'remaining',
+                    } : undefined}
+                    reward={mechanic.buyReward}
+                  />
+                </div>
+              </MechanicCard>
             )}
 
             {/* Coupon Codes — claim window, spots, redeem window, terms */}
             {mechanic.type === 'coupon' && (
-              <div className="mb-6">
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.couponRedeemBefore}
-                  progress={mechanic.couponTotalSlots !== undefined && mechanic.couponClaimed !== undefined ? {
-                    label: 'Coupons Claimed', current: mechanic.couponClaimed, total: mechanic.couponTotalSlots, remainingLabel: 'remaining',
-                  } : undefined}
-                  reward={mechanic.couponReward}
-                  terms={mechanic.couponTerms}
-                />
-              </div>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Claimed today"
+                submitLabel={`Claim Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="mb-5">
+                  <ClaimRedeemGrid
+                    cardFrom={meta.cardFrom}
+                    cardTo={meta.cardTo}
+                    claimDate={mechanic.endDate}
+                    redeemDate={mechanic.couponRedeemBefore}
+                    progress={mechanic.couponTotalSlots !== undefined && mechanic.couponClaimed !== undefined ? {
+                      label: 'Coupons Claimed', current: mechanic.couponClaimed, total: mechanic.couponTotalSlots, remainingLabel: 'remaining',
+                    } : undefined}
+                    reward={mechanic.couponReward}
+                    terms={mechanic.couponTerms}
+                  />
+                </div>
+              </MechanicCard>
             )}
 
             {/* Flash Deal — claim window, spots, redeem window, terms */}
             {mechanic.type === 'flash' && (
-              <div className="mb-6">
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.flashRedeemBefore}
-                  progress={mechanic.flashTotalSlots !== undefined && mechanic.flashClaimed !== undefined ? {
-                    label: 'Spots Claimed', current: mechanic.flashClaimed, total: mechanic.flashTotalSlots, remainingLabel: 'remaining',
-                  } : undefined}
-                  reward={mechanic.flashReward}
-                  terms={mechanic.flashTerms}
-                />
-              </div>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Claimed today"
+                submitLabel={`Claim Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="mb-5">
+                  <ClaimRedeemGrid
+                    cardFrom={meta.cardFrom}
+                    cardTo={meta.cardTo}
+                    claimDate={mechanic.endDate}
+                    redeemDate={mechanic.flashRedeemBefore}
+                    progress={mechanic.flashTotalSlots !== undefined && mechanic.flashClaimed !== undefined ? {
+                      label: 'Spots Claimed', current: mechanic.flashClaimed, total: mechanic.flashTotalSlots, remainingLabel: 'remaining',
+                    } : undefined}
+                    reward={mechanic.flashReward}
+                    terms={mechanic.flashTerms}
+                  />
+                </div>
+              </MechanicCard>
             )}
 
             {/* Bring a Friend — friend progress, claim window, redeem window, reward */}
             {mechanic.type === 'friend' && (
-              <div className="mb-6">
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.friendRedeemBefore}
-                  progress={mechanic.friendMinFriends !== undefined ? {
-                    label: 'Friends Brought', current: mechanic.friendsBrought ?? 0, total: mechanic.friendMinFriends, remainingLabel: 'more to go', showBar: true,
-                  } : undefined}
-                  reward={mechanic.friendReward}
-                />
-              </div>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Claimed today"
+                submitLabel={`Claim Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="mb-5">
+                  <ClaimRedeemGrid
+                    cardFrom={meta.cardFrom}
+                    cardTo={meta.cardTo}
+                    claimDate={mechanic.endDate}
+                    redeemDate={mechanic.friendRedeemBefore}
+                    progress={mechanic.friendMinFriends !== undefined ? {
+                      label: 'Friends Brought', current: mechanic.friendsBrought ?? 0, total: mechanic.friendMinFriends, remainingLabel: 'more to go', showBar: true,
+                    } : undefined}
+                    reward={mechanic.friendReward}
+                  />
+                </div>
+              </MechanicCard>
             )}
 
-            {/* Community Offer — Group Unlock: shared group progress, reserve/redeem window, reward */}
-            {mechanic.type === 'groupunlock' && (
-              <div className="mb-6">
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimLabel="Reserve Before"
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.groupRedeemBefore}
-                  progress={mechanic.groupTarget !== undefined ? {
-                    label: 'People Joined', current: mechanic.groupJoined ?? 0, total: mechanic.groupTarget, remainingLabel: 'more to unlock', showBar: true,
-                  } : undefined}
-                  reward={mechanic.groupReward}
-                />
-              </div>
-            )}
+            {/* Community Offer — Group Unlock: shared group progress, reserve/redeem window, reward — bespoke 4-state bottom section */}
+            {mechanic.type === 'groupunlock' && (() => {
+              const groupFull = (mechanic.groupJoined ?? 0) >= (mechanic.groupTarget ?? Infinity)
+              return (
+                <div className="mb-6">
+                  <div className="rounded-3xl bg-white px-5 py-5" style={{ boxShadow: `0 16px 48px ${meta.cardFrom}20, 0 0 0 1px ${meta.cardFrom}1A` }}>
+                    <div className="mb-5">
+                      <ClaimRedeemGrid
+                        cardFrom={meta.cardFrom}
+                        cardTo={meta.cardTo}
+                        claimLabel="Reserve Before"
+                        claimDate={mechanic.endDate}
+                        redeemDate={mechanic.groupRedeemBefore}
+                        progress={mechanic.groupTarget !== undefined ? {
+                          label: 'People Joined', current: mechanic.groupJoined ?? 0, total: mechanic.groupTarget, remainingLabel: 'more to unlock', showBar: true,
+                        } : undefined}
+                        reward={mechanic.groupReward}
+                      />
+                    </div>
+                    <DurationPlayersBox cardFrom={meta.cardFrom} startDate={mechanic.startDate} endDate={mechanic.endDate} participants={mechanic.participants} className="mb-5" />
+
+                    {mechanic.hasReserved && groupFull ? (
+                      <InlineKeypad
+                        cardFrom={meta.cardFrom}
+                        cardTo={meta.cardTo}
+                        digits={digits}
+                        pressDigit={pressDigit}
+                        pressBackspace={pressBackspace}
+                        onSubmit={joinCampaign}
+                        disabled={!codeComplete}
+                        submitLabel={`Claim Now ${meta.emoji}`}
+                      />
+                    ) : mechanic.hasReserved ? (
+                      <Link
+                        href={`/customer/games/${mechanic.type}`}
+                        className="flex items-center justify-center w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-500 bg-gray-100"
+                      >
+                        ✓ Reserved — View Status
+                      </Link>
+                    ) : groupFull ? (
+                      <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100">
+                        Group Full
+                      </div>
+                    ) : (
+                      <InlineKeypad
+                        cardFrom={meta.cardFrom}
+                        cardTo={meta.cardTo}
+                        digits={digits}
+                        pressDigit={pressDigit}
+                        pressBackspace={pressBackspace}
+                        onSubmit={joinCampaign}
+                        disabled={!codeComplete}
+                        submitLabel={`Reserve a Spot ${meta.emoji}`}
+                      />
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Package/Combo Deal — bundle contents/pricing, claim/redeem window, spots, terms */}
             {mechanic.type === 'combo' && (
-              <div className="mb-6">
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Claimed today"
+                submitLabel={`Claim Now ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
                 <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
                   {mechanic.comboVariant === 'freeitem' ? (
                     <>
@@ -841,21 +1096,23 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   )}
                 </div>
 
-                <ClaimRedeemGrid
-                  cardFrom={meta.cardFrom}
-                  cardTo={meta.cardTo}
-                  claimDate={mechanic.endDate}
-                  redeemDate={mechanic.comboRedeemBefore}
-                  progress={mechanic.comboTotalSpots !== undefined ? {
-                    label: 'Spots Claimed', current: mechanic.comboClaimed ?? 0, total: mechanic.comboTotalSpots, remainingLabel: 'remaining',
-                  } : undefined}
-                  terms={mechanic.comboTerms}
-                />
-              </div>
+                <div className="mb-5">
+                  <ClaimRedeemGrid
+                    cardFrom={meta.cardFrom}
+                    cardTo={meta.cardTo}
+                    claimDate={mechanic.endDate}
+                    redeemDate={mechanic.comboRedeemBefore}
+                    progress={mechanic.comboTotalSpots !== undefined ? {
+                      label: 'Spots Claimed', current: mechanic.comboClaimed ?? 0, total: mechanic.comboTotalSpots, remainingLabel: 'remaining',
+                    } : undefined}
+                    terms={mechanic.comboTerms}
+                  />
+                </div>
+              </MechanicCard>
             )}
 
-            {/* Duration + players — dice/shake render their own copy inside the tinted card above */}
-            {mechanic.type !== 'dice' && mechanic.type !== 'shake' && (
+            {/* Duration + players — every other mechanic now renders its own copy inside its card above */}
+            {mechanic.type === 'checkin' && (
               <DurationPlayersBox
                 cardFrom={meta.cardFrom}
                 startDate={mechanic.startDate}
@@ -871,65 +1128,25 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <p className="text-xs text-gray-400 mb-1">Offered by</p>
         <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
-        {/* PLAY / CLAIM CTA */}
-        {mechanic.type === 'spin' ? null : mechanic.type === 'groupunlock' ? (
-          (() => {
-            const groupFull = (mechanic.groupJoined ?? 0) >= (mechanic.groupTarget ?? Infinity)
-            if (mechanic.hasReserved && groupFull) {
-              return (
-                <Link
-                  href={`/customer/games/${mechanic.type}`}
-                  className="flex items-center justify-center w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
-                  style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 8px 28px ${meta.cardFrom}55` }}
-                >
-                  Claim Now {meta.emoji}
-                </Link>
-              )
-            }
-            if (mechanic.hasReserved) {
-              return (
-                <Link
-                  href={`/customer/games/${mechanic.type}`}
-                  className="flex items-center justify-center w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-500 bg-gray-100"
-                >
-                  ✓ Reserved — View Status
-                </Link>
-              )
-            }
-            if (groupFull) {
-              return (
-                <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100">
-                  Group Full
-                </div>
-              )
-            }
-            return (
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={openOTP}
-                className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 8px 28px ${meta.cardFrom}55` }}
-              >
-                Reserve a Spot {meta.emoji}
-              </motion.button>
-            )
-          })()
-        ) : mechanic.playedToday ? (
-          <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-            <span>✓</span> {isClaimMechanic ? 'Claimed today' : 'Played today'} · Come back tomorrow
-          </div>
-        ) : (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={openOTP}
-            className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
-            style={{
-              background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
-              boxShadow: `0 8px 28px ${meta.cardFrom}55`,
-            }}
-          >
-            {isClaimMechanic ? 'Claim Now' : 'Play Now'} {meta.emoji}
-          </motion.button>
+        {/* PLAY CTA — only stamp/checkin still use the bottom-sheet PIN flow; every other mechanic enters its code inline in its card above */}
+        {!usesInlineKeypad && (
+          mechanic.playedToday ? (
+            <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
+              <span>✓</span> Played today · Come back tomorrow
+            </div>
+          ) : (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={openOTP}
+              className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
+                boxShadow: `0 8px 28px ${meta.cardFrom}55`,
+              }}
+            >
+              Play Now {meta.emoji}
+            </motion.button>
+          )
         )}
       </div>
 
