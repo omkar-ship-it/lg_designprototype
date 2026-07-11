@@ -51,6 +51,12 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// Splits a reward string like "Free Coffee ☕" into its label and trailing emoji
+function splitReward(text: string): { label: string; icon: string } {
+  const match = text.match(/^(.*?)\s*([\p{Extended_Pictographic}️‍]+)\s*$/u)
+  return match ? { label: match[1], icon: match[2] } : { label: text, icon: '🎁' }
+}
+
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string; type: string }> }) {
   const { id, type } = use(params)
   const router = useRouter()
@@ -427,107 +433,120 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         ) : mechanic.type === 'spin' ? (
           <div className="mb-6">
             <div
-              className="rounded-3xl overflow-hidden"
-              style={{ boxShadow: `0 16px 48px ${meta.cardFrom}2E, 0 0 0 1px ${meta.cardFrom}2E` }}
+              className="rounded-3xl bg-white px-5 py-5"
+              style={{ boxShadow: `0 16px 48px ${meta.cardFrom}20, 0 0 0 1px ${meta.cardFrom}1A` }}
             >
-              {/* Rewards header strip */}
-              <div className="relative px-5 py-4 overflow-hidden" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                <span className="absolute -right-3 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">{meta.emoji}</span>
-                <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-2">What you could win</p>
-                <div className="flex flex-wrap gap-2">
-                  {(mechanic.prizes ?? []).map((p, i) => (
-                    <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white/15 text-white backdrop-blur-sm">
-                      {p}
-                    </span>
-                  ))}
-                </div>
+              {/* Rewards */}
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
+              <div className="grid grid-cols-2 gap-2 mb-5">
+                {(mechanic.prizes ?? []).map((p, i) => {
+                  const { label, icon } = splitReward(p)
+                  return (
+                    <div
+                      key={i}
+                      className="rounded-2xl p-3 flex items-center gap-2.5"
+                      style={{ background: `${meta.cardFrom}0F` }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0"
+                        style={{ background: `${meta.cardFrom}1F` }}
+                      >
+                        {icon}
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 leading-tight">{label}</span>
+                    </div>
+                  )
+                })}
               </div>
 
-              <div className="bg-white px-5 py-5">
-                {/* Duration + players */}
-                <div className="flex items-center justify-between mb-5 pb-5" style={{ borderBottom: '1px dashed #E5E7EB' }}>
+              {/* Duration + players */}
+              <div className="flex items-center justify-between rounded-2xl p-4 mb-5" style={{ background: `${meta.cardFrom}0F` }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${meta.cardFrom}1F` }}>
+                    <CalendarDays className="w-4 h-4" style={{ color: meta.cardFrom }} />
+                  </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Duration</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Duration</p>
                     <p className="text-sm font-bold text-gray-800">
                       {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{mechanic.participants.toLocaleString()} players</span>
-                  </div>
                 </div>
-
-                {mechanic.playedToday ? (
-                  <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-50 flex items-center justify-center gap-2">
-                    <span>✓</span> Played today · Come back tomorrow
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm font-bold text-gray-900 text-center mb-1">Enter the code shared by staff</p>
-                    <p className="text-xs text-gray-400 text-center mb-5">3-digit code · refreshes every 2 minutes</p>
-
-                    {/* Digit boxes */}
-                    <div className="flex gap-3 justify-center mb-5">
-                      {[0, 1, 2].map(i => (
-                        <div
-                          key={i}
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-gray-900 transition-colors"
-                          style={{
-                            background: '#F9FAFB',
-                            border: digits[i] ? `2px solid ${meta.cardFrom}` : '2px solid #E5E7EB',
-                          }}
-                        >
-                          {digits[i]}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Numeric keypad */}
-                    <div className="grid grid-cols-3 gap-2.5 mb-5">
-                      {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
-                        <motion.button
-                          key={d}
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => pressDigit(d)}
-                          className="py-3.5 rounded-2xl text-lg font-bold text-gray-800 bg-gray-50"
-                        >
-                          {d}
-                        </motion.button>
-                      ))}
-                      <div />
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => pressDigit('0')}
-                        className="py-3.5 rounded-2xl text-lg font-bold text-gray-800 bg-gray-50"
-                      >
-                        0
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={pressBackspace}
-                        className="py-3.5 rounded-2xl flex items-center justify-center text-gray-500 bg-gray-50"
-                      >
-                        <Delete className="w-4 h-4" />
-                      </motion.button>
-                    </div>
-
-                    <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      onClick={joinCampaign}
-                      disabled={!codeComplete}
-                      className="w-full py-4 rounded-2xl font-bold text-base transition-all"
-                      style={{
-                        background: codeComplete ? `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` : '#F3F4F6',
-                        color: codeComplete ? 'white' : '#9CA3AF',
-                        boxShadow: codeComplete ? `0 8px 28px ${meta.cardFrom}55` : 'none',
-                      }}
-                    >
-                      Play Now {meta.emoji}
-                    </motion.button>
-                  </>
-                )}
+                <div className="flex items-center gap-1 text-xs font-bold shrink-0" style={{ color: meta.cardFrom }}>
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{mechanic.participants.toLocaleString()}</span>
+                </div>
               </div>
+
+              {mechanic.playedToday ? (
+                <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-50 flex items-center justify-center gap-2">
+                  <span>✓</span> Played today · Come back tomorrow
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-bold text-gray-900 text-center mb-1">Enter the code shared by staff</p>
+                  <p className="text-xs text-gray-400 text-center mb-4">3-digit code · refreshes every 2 minutes</p>
+
+                  {/* Digit boxes */}
+                  <div className="flex gap-2.5 justify-center mb-4">
+                    {[0, 1, 2].map(i => (
+                      <div
+                        key={i}
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black text-gray-900 transition-colors"
+                        style={{
+                          background: '#F9FAFB',
+                          border: digits[i] ? `2px solid ${meta.cardFrom}` : '2px solid #E5E7EB',
+                        }}
+                      >
+                        {digits[i]}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Numeric keypad */}
+                  <div className="grid grid-cols-3 gap-2 mb-4 max-w-[220px] mx-auto">
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
+                      <motion.button
+                        key={d}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => pressDigit(d)}
+                        className="py-2 rounded-xl text-sm font-bold text-gray-800 bg-gray-50"
+                      >
+                        {d}
+                      </motion.button>
+                    ))}
+                    <div />
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => pressDigit('0')}
+                      className="py-2 rounded-xl text-sm font-bold text-gray-800 bg-gray-50"
+                    >
+                      0
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={pressBackspace}
+                      className="py-2 rounded-xl flex items-center justify-center text-gray-500 bg-gray-50"
+                    >
+                      <Delete className="w-3.5 h-3.5" />
+                    </motion.button>
+                  </div>
+
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={joinCampaign}
+                    disabled={!codeComplete}
+                    className="w-full py-4 rounded-2xl font-bold text-base transition-all"
+                    style={{
+                      background: codeComplete ? `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` : '#F3F4F6',
+                      color: codeComplete ? 'white' : '#9CA3AF',
+                      boxShadow: codeComplete ? `0 8px 28px ${meta.cardFrom}55` : 'none',
+                    }}
+                  >
+                    Play Now {meta.emoji}
+                  </motion.button>
+                </>
+              )}
             </div>
           </div>
         ) : (
