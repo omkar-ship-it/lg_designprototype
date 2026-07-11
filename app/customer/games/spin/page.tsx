@@ -5,10 +5,25 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
 import { campaigns } from '@/lib/mock-data'
+import { MECHANIC_META } from '@/lib/utils'
 import type { SpinSegment } from '@/lib/types'
 
 const spinCampaign = campaigns.find(c => c.mechanic === 'spin')!
 const segments = (spinCampaign.config as { segments: SpinSegment[] }).segments
+const meta = MECHANIC_META.spin
+
+// Blends two hex colors — used to darken the mechanic's brand color into a moody backdrop
+function mixHex(hex1: string, hex2: string, t: number) {
+  const p1 = parseInt(hex1.slice(1), 16), p2 = parseInt(hex2.slice(1), 16)
+  const r = Math.round(((p1 >> 16) & 255) * (1 - t) + ((p2 >> 16) & 255) * t)
+  const g = Math.round(((p1 >> 8) & 255) * (1 - t) + ((p2 >> 8) & 255) * t)
+  const b = Math.round((p1 & 255) * (1 - t) + (p2 & 255) * t)
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+}
+
+const BG_FROM = mixHex(meta.cardTo, '#000000', 0.75)
+const BG_MID  = mixHex(meta.cardFrom, '#000000', 0.55)
+const BG_TO   = mixHex(meta.cardTo, '#000000', 0.9)
 
 type State = 'idle' | 'spinning' | 'result'
 
@@ -100,7 +115,7 @@ export default function SpinWheelPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, ${BG_FROM} 0%, ${BG_MID} 45%, ${BG_TO} 100%)` }}
     >
       {/* Ambient orbs */}
       <div className="absolute top-20 -left-24 w-72 h-72 rounded-full pointer-events-none"
@@ -173,8 +188,18 @@ export default function SpinWheelPage() {
                 const midAngle = (startAngle + endAngle) / 2
                 const tx = cx + (r * 0.65) * Math.cos(midAngle)
                 const ty = cy + (r * 0.65) * Math.sin(midAngle)
-                const label = seg.label.length > 8 ? seg.label.slice(0, 7) + '…' : seg.label
                 const isLanded = landedIdx === i && state === 'result'
+
+                // Wrap onto two short lines instead of truncating mid-word
+                const words = seg.label.split(' ')
+                const lines = words.length > 1
+                  ? [words.slice(0, Math.ceil(words.length / 2)).join(' '), words.slice(Math.ceil(words.length / 2)).join(' ')]
+                  : [seg.label.length > 8 ? seg.label.slice(0, 7) + '…' : seg.label]
+
+                // Keep labels upright — flip 180° on the left half so nothing reads upside down
+                let labelRotation = i * segAngle + segAngle / 2
+                if (labelRotation > 90 && labelRotation < 270) labelRotation += 180
+
                 return (
                   <g key={i}>
                     <path
@@ -185,9 +210,13 @@ export default function SpinWheelPage() {
                       opacity={isLanded ? 1 : landedIdx !== null ? 0.5 : 0.92}
                     />
                     <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle"
-                      fill="white" fontSize="9" fontWeight="700"
-                      transform={`rotate(${i * segAngle + segAngle / 2}, ${tx}, ${ty})`}>
-                      {label}
+                      fill="white" fontSize="9.5" fontWeight="700"
+                      transform={`rotate(${labelRotation}, ${tx}, ${ty})`}>
+                      {lines.map((line, li) => (
+                        <tspan key={li} x={tx} dy={lines.length === 1 ? 0 : li === 0 ? -6 : 12}>
+                          {line}
+                        </tspan>
+                      ))}
                     </text>
                   </g>
                 )
