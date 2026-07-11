@@ -3,7 +3,7 @@ import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, FerrisWheel, Dices, Ticket, ArrowRightLeft, TicketPercent, Zap, Handshake, UserPlus, Package } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, ChartPie, Dices, Ticket, ArrowRightLeft, TicketPercent, Zap, Handshake, UserPlus, Package, Delete } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -29,7 +29,7 @@ const MECHANIC_ICONS = {
   stamp:   Gift,
   shake:   Smartphone,
   checkin: Target,
-  spin:    FerrisWheel,
+  spin:    ChartPie,
   dice:    Dices,
   lottery: Ticket,
   buyxgety: ArrowRightLeft,
@@ -90,6 +90,24 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
     if (e.key === 'Backspace' && !digits[i] && i > 0) digitRefs[i - 1].current?.focus()
+  }
+
+  // Inline keypad (Spin details page) — pressing a digit fills the first empty slot
+  const pressDigit = (d: string) => {
+    const i = digits.findIndex(x => !x)
+    if (i === -1) return
+    const next = [...digits]
+    next[i] = d
+    setDigits(next)
+  }
+
+  const pressBackspace = () => {
+    const i = [...digits].reverse().findIndex(x => x)
+    if (i === -1) return
+    const realIdx = digits.length - 1 - i
+    const next = [...digits]
+    next[realIdx] = ''
+    setDigits(next)
   }
 
   const joinCampaign = () => {
@@ -406,10 +424,116 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )
           })()
+        ) : mechanic.type === 'spin' ? (
+          <div className="mb-6">
+            <div
+              className="rounded-3xl overflow-hidden"
+              style={{ boxShadow: `0 16px 48px ${meta.cardFrom}2E, 0 0 0 1px ${meta.cardFrom}2E` }}
+            >
+              {/* Rewards header strip */}
+              <div className="relative px-5 py-4 overflow-hidden" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
+                <span className="absolute -right-3 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">{meta.emoji}</span>
+                <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-2">What you could win</p>
+                <div className="flex flex-wrap gap-2">
+                  {(mechanic.prizes ?? []).map((p, i) => (
+                    <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white/15 text-white backdrop-blur-sm">
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white px-5 py-5">
+                {/* Duration + players */}
+                <div className="flex items-center justify-between mb-5 pb-5" style={{ borderBottom: '1px dashed #E5E7EB' }}>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Duration</p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{mechanic.participants.toLocaleString()} players</span>
+                  </div>
+                </div>
+
+                {mechanic.playedToday ? (
+                  <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-50 flex items-center justify-center gap-2">
+                    <span>✓</span> Played today · Come back tomorrow
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-gray-900 text-center mb-1">Enter the code shared by staff</p>
+                    <p className="text-xs text-gray-400 text-center mb-5">3-digit code · refreshes every 2 minutes</p>
+
+                    {/* Digit boxes */}
+                    <div className="flex gap-3 justify-center mb-5">
+                      {[0, 1, 2].map(i => (
+                        <div
+                          key={i}
+                          className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-gray-900 transition-colors"
+                          style={{
+                            background: '#F9FAFB',
+                            border: digits[i] ? `2px solid ${meta.cardFrom}` : '2px solid #E5E7EB',
+                          }}
+                        >
+                          {digits[i]}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Numeric keypad */}
+                    <div className="grid grid-cols-3 gap-2.5 mb-5">
+                      {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
+                        <motion.button
+                          key={d}
+                          whileTap={{ scale: 0.92 }}
+                          onClick={() => pressDigit(d)}
+                          className="py-3.5 rounded-2xl text-lg font-bold text-gray-800 bg-gray-50"
+                        >
+                          {d}
+                        </motion.button>
+                      ))}
+                      <div />
+                      <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => pressDigit('0')}
+                        className="py-3.5 rounded-2xl text-lg font-bold text-gray-800 bg-gray-50"
+                      >
+                        0
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        onClick={pressBackspace}
+                        className="py-3.5 rounded-2xl flex items-center justify-center text-gray-500 bg-gray-50"
+                      >
+                        <Delete className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={joinCampaign}
+                      disabled={!codeComplete}
+                      className="w-full py-4 rounded-2xl font-bold text-base transition-all"
+                      style={{
+                        background: codeComplete ? `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` : '#F3F4F6',
+                        color: codeComplete ? 'white' : '#9CA3AF',
+                        boxShadow: codeComplete ? `0 8px 28px ${meta.cardFrom}55` : 'none',
+                      }}
+                    >
+                      Play Now {meta.emoji}
+                    </motion.button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
           <>
-            {/* Prizes — spin / dice / shake */}
-            {(mechanic.type === 'spin' || mechanic.type === 'dice' || mechanic.type === 'shake') && mechanic.prizes && mechanic.prizes.length > 0 && (
+            {/* Prizes — dice / shake */}
+            {(mechanic.type === 'dice' || mechanic.type === 'shake') && mechanic.prizes && mechanic.prizes.length > 0 && (
               <div className="mb-6">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
                 <div className="flex flex-wrap gap-2">
@@ -751,7 +875,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
         {/* PLAY / CLAIM CTA */}
-        {mechanic.type === 'groupunlock' ? (
+        {mechanic.type === 'spin' ? null : mechanic.type === 'groupunlock' ? (
           (() => {
             const groupFull = (mechanic.groupJoined ?? 0) >= (mechanic.groupTarget ?? Infinity)
             if (mechanic.hasReserved && groupFull) {
