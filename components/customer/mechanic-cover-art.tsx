@@ -265,12 +265,12 @@ export function LotteryDrawArt({ className = '' }: { className?: string }) {
   const rawId = useId()
   const gid = `ld-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
   const cx = 60, cy = 58, r = 34
-  const ballColors = ['#F472B6', '#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#FB923C', '#F87171']
-  const balls = Array.from({ length: 10 }, (_, i) => {
-    const angle = i * 47
+  const ballNumbers = [7, 3, 1, 5, 2, 6, 1]
+  const balls = Array.from({ length: ballNumbers.length }, (_, i) => {
+    const angle = i * 51
     const dist = (i % 3) * 8 + 6
     const p = polarToCartesian(cx, cy, dist, angle)
-    return { ...p, color: ballColors[i % ballColors.length], r: 6.5 }
+    return { ...p, n: ballNumbers[i], isWhite: i % 2 === 0, r: 7.5 }
   })
 
   return (
@@ -280,31 +280,39 @@ export function LotteryDrawArt({ className = '' }: { className?: string }) {
           <circle cx={cx} cy={cy} r={r - 3} />
         </clipPath>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1C1917" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#4C3FA8" floodOpacity="0.3" />
         </filter>
+        <linearGradient id={`${gid}-stand`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#9B8FF5" />
+          <stop offset="100%" stopColor="#5B4FC7" />
+        </linearGradient>
       </defs>
 
       {/* stand */}
-      <rect x="38" y="106" width="44" height="12" rx="3" fill="#1C1917" />
-      <rect x="55" y="90" width="10" height="20" fill="#78716C" />
+      <rect x="38" y="106" width="44" height="12" rx="3" fill={`url(#${gid}-stand)`} />
+      <rect x="55" y="90" width="10" height="20" fill="#7C6EF0" />
 
-      {/* crank */}
-      <line x1={cx + r} y1={cy} x2={cx + r + 10} y2={cy + 6} stroke="#A16207" strokeWidth="3" strokeLinecap="round" />
-      <circle cx={cx + r + 10} cy={cy + 6} r="3" fill="#FBBF24" />
+      {/* axle */}
+      <line x1={cx - r - 10} y1={cy} x2={cx + r + 10} y2={cy} stroke="#D9CFFF" strokeWidth="3" strokeLinecap="round" />
+      <circle cx={cx - r - 10} cy={cy} r="3.5" fill="#FBBF24" />
+      <circle cx={cx + r + 10} cy={cy} r="3.5" fill="#FBBF24" />
 
       <g filter={`url(#${gid}-shadow)`}>
-        <circle cx={cx} cy={cy} r={r} fill="#FEF3C7" opacity="0.18" stroke="#FBBF24" strokeWidth="3" />
+        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.55" stroke="#7C6EF0" strokeWidth="3" />
         <g clipPath={`url(#${gid}-clip)`}>
           {balls.map((b, i) => (
-            <circle key={i} cx={b.x} cy={b.y} r={b.r} fill={b.color} />
+            <g key={i}>
+              <circle cx={b.x} cy={b.y} r={b.r} fill={b.isWhite ? '#FFFFFF' : '#8B7CF6'} stroke={b.isWhite ? '#C4B5FD' : 'none'} strokeWidth="1" />
+              <text x={b.x} y={b.y + 2.5} fontSize="7" fontWeight="700" textAnchor="middle" fill={b.isWhite ? '#5B4FC7' : '#FFFFFF'}>{b.n}</text>
+            </g>
           ))}
         </g>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FBBF24" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="2" />
       </g>
 
-      {/* plaque */}
-      <rect x="32" y="112" width="56" height="14" rx="3" fill="#1C1917" stroke="#FBBF24" strokeWidth="1.5" />
-      <text x="60" y="121.5" fontSize="7" fontWeight="700" fill="#FBBF24" textAnchor="middle">JACKPOT</text>
+      {/* sparkle accents */}
+      <text x="14" y="26" fontSize="12" fill="#C4B5FD">✦</text>
+      <text x="98" y="42" fontSize="8" fill="#FBBF24">✦</text>
     </svg>
   )
 }

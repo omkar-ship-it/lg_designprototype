@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import {
   Tag, ShoppingCart, Clock, ShieldCheck, ShoppingBag, Star, Zap, Gift,
-  TicketPercent, Wallet, ThumbsUp, Ticket, CalendarDays, UserPlus,
+  TicketPercent, Wallet, ThumbsUp, Ticket, CalendarDays, UserPlus, Trophy,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -64,13 +64,13 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
     ],
   },
   lottery: {
-    headline: 'Play & Win Big Prizes!', tagline: 'Join the draw with every visit — you could be next!',
-    bgFrom: '#422006', bgTo: '#1C1917', textColor: '#FDE68A', layout: 'center', badgeBg: '#FEF3C7', art: LotteryDrawArt,
+    headline: 'Your Chance to', headlineAccent: 'Win Big!', accentColor: '#7C6EF0',
+    tagline: 'Join the lottery draw and stand a chance to win exciting prizes.',
+    bgFrom: '#F5F3FF', bgTo: '#EDE9FE', textColor: '#2E1065', layout: 'side', art: LotteryDrawArt,
     features: [
-      { icon: Ticket, label: 'Earn Tickets' },
-      { icon: CalendarDays, label: 'Monthly Draw' },
-      { icon: Gift, label: 'Big Prizes' },
-      { icon: Star, label: 'Lucky Winner' },
+      { icon: Ticket, label: 'Earn Entries' },
+      { icon: CalendarDays, label: 'Weekly Draw' },
+      { icon: Trophy, label: 'Exciting Prizes' },
     ],
   },
   buyxgety: {

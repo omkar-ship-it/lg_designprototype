@@ -51,6 +51,11 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// Duration ranges drop the year — the two dates already imply the span
+function fmtDateShort(d: string) {
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
+
 // Splits a reward string like "Free Coffee ☕" into its label and trailing emoji
 function splitReward(text: string): { label: string; icon: string } {
   const match = text.match(/^(.*?)\s*([\p{Extended_Pictographic}️‍]+)\s*$/u)
@@ -71,7 +76,7 @@ function DurationPlayersBox({ cardFrom, startDate, endDate, participants, classN
         </div>
       </div>
       <p className="text-sm font-semibold text-gray-800">
-        {fmtDate(startDate)} → {fmtDate(endDate)}
+        {fmtDateShort(startDate)} → {fmtDateShort(endDate)}
       </p>
     </div>
   )
@@ -670,7 +675,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Duration</p>
                     <p className="text-sm font-bold text-gray-800">
-                      {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
+                      {fmtDateShort(mechanic.startDate)} → {fmtDateShort(mechanic.endDate)}
                     </p>
                   </div>
                 </div>

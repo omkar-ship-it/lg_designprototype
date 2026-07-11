@@ -113,7 +113,7 @@ export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: strin
   spin:    { label: 'SPIN A WHEEL', badgeBg: '#EDE9FE', badgeText: '#5B21B6', cardFrom: '#7C3AED', cardTo: '#4C1D95', emoji: '🎡' },
   shake:   { label: 'SCRATCH',      badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#3B82F6', cardTo: '#1D4ED8', emoji: '🃏' },
   dice:    { label: 'ROLL A DICE',  badgeBg: '#FCE7F3', badgeText: '#9D174D', cardFrom: '#BE185D', cardTo: '#831843', emoji: '🎲' },
-  lottery: { label: 'LOTTERY',      badgeBg: '#FEF9C3', badgeText: '#854D0E', cardFrom: '#EAB308', cardTo: '#A16207', emoji: '🎟️' },
+  lottery: { label: 'LOTTERY',      badgeBg: '#EDE9FE', badgeText: '#4C3FA8', cardFrom: '#7C6EF0', cardTo: '#4C3FA8', emoji: '🎟️' },
   checkin: { label: 'CHECK-IN',     badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '📍' },
   buyxgety: { label: 'BUY X GET Y', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#F97316', cardTo: '#C2410C', emoji: '💰' },
   coupon:  { label: 'COUPON CODES', badgeBg: '#FEF9C3', badgeText: '#854D0E', cardFrom: '#CA8A04', cardTo: '#854D0E', emoji: '🎫' },

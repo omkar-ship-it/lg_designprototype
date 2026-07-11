@@ -3,6 +3,13 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
+import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
+
+const meta = MECHANIC_META.lottery
+const accentRgb = hexToRgb(meta.cardFrom).join(',')
+const deepRgb = hexToRgb(meta.cardTo).join(',')
+const bgTop = hexMix(meta.cardTo, '#000000', 0.7)
+const bgMid = hexMix(meta.cardFrom, '#000000', 0.55)
 
 const DRAW_DATE      = '31 Jul 2026'
 const JACKPOT_PRIZE  = 'Free Month of Coffee 👑'
@@ -47,17 +54,17 @@ export default function LotteryPage() {
   return (
     <div
       className="min-h-screen flex flex-col px-5 pt-12 pb-8 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1A0A00 0%, #2C1600 40%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, ${bgTop} 0%, ${bgMid} 40%, #0D0B1E 100%)` }}
     >
       {/* Ambient orbs */}
       <div className="absolute top-20 -left-20 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(245,197,24,0.2) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.2) 0%, transparent 70%)`, filter: 'blur(60px)' }} />
       <div className="absolute bottom-32 -right-20 w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.18) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${deepRgb},0.18) 0%, transparent 70%)`, filter: 'blur(48px)' }} />
 
       {/* Idle sparkles */}
       {state === 'idle' && SPARKLE_POS.map((pos, i) => (
-        <motion.div key={i} className="absolute text-yellow-300/20 pointer-events-none select-none" style={pos}
+        <motion.div key={i} className="absolute pointer-events-none select-none" style={{ ...pos, color: `rgba(${accentRgb},0.3)` }}
           animate={{ opacity: [0.15, 0.6, 0.15], scale: [0.8, 1.2, 0.8], rotate: [0, 12, 0] }}
           transition={{ duration: 2.5 + i * 0.35, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}>
           ✦
@@ -96,9 +103,9 @@ export default function LotteryPage() {
 
               {/* Draw countdown */}
               <div className="rounded-2xl p-4 text-center"
-                style={{ background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.25)' }}>
-                <p className="text-[10px] text-yellow-400/60 uppercase tracking-widest font-bold mb-1">Draw in</p>
-                <p className="text-4xl font-black text-yellow-400">{daysUntilDraw}</p>
+                style={{ background: `rgba(${accentRgb},0.1)`, border: `1px solid rgba(${accentRgb},0.3)` }}>
+                <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: `rgba(${accentRgb},0.7)` }}>Draw in</p>
+                <p className="text-4xl font-black" style={{ color: meta.cardFrom }}>{daysUntilDraw}</p>
                 <p className="text-xs text-white/40 mt-0.5">days · {DRAW_DATE}</p>
               </div>
 
@@ -126,12 +133,12 @@ export default function LotteryPage() {
                 disabled={state === 'receiving'}
                 className="w-full py-5 rounded-2xl text-base font-extrabold z-10"
                 style={{
-                  background: state === 'receiving' ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #F5C518, #D97706)',
-                  color: state === 'receiving' ? 'white' : '#1A0A00',
-                  boxShadow: state !== 'receiving' ? '0 8px 32px rgba(245,197,24,0.4)' : 'none',
+                  background: state === 'receiving' ? 'rgba(255,255,255,0.08)' : `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
+                  color: 'white',
+                  boxShadow: state !== 'receiving' ? `0 8px 32px rgba(${accentRgb},0.4)` : 'none',
                 }}
                 animate={state === 'idle'
-                  ? { boxShadow: ['0 8px 32px rgba(245,197,24,0.35)', '0 8px 52px rgba(245,197,24,0.65)', '0 8px 32px rgba(245,197,24,0.35)'] }
+                  ? { boxShadow: [`0 8px 32px rgba(${accentRgb},0.35)`, `0 8px 52px rgba(${accentRgb},0.65)`, `0 8px 32px rgba(${accentRgb},0.35)`] }
                   : {}}
                 transition={{ duration: 1.8, repeat: state === 'idle' ? Infinity : 0, ease: 'easeInOut' }}
               >
@@ -166,13 +173,13 @@ export default function LotteryPage() {
                 transition={{ type: 'spring', stiffness: 240, damping: 22, delay: 0.2 }}
                 className="rounded-3xl overflow-hidden"
                 style={{
-                  border: '2px solid rgba(245,197,24,0.5)',
-                  boxShadow: '0 0 60px rgba(245,197,24,0.15), 0 20px 60px rgba(0,0,0,0.6)',
+                  border: `2px solid rgba(${accentRgb},0.5)`,
+                  boxShadow: `0 0 60px rgba(${accentRgb},0.15), 0 20px 60px rgba(0,0,0,0.6)`,
                 }}
               >
                 {/* Ticket header */}
                 <div className="relative px-5 py-4 overflow-hidden"
-                  style={{ background: 'linear-gradient(135deg, #F5C518 0%, #D97706 100%)' }}>
+                  style={{ background: `linear-gradient(135deg, ${meta.cardFrom} 0%, ${meta.cardTo} 100%)` }}>
                   <div className="absolute inset-0 opacity-[0.08]"
                     style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '16px 16px' }} />
                   {/* Sheen */}
@@ -184,26 +191,26 @@ export default function LotteryPage() {
                   />
                   <div className="relative flex items-center justify-between">
                     <div>
-                      <p className="text-[9px] font-black text-black/50 uppercase tracking-[0.2em] mb-0.5">Lucky Draw</p>
-                      <p className="text-lg font-extrabold text-black">🎟️ {CAMPAIGN_NAME}</p>
+                      <p className="text-[9px] font-black text-white/60 uppercase tracking-[0.2em] mb-0.5">Lucky Draw</p>
+                      <p className="text-lg font-extrabold text-white">🎟️ {CAMPAIGN_NAME}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] text-black/40 font-bold uppercase mb-0.5">{BUSINESS_NAME}</p>
-                      <p className="text-[10px] font-bold text-black/60">Draw: {DRAW_DATE}</p>
+                      <p className="text-[9px] text-white/50 font-bold uppercase mb-0.5">{BUSINESS_NAME}</p>
+                      <p className="text-[10px] font-bold text-white/70">Draw: {DRAW_DATE}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Ticket body */}
                 <div className="px-5 py-6 text-center"
-                  style={{ background: 'linear-gradient(180deg, #1E0A00 0%, #120800 100%)' }}>
+                  style={{ background: `linear-gradient(180deg, ${hexMix(meta.cardTo, '#000000', 0.6)} 0%, #0D0B1E 100%)` }}>
                   <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Your ticket number</p>
                   <motion.p
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 280, damping: 14, delay: 0.5 }}
                     className="text-6xl font-black tracking-widest mb-1"
-                    style={{ color: '#F5C518', textShadow: '0 0 30px rgba(245,197,24,0.5)' }}
+                    style={{ color: meta.cardFrom, textShadow: `0 0 30px rgba(${accentRgb},0.5)` }}
                   >
                     #{padTicketNo(ticketNo)}
                   </motion.p>
@@ -213,11 +220,11 @@ export default function LotteryPage() {
                 </div>
 
                 {/* Perforated line */}
-                <div style={{ borderTop: '2px dashed rgba(245,197,24,0.3)' }} />
+                <div style={{ borderTop: `2px dashed rgba(${accentRgb},0.3)` }} />
 
                 {/* Ticket footer */}
                 <div className="px-5 py-2.5 flex items-center justify-between"
-                  style={{ background: '#0D0800' }}>
+                  style={{ background: '#0D0B1E' }}>
                   <p className="font-mono text-[9px] text-white/20 tracking-wider">{serialNo}</p>
                   <p className="text-[9px] text-white/15">Terms apply</p>
                 </div>
@@ -229,10 +236,10 @@ export default function LotteryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
                 className="rounded-2xl px-4 py-3 text-center"
-                style={{ background: 'rgba(245,197,24,0.07)', border: '1px solid rgba(245,197,24,0.2)' }}
+                style={{ background: `rgba(${accentRgb},0.08)`, border: `1px solid rgba(${accentRgb},0.25)` }}
               >
                 <p className="text-xs text-white/50">You could win</p>
-                <p className="text-sm font-bold text-yellow-400">{JACKPOT_PRIZE}</p>
+                <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{JACKPOT_PRIZE}</p>
               </motion.div>
 
               <motion.button
