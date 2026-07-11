@@ -57,6 +57,97 @@ function splitReward(text: string): { label: string; icon: string } {
   return match ? { label: match[1], icon: match[2] } : { label: text, icon: '🎁' }
 }
 
+// Shared "Duration + players" stat box, tinted to the mechanic's brand color
+function DurationPlayersBox({ cardFrom, startDate, endDate, participants, className = '' }: {
+  cardFrom: string; startDate: string; endDate: string; participants: number; className?: string
+}) {
+  return (
+    <div className={`rounded-2xl p-4 ${className}`} style={{ background: `${cardFrom}12` }}>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
+        <div className="flex items-center gap-1 text-[10px]" style={{ color: cardFrom }}>
+          <Users className="w-3 h-3" />
+          <span>{participants.toLocaleString()} players</span>
+        </div>
+      </div>
+      <p className="text-sm font-semibold text-gray-800">
+        {fmtDate(startDate)} → {fmtDate(endDate)}
+      </p>
+    </div>
+  )
+}
+
+interface ClaimRedeemGridProps {
+  cardFrom: string
+  cardTo: string
+  claimLabel?: string
+  claimDate: string
+  redeemDate?: string
+  progress?: {
+    label: string
+    current: number
+    total: number
+    remainingLabel: string
+    showBar?: boolean
+  }
+  reward?: string
+  terms?: string
+}
+
+// Shared claim/redeem/spots/reward grid — reused by buyxgety, coupon, flash, friend, groupunlock, combo
+function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms }: ClaimRedeemGridProps) {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">{claimLabel}</p>
+          <p className="text-sm font-bold text-gray-900">{fmtDate(claimDate)}</p>
+        </div>
+        <div className="rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
+          <p className="text-sm font-bold text-gray-900">{redeemDate ? fmtDate(redeemDate) : '—'}</p>
+        </div>
+        {progress && (
+          <div className="col-span-2 rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">{progress.label}</p>
+              <p className="text-xs font-semibold" style={{ color: cardFrom }}>
+                {Math.max(0, progress.total - progress.current)} {progress.remainingLabel}
+              </p>
+            </div>
+            <p className={`text-sm font-bold text-gray-900 ${progress.showBar ? 'mb-2' : ''}`}>
+              {progress.current} / {progress.total}
+            </p>
+            {progress.showBar && (
+              <div className="h-1.5 rounded-full bg-white overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, Math.round((progress.current / progress.total) * 100))}%`,
+                    background: `linear-gradient(90deg, ${cardFrom}, ${cardTo})`,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        {reward && (
+          <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${cardFrom}12` }}>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
+            <p className="text-sm font-bold" style={{ color: cardFrom }}>{reward}</p>
+          </div>
+        )}
+      </div>
+      {terms && (
+        <div className="bg-gray-50 rounded-2xl p-4">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
+          <p className="text-xs text-gray-500 leading-relaxed">{terms}</p>
+        </div>
+      )}
+    </>
+  )
+}
+
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string; type: string }> }) {
   const { id, type } = use(params)
   const router = useRouter()
@@ -66,6 +157,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const meta     = MECHANIC_META[mechanic.type as MechanicType]
   const hero     = HERO_COVER[mechanic.type as MechanicType]
   const Art      = hero?.art
+  const isClaimMechanic = mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo'
 
   // OTP state
   const [showOTP, setShowOTP] = useState(false)
@@ -551,20 +643,30 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <>
-            {/* Prizes — dice / shake */}
-            {(mechanic.type === 'dice' || mechanic.type === 'shake') && mechanic.prizes && mechanic.prizes.length > 0 && (
+            {/* Prizes — dice / shake, wrapped in a tinted card alongside duration/players */}
+            {(mechanic.type === 'dice' || mechanic.type === 'shake') && (
               <div className="mb-6">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
-                <div className="flex flex-wrap gap-2">
-                  {mechanic.prizes.map((p, i) => (
-                    <span
-                      key={i}
-                      className="text-sm font-semibold px-3 py-1.5 rounded-full"
-                      style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}
-                    >
-                      {p}
-                    </span>
-                  ))}
+                <div
+                  className="rounded-3xl bg-white px-5 py-5"
+                  style={{ boxShadow: `0 16px 48px ${meta.cardFrom}20, 0 0 0 1px ${meta.cardFrom}1A` }}
+                >
+                  {mechanic.prizes && mechanic.prizes.length > 0 && (
+                    <>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-3">What you could win</p>
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {mechanic.prizes.map((p, i) => (
+                          <span
+                            key={i}
+                            className="text-sm font-semibold px-3 py-1.5 rounded-full"
+                            style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}
+                          >
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <DurationPlayersBox cardFrom={meta.cardFrom} startDate={mechanic.startDate} endDate={mechanic.endDate} participants={mechanic.participants} />
                 </div>
               </div>
             )}
@@ -572,13 +674,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {/* Lottery — draw date + tickets */}
             {mechanic.type === 'lottery' && (
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-gray-50 rounded-2xl p-4">
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Draw Date</p>
                   <p className="text-sm font-bold text-gray-800">
                     {mechanic.drawDate ? fmtDate(mechanic.drawDate) : '—'}
                   </p>
                 </div>
-                <div className="bg-gray-50 rounded-2xl p-4">
+                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Your Tickets</p>
                   <p className="text-2xl font-black" style={{ color: meta.cardFrom }}>
                     {mechanic.userTickets ?? 0}
@@ -612,185 +714,84 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
             {/* Buy X Get Y — claim window, spots, redeem window */}
             {mechanic.type === 'buyxgety' && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
-                  <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                </div>
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {mechanic.buyRedeemBefore ? fmtDate(mechanic.buyRedeemBefore) : '—'}
-                  </p>
-                </div>
-                {mechanic.buyTotalSlots !== undefined && mechanic.buyClaimed !== undefined && (
-                  <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
-                    <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Spots Claimed</p>
-                      <p className="text-sm font-bold text-gray-900">{mechanic.buyClaimed} / {mechanic.buyTotalSlots}</p>
-                    </div>
-                    <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                      {mechanic.buyTotalSlots - mechanic.buyClaimed} remaining
-                    </p>
-                  </div>
-                )}
-                {mechanic.buyReward && (
-                  <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
-                    <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.buyReward}</p>
-                  </div>
-                )}
+              <div className="mb-6">
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.buyRedeemBefore}
+                  progress={mechanic.buyTotalSlots !== undefined && mechanic.buyClaimed !== undefined ? {
+                    label: 'Spots Claimed', current: mechanic.buyClaimed, total: mechanic.buyTotalSlots, remainingLabel: 'remaining',
+                  } : undefined}
+                  reward={mechanic.buyReward}
+                />
               </div>
             )}
 
             {/* Coupon Codes — claim window, spots, redeem window, terms */}
             {mechanic.type === 'coupon' && (
               <div className="mb-6">
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
-                    <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                  </div>
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {mechanic.couponRedeemBefore ? fmtDate(mechanic.couponRedeemBefore) : '—'}
-                    </p>
-                  </div>
-                  {mechanic.couponTotalSlots !== undefined && mechanic.couponClaimed !== undefined && (
-                    <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
-                      <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Coupons Claimed</p>
-                        <p className="text-sm font-bold text-gray-900">{mechanic.couponClaimed} / {mechanic.couponTotalSlots}</p>
-                      </div>
-                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                        {mechanic.couponTotalSlots - mechanic.couponClaimed} remaining
-                      </p>
-                    </div>
-                  )}
-                  {mechanic.couponReward && (
-                    <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
-                      <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.couponReward}</p>
-                    </div>
-                  )}
-                </div>
-                {mechanic.couponTerms && (
-                  <div className="bg-gray-50 rounded-2xl p-4">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{mechanic.couponTerms}</p>
-                  </div>
-                )}
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.couponRedeemBefore}
+                  progress={mechanic.couponTotalSlots !== undefined && mechanic.couponClaimed !== undefined ? {
+                    label: 'Coupons Claimed', current: mechanic.couponClaimed, total: mechanic.couponTotalSlots, remainingLabel: 'remaining',
+                  } : undefined}
+                  reward={mechanic.couponReward}
+                  terms={mechanic.couponTerms}
+                />
               </div>
             )}
 
             {/* Flash Deal — claim window, spots, redeem window, terms */}
             {mechanic.type === 'flash' && (
               <div className="mb-6">
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
-                    <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                  </div>
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {mechanic.flashRedeemBefore ? fmtDate(mechanic.flashRedeemBefore) : '—'}
-                    </p>
-                  </div>
-                  {mechanic.flashTotalSlots !== undefined && mechanic.flashClaimed !== undefined && (
-                    <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
-                      <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Spots Claimed</p>
-                        <p className="text-sm font-bold text-gray-900">{mechanic.flashClaimed} / {mechanic.flashTotalSlots}</p>
-                      </div>
-                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                        {mechanic.flashTotalSlots - mechanic.flashClaimed} remaining
-                      </p>
-                    </div>
-                  )}
-                  {mechanic.flashReward && (
-                    <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
-                      <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.flashReward}</p>
-                    </div>
-                  )}
-                </div>
-                {mechanic.flashTerms && (
-                  <div className="bg-gray-50 rounded-2xl p-4">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{mechanic.flashTerms}</p>
-                  </div>
-                )}
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.flashRedeemBefore}
+                  progress={mechanic.flashTotalSlots !== undefined && mechanic.flashClaimed !== undefined ? {
+                    label: 'Spots Claimed', current: mechanic.flashClaimed, total: mechanic.flashTotalSlots, remainingLabel: 'remaining',
+                  } : undefined}
+                  reward={mechanic.flashReward}
+                  terms={mechanic.flashTerms}
+                />
               </div>
             )}
 
             {/* Bring a Friend — friend progress, claim window, redeem window, reward */}
             {mechanic.type === 'friend' && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
-                  <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                </div>
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {mechanic.friendRedeemBefore ? fmtDate(mechanic.friendRedeemBefore) : '—'}
-                  </p>
-                </div>
-                {mechanic.friendMinFriends !== undefined && (
-                  <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
-                    <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Friends Brought</p>
-                      <p className="text-sm font-bold text-gray-900">{mechanic.friendsBrought ?? 0} / {mechanic.friendMinFriends}</p>
-                    </div>
-                    <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                      {Math.max(0, mechanic.friendMinFriends - (mechanic.friendsBrought ?? 0))} more to go
-                    </p>
-                  </div>
-                )}
-                {mechanic.friendReward && (
-                  <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
-                    <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.friendReward}</p>
-                  </div>
-                )}
+              <div className="mb-6">
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.friendRedeemBefore}
+                  progress={mechanic.friendMinFriends !== undefined ? {
+                    label: 'Friends Brought', current: mechanic.friendsBrought ?? 0, total: mechanic.friendMinFriends, remainingLabel: 'more to go', showBar: true,
+                  } : undefined}
+                  reward={mechanic.friendReward}
+                />
               </div>
             )}
 
             {/* Community Offer — Group Unlock: shared group progress, reserve/redeem window, reward */}
             {mechanic.type === 'groupunlock' && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reserve Before</p>
-                  <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                </div>
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {mechanic.groupRedeemBefore ? fmtDate(mechanic.groupRedeemBefore) : '—'}
-                  </p>
-                </div>
-                {mechanic.groupTarget !== undefined && (
-                  <div className="col-span-2 rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">People Joined</p>
-                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                        {Math.max(0, mechanic.groupTarget - (mechanic.groupJoined ?? 0))} more to unlock
-                      </p>
-                    </div>
-                    <p className="text-sm font-bold text-gray-900 mb-2">{mechanic.groupJoined ?? 0} / {mechanic.groupTarget}</p>
-                    <div className="h-1.5 rounded-full bg-white overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(((mechanic.groupJoined ?? 0) / mechanic.groupTarget) * 100))}%`, background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }} />
-                    </div>
-                  </div>
-                )}
-                {mechanic.groupReward && (
-                  <div className="col-span-2 rounded-2xl p-4 text-center" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Reward</p>
-                    <p className="text-sm font-bold" style={{ color: meta.cardFrom }}>{mechanic.groupReward}</p>
-                  </div>
-                )}
+              <div className="mb-6">
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimLabel="Reserve Before"
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.groupRedeemBefore}
+                  progress={mechanic.groupTarget !== undefined ? {
+                    label: 'People Joined', current: mechanic.groupJoined ?? 0, total: mechanic.groupTarget, remainingLabel: 'more to unlock', showBar: true,
+                  } : undefined}
+                  reward={mechanic.groupReward}
+                />
               </div>
             )}
 
@@ -840,52 +841,29 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Claim Before</p>
-                    <p className="text-sm font-bold text-gray-900">{fmtDate(mechanic.endDate)}</p>
-                  </div>
-                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {mechanic.comboRedeemBefore ? fmtDate(mechanic.comboRedeemBefore) : '—'}
-                    </p>
-                  </div>
-                  {mechanic.comboTotalSpots !== undefined && (
-                    <div className="col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: `${meta.cardFrom}12` }}>
-                      <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Spots Claimed</p>
-                        <p className="text-sm font-bold text-gray-900">{mechanic.comboClaimed ?? 0} / {mechanic.comboTotalSpots}</p>
-                      </div>
-                      <p className="text-xs font-semibold" style={{ color: meta.cardFrom }}>
-                        {mechanic.comboTotalSpots - (mechanic.comboClaimed ?? 0)} remaining
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {mechanic.comboTerms && (
-                  <div className="bg-gray-50 rounded-2xl p-4">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-bold mb-1.5">Terms &amp; Conditions</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{mechanic.comboTerms}</p>
-                  </div>
-                )}
+                <ClaimRedeemGrid
+                  cardFrom={meta.cardFrom}
+                  cardTo={meta.cardTo}
+                  claimDate={mechanic.endDate}
+                  redeemDate={mechanic.comboRedeemBefore}
+                  progress={mechanic.comboTotalSpots !== undefined ? {
+                    label: 'Spots Claimed', current: mechanic.comboClaimed ?? 0, total: mechanic.comboTotalSpots, remainingLabel: 'remaining',
+                  } : undefined}
+                  terms={mechanic.comboTerms}
+                />
               </div>
             )}
 
-            {/* Duration + players */}
-            <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
-                <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                  <Users className="w-3 h-3" />
-                  <span>{mechanic.participants.toLocaleString()} players</span>
-                </div>
-              </div>
-              <p className="text-sm font-semibold text-gray-800">
-                {fmtDate(mechanic.startDate)} → {fmtDate(mechanic.endDate)}
-              </p>
-            </div>
+            {/* Duration + players — dice/shake render their own copy inside the tinted card above */}
+            {mechanic.type !== 'dice' && mechanic.type !== 'shake' && (
+              <DurationPlayersBox
+                cardFrom={meta.cardFrom}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                className="mb-6"
+              />
+            )}
           </>
         )}
 
@@ -938,7 +916,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           })()
         ) : mechanic.playedToday ? (
           <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-            <span>✓</span> {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo' ? 'Claimed today' : 'Played today'} · Come back tomorrow
+            <span>✓</span> {isClaimMechanic ? 'Claimed today' : 'Played today'} · Come back tomorrow
           </div>
         ) : (
           <motion.button
@@ -950,7 +928,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               boxShadow: `0 8px 28px ${meta.cardFrom}55`,
             }}
           >
-            {mechanic.type === 'buyxgety' || mechanic.type === 'coupon' || mechanic.type === 'flash' || mechanic.type === 'friend' || mechanic.type === 'combo' ? 'Claim Now' : 'Play Now'} {meta.emoji}
+            {isClaimMechanic ? 'Claim Now' : 'Play Now'} {meta.emoji}
           </motion.button>
         )}
       </div>

@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { hexMix, hexToRgb } from '@/lib/utils'
 
 const CONFETTI_COLORS = ['#7C3AED', '#F5C518', '#EC4899', '#06B6D4', '#22C55E', '#F59E0B', '#A78BFA', '#FDE68A']
 
@@ -59,16 +60,21 @@ interface WinCelebrationProps {
   businessName?: string
   hidePlayAgain?: boolean
   onClose?: () => void
+  /** Optional mechanic brand color pair (e.g. MECHANIC_META[type]) — omit to keep the default purple palette */
+  accentFrom?: string
+  accentTo?: string
 }
 
-export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, onClose }: WinCelebrationProps) {
+export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, onClose, accentFrom, accentTo }: WinCelebrationProps) {
   const router = useRouter()
   const displayCode = code ?? `LG-WIN7`
+  const bgMid = accentTo ? hexMix(accentTo, '#000000', 0.4) : '#2D1B69'
+  const glowRgb = accentTo ? hexToRgb(accentTo).join(',') : '124,58,237'
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, #1A0545 0%, ${bgMid} 45%, #0D0B1E 100%)` }}
     >
       <Confetti />
       <div className="relative z-10 text-center px-8 w-full max-w-sm mx-auto">
@@ -92,7 +98,7 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
           style={{
             background: 'rgba(255,255,255,0.1)',
             border: '2.5px solid rgba(255,255,255,0.25)',
-            boxShadow: '0 0 40px rgba(245,197,24,0.18), 0 0 80px rgba(124,58,237,0.15)',
+            boxShadow: `0 0 40px rgba(245,197,24,0.18), 0 0 80px rgba(${glowRgb},0.15)`,
           }}
         >
           <span className="text-6xl">{emoji}</span>
@@ -147,13 +153,14 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
   )
 }
 
-export function NoWin({ onClose }: { onClose?: () => void }) {
+export function NoWin({ onClose, accentTo }: { onClose?: () => void; accentTo?: string }) {
   const router = useRouter()
+  const bgMid = accentTo ? hexMix(accentTo, '#000000', 0.4) : '#2D1B69'
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, #1A0545 0%, ${bgMid} 45%, #0D0B1E 100%)` }}
     >
       <div className="text-center px-8 w-full max-w-sm mx-auto">
         <motion.div

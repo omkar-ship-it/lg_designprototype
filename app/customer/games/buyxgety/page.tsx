@@ -3,6 +3,10 @@ import { useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
 import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
+import { ClaimInfoRow } from '@/components/customer/claim-info-row'
+import { MECHANIC_META } from '@/lib/utils'
+
+const meta = MECHANIC_META.buyxgety
 
 const BUSINESS_NAME = 'The Daily Grind'
 const BUSINESS_EMOJI = '☕'
@@ -21,30 +25,22 @@ export default function BuyXGetYPage() {
   const [state, setState] = useState<State>('idle')
 
   if (state === 'earned') {
-    return <WinCelebration reward={REWARD_LABEL} emoji={REWARD_EMOJI} hidePlayAgain />
+    return <WinCelebration reward={REWARD_LABEL} emoji={REWARD_EMOJI} hidePlayAgain accentFrom={meta.cardFrom} accentTo={meta.cardTo} />
   }
 
   return (
     <RubLampClaim
       title={`Rub the lamp to\nclaim ${BUSINESS_NAME}'s reward`}
       onComplete={() => setState('earned')}
+      accentFrom={meta.cardFrom}
+      accentTo={meta.cardTo}
     >
       <p className="text-white font-bold text-base text-center mb-4">
         Buy X, Get Y — {BUSINESS_NAME} {BUSINESS_EMOJI}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
-            <CalendarDays className="w-3 h-3" /> Claim Before
-          </p>
-          <p className="text-sm font-bold text-white">{fmtDate(CLAIM_BEFORE)}</p>
-        </div>
-        <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1 flex items-center gap-1">
-            <CalendarDays className="w-3 h-3" /> Redeem Before
-          </p>
-          <p className="text-sm font-bold text-white">{fmtDate(REDEEM_BEFORE)}</p>
-        </div>
+        <ClaimInfoRow icon={CalendarDays} label="Claim Before" value={fmtDate(CLAIM_BEFORE)} accent={meta.cardFrom} />
+        <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
     </RubLampClaim>
   )
