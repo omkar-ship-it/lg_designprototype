@@ -95,45 +95,32 @@ export function SpinWheelArt({ className = '' }: { className?: string }) {
 export function RollDiceArt({ className = '' }: { className?: string }) {
   const rawId = useId()
   const gid = `rd-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
-  // isometric cube: top / left / right faces
-  const top: [number, number][] = [[60, 14], [96, 34], [60, 54], [24, 34]]
-  const left: [number, number][] = [[24, 34], [60, 54], [60, 96], [24, 76]]
-  const right: [number, number][] = [[96, 34], [60, 54], [60, 96], [96, 76]]
-  const pts = (a: [number, number][]) => a.map(p => p.join(',')).join(' ')
 
   return (
-    <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
+    <svg viewBox="0 0 150 130" className={className} aria-hidden="true">
       <defs>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#831843" floodOpacity="0.3" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#831843" floodOpacity="0.28" />
         </filter>
       </defs>
 
-      {/* sparkle rays */}
-      <path d="M14,20 L17,27 L14,34 L11,27 Z" fill="#FBCFE8" opacity="0.9" />
-      <path d="M104,66 L107,73 L104,80 L101,73 Z" fill="#FBCFE8" opacity="0.9" />
-      <path d="M96,12 L98,17 L96,22 L94,17 Z" fill="#FBCFE8" opacity="0.8" />
-      <circle cx="18" cy="90" r="2" fill="#FBCFE8" opacity="0.8" />
-
       {/* ground shadow */}
-      <ellipse cx="60" cy="99" rx="26" ry="5" fill="#831843" opacity="0.18" />
+      <ellipse cx="78" cy="114" rx="46" ry="7" fill="#831843" opacity="0.15" />
 
-      <g filter={`url(#${gid}-shadow)`}>
-        <polygon points={pts(top)} fill="#FFFFFF" stroke="#831843" strokeWidth="2" strokeLinejoin="round" />
-        <polygon points={pts(left)} fill="#F4D9E4" stroke="#831843" strokeWidth="2" strokeLinejoin="round" />
-        <polygon points={pts(right)} fill="#FBE7EF" stroke="#831843" strokeWidth="2" strokeLinejoin="round" />
+      {/* back die — smaller, blush, single pip */}
+      <g filter={`url(#${gid}-shadow)`} transform="rotate(16 100 40)">
+        <rect x="70" y="10" width="60" height="60" rx="16" fill="#FBE7EF" />
+        <circle cx="100" cy="40" r="6" fill="#BE185D" />
+      </g>
 
-        {/* pips: top face shows 2 */}
-        <circle cx="52" cy="28" r="3" fill="#831843" />
-        <circle cx="72" cy="40" r="3" fill="#831843" />
-
-        {/* pips: right face shows 3 */}
-        <circle cx="70" cy="48" r="3" fill="#9D174D" />
-        <circle cx="80" cy="58" r="3" fill="#9D174D" />
-        <circle cx="90" cy="68" r="3" fill="#9D174D" />
-
-        {/* pips: left face shows 1 */}
-        <circle cx="42" cy="65" r="3" fill="#9D174D" />
+      {/* front die — bigger, white, five pips */}
+      <g filter={`url(#${gid}-shadow)`} transform="rotate(-10 62 78)">
+        <rect x="22" y="38" width="80" height="80" rx="20" fill="#FFFFFF" />
+        <circle cx="42" cy="58" r="6.5" fill="#9D174D" />
+        <circle cx="82" cy="58" r="6.5" fill="#9D174D" />
+        <circle cx="62" cy="78" r="6.5" fill="#9D174D" />
+        <circle cx="42" cy="98" r="6.5" fill="#9D174D" />
+        <circle cx="82" cy="98" r="6.5" fill="#9D174D" />
       </g>
     </svg>
   )
@@ -149,32 +136,32 @@ export function CouponTicketArt({ className = '' }: { className?: string }) {
     <svg viewBox="0 0 170 100" className={className} aria-hidden="true">
       <defs>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7F1D1D" floodOpacity="0.28" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7C2D12" floodOpacity="0.28" />
         </filter>
       </defs>
 
       <g filter={`url(#${gid}-shadow)`}>
-        <rect x="10" y="14" width="140" height="72" rx="10" fill="#FEF2F2" />
+        <rect x="10" y="14" width="140" height="72" rx="10" fill="#FFF7ED" />
         {/* perforation notches */}
-        <circle cx={perfX} cy="14" r="6" fill="#DC2626" />
-        <circle cx={perfX} cy="86" r="6" fill="#DC2626" />
-        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#DC2626" strokeWidth="2" strokeDasharray="4 4" />
+        <circle cx={perfX} cy="14" r="6" fill="#EA580C" />
+        <circle cx={perfX} cy="86" r="6" fill="#EA580C" />
+        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#EA580C" strokeWidth="2" strokeDasharray="4 4" />
 
         {/* left zone: tag icon + code lines */}
-        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#991B1B" strokeWidth="2.5" transform="rotate(-8 36 40)" />
-        <circle cx="32" cy="38" r="1.4" fill="#991B1B" transform="rotate(-8 36 40)" />
-        <rect x="50" y="38" width="42" height="4" rx="2" fill="#FCA5A5" />
-        <rect x="50" y="48" width="30" height="4" rx="2" fill="#FECACA" />
+        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#9A3412" strokeWidth="2.5" transform="rotate(-8 36 40)" />
+        <circle cx="32" cy="38" r="1.4" fill="#9A3412" transform="rotate(-8 36 40)" />
+        <rect x="50" y="38" width="42" height="4" rx="2" fill="#FDBA74" />
+        <rect x="50" y="48" width="30" height="4" rx="2" fill="#FED7AA" />
 
         {/* barcode */}
         {holes.map((y, i) => (
-          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#7F1D1D" opacity="0.85" />
+          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#7C2D12" opacity="0.85" />
         ))}
       </g>
 
       {/* percent starburst badge */}
       <g filter={`url(#${gid}-shadow)`}>
-        <path d={burstPath(148, 82, 20, 15, 10)} fill="#DC2626" />
+        <path d={burstPath(148, 82, 20, 15, 10)} fill="#EA580C" />
         <text x="148" y="82" fontSize="15" fontWeight="700" fill="#FFFFFF" textAnchor="middle" dominantBaseline="central">%</text>
       </g>
     </svg>
@@ -264,23 +251,22 @@ export function FlashClockArt({ className = '' }: { className?: string }) {
 export function LotteryDrawArt({ className = '' }: { className?: string }) {
   const rawId = useId()
   const gid = `ld-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
-  const cx = 60, cy = 58, r = 34
-  const ballNumbers = [7, 3, 1, 5, 2, 6, 1]
-  const balls = Array.from({ length: ballNumbers.length }, (_, i) => {
-    const angle = i * 51
-    const dist = (i % 3) * 8 + 6
-    const p = polarToCartesian(cx, cy, dist, angle)
-    return { ...p, n: ballNumbers[i], isWhite: i % 2 === 0, r: 7.5 }
-  })
+  const cx = 68, cy = 56, r = 42
+  const balls = [
+    { angle: 200, dist: 16, n: 7, isWhite: true,  r: 12 },
+    { angle: 40,  dist: 18, n: 3, isWhite: false, r: 13 },
+    { angle: 320, dist: 14, n: 5, isWhite: true,  r: 11 },
+    { angle: 120, dist: 10, n: 1, isWhite: false, r: 10 },
+  ].map(b => ({ ...b, ...polarToCartesian(cx, cy, b.dist, b.angle) }))
 
   return (
-    <svg viewBox="0 0 120 130" className={className} aria-hidden="true">
+    <svg viewBox="0 0 150 130" className={className} aria-hidden="true">
       <defs>
         <clipPath id={`${gid}-clip`}>
           <circle cx={cx} cy={cy} r={r - 3} />
         </clipPath>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#4C3FA8" floodOpacity="0.3" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#4C3FA8" floodOpacity="0.3" />
         </filter>
         <linearGradient id={`${gid}-stand`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#9B8FF5" />
@@ -289,30 +275,41 @@ export function LotteryDrawArt({ className = '' }: { className?: string }) {
       </defs>
 
       {/* stand */}
-      <rect x="38" y="106" width="44" height="12" rx="3" fill={`url(#${gid}-stand)`} />
-      <rect x="55" y="90" width="10" height="20" fill="#7C6EF0" />
+      <rect x="44" y="108" width="48" height="13" rx="3.5" fill={`url(#${gid}-stand)`} />
+      <rect x="62" y="90" width="12" height="22" fill="#7C6EF0" />
 
       {/* axle */}
-      <line x1={cx - r - 10} y1={cy} x2={cx + r + 10} y2={cy} stroke="#D9CFFF" strokeWidth="3" strokeLinecap="round" />
-      <circle cx={cx - r - 10} cy={cy} r="3.5" fill="#FBBF24" />
-      <circle cx={cx + r + 10} cy={cy} r="3.5" fill="#FBBF24" />
+      <line x1={cx - r - 11} y1={cy} x2={cx + r + 11} y2={cy} stroke="#D9CFFF" strokeWidth="4" strokeLinecap="round" />
+      <circle cx={cx - r - 11} cy={cy} r="4.5" fill="#FBBF24" />
+      <circle cx={cx + r + 11} cy={cy} r="4.5" fill="#FBBF24" />
 
       <g filter={`url(#${gid}-shadow)`}>
-        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.55" stroke="#7C6EF0" strokeWidth="3" />
+        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.6" stroke="#7C6EF0" strokeWidth="3.5" />
+        {/* cage lattice */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const p1 = polarToCartesian(cx, cy, r, i * 30)
+          const p2 = polarToCartesian(cx, cy, r, i * 30 + 180)
+          return <line key={i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#C4B5FD" strokeWidth="1" opacity="0.4" />
+        })}
         <g clipPath={`url(#${gid}-clip)`}>
           {balls.map((b, i) => (
             <g key={i}>
-              <circle cx={b.x} cy={b.y} r={b.r} fill={b.isWhite ? '#FFFFFF' : '#8B7CF6'} stroke={b.isWhite ? '#C4B5FD' : 'none'} strokeWidth="1" />
-              <text x={b.x} y={b.y + 2.5} fontSize="7" fontWeight="700" textAnchor="middle" fill={b.isWhite ? '#5B4FC7' : '#FFFFFF'}>{b.n}</text>
+              <circle cx={b.x} cy={b.y} r={b.r} fill={b.isWhite ? '#FFFFFF' : '#8B7CF6'} stroke={b.isWhite ? '#C4B5FD' : 'none'} strokeWidth="1.5" />
+              <text x={b.x} y={b.y + 3.5} fontSize="12" fontWeight="800" textAnchor="middle" fill={b.isWhite ? '#5B4FC7' : '#FFFFFF'}>{b.n}</text>
             </g>
           ))}
         </g>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="2.5" />
+      </g>
+
+      {/* jackpot star burst */}
+      <g filter={`url(#${gid}-shadow)`}>
+        <path d={burstPath(122, 26, 15, 8, 8)} fill="#FBBF24" />
       </g>
 
       {/* sparkle accents */}
-      <text x="14" y="26" fontSize="12" fill="#C4B5FD">✦</text>
-      <text x="98" y="42" fontSize="8" fill="#FBBF24">✦</text>
+      <text x="10" y="30" fontSize="16" fill="#C4B5FD">✦</text>
+      <text x="16" y="98" fontSize="10" fill="#FBBF24">✦</text>
     </svg>
   )
 }

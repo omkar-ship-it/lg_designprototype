@@ -35,7 +35,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   coupon: {
     headline: 'Exclusive Savings', tagline: 'Apply your code at checkout and save more.',
-    bgFrom: '#FEF2F2', bgTo: '#FEE2E2', textColor: '#7F1D1D', layout: 'side', art: CouponTicketArt,
+    bgFrom: '#FFF7ED', bgTo: '#FFEDD5', textColor: '#7C2D12', layout: 'side', art: CouponTicketArt,
     features: [
       { icon: Tag, label: 'Extra Savings' },
       { icon: ShoppingCart, label: 'Easy to Use' },
@@ -65,7 +65,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   lottery: {
     headline: 'Your Chance to', headlineAccent: 'Win Big!', accentColor: '#7C6EF0',
-    tagline: 'Join the lottery draw and stand a chance to win exciting prizes.',
+    tagline: 'Earn a ticket every visit — big prizes await.',
     bgFrom: '#F5F3FF', bgTo: '#EDE9FE', textColor: '#2E1065', layout: 'side', art: LotteryDrawArt,
     features: [
       { icon: Ticket, label: 'Earn Entries' },
