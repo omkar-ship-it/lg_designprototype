@@ -12,19 +12,6 @@ const spinCampaign = campaigns.find(c => c.mechanic === 'spin')!
 const segments = (spinCampaign.config as { segments: SpinSegment[] }).segments
 const meta = MECHANIC_META.spin
 
-// Blends two hex colors — used to darken the mechanic's brand color into a moody backdrop
-function mixHex(hex1: string, hex2: string, t: number) {
-  const p1 = parseInt(hex1.slice(1), 16), p2 = parseInt(hex2.slice(1), 16)
-  const r = Math.round(((p1 >> 16) & 255) * (1 - t) + ((p2 >> 16) & 255) * t)
-  const g = Math.round(((p1 >> 8) & 255) * (1 - t) + ((p2 >> 8) & 255) * t)
-  const b = Math.round((p1 & 255) * (1 - t) + (p2 & 255) * t)
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
-}
-
-const BG_FROM = mixHex(meta.cardTo, '#000000', 0.75)
-const BG_MID  = mixHex(meta.cardFrom, '#000000', 0.55)
-const BG_TO   = mixHex(meta.cardTo, '#000000', 0.9)
-
 type State = 'idle' | 'spinning' | 'result'
 
 const SPARKLE_POS = [
@@ -91,9 +78,15 @@ export default function SpinWheelPage() {
   }
 
   if (state === 'result' && won)
-    return <WinCelebration reward={wonReward} emoji="🎡" hidePlayAgain onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }} />
+    return (
+      <WinCelebration
+        reward={wonReward} emoji="🎡" hidePlayAgain theme="light"
+        accentFrom={meta.cardFrom} accentTo={meta.cardTo}
+        onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }}
+      />
+    )
   if (state === 'result' && !won)
-    return <NoWin onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }} />
+    return <NoWin theme="light" accentTo={meta.cardFrom} onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }} />
 
   const cx = 150, cy = 150, r = 140
 
@@ -114,27 +107,26 @@ export default function SpinWheelPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10 relative overflow-hidden"
-      style={{ background: `linear-gradient(145deg, ${BG_FROM} 0%, ${BG_MID} 45%, ${BG_TO} 100%)` }}
+      className="min-h-screen flex flex-col items-center justify-between px-5 pt-12 pb-10 relative overflow-hidden bg-white"
     >
       {/* Ambient orbs */}
       <div className="absolute top-20 -left-24 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(245,197,24,0.15) 0%, transparent 70%)', filter: 'blur(56px)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(245,197,24,0.12) 0%, transparent 70%)', filter: 'blur(56px)' }} />
       <div className="absolute bottom-28 -right-24 w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        style={{ background: `radial-gradient(circle, ${meta.cardFrom}18 0%, transparent 70%)`, filter: 'blur(48px)' }} />
 
       {/* Back */}
       <button
         onClick={() => router.back()}
-        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center z-20"
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/5 backdrop-blur-md flex items-center justify-center z-20"
       >
-        <ArrowLeft className="w-4 h-4 text-white" />
+        <ArrowLeft className="w-4 h-4 text-gray-700" />
       </button>
-      <p className="absolute top-14 right-4 text-[10px] text-white/30 z-20">Spin the Wheel</p>
+      <p className="absolute top-14 right-4 text-[10px] text-gray-400 z-20">Spin the Wheel</p>
 
       {/* Idle sparkles */}
       {state === 'idle' && SPARKLE_POS.map((pos, i) => (
-        <motion.div key={i} className="absolute text-yellow-300/25 pointer-events-none select-none" style={pos}
+        <motion.div key={i} className="absolute text-amber-400/40 pointer-events-none select-none" style={pos}
           animate={{ opacity: [0.2, 0.8, 0.2], scale: [0.8, 1.3, 0.8], rotate: [0, 15, 0] }}
           transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}>
           ✦
@@ -143,8 +135,8 @@ export default function SpinWheelPage() {
 
       <div className="flex-1 flex flex-col items-center justify-center w-full z-10">
         <div className="text-center mb-4">
-          <h1 className="text-xl font-extrabold text-white">Spin the Wheel</h1>
-          <p className="text-sm text-white/50 mt-1">
+          <h1 className="text-xl font-extrabold text-gray-900">Spin the Wheel</h1>
+          <p className="text-sm text-gray-500 mt-1">
             {state === 'spinning' ? 'Spinning…' : 'Tap SPIN to try your luck!'}
           </p>
         </div>
@@ -266,8 +258,8 @@ export default function SpinWheelPage() {
         disabled={state === 'spinning'}
         className="w-full py-5 rounded-2xl text-xl font-extrabold transition-all disabled:opacity-50 z-10"
         style={{
-          background: state === 'spinning' ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #F5C518, #F59E0B)',
-          color: state === 'spinning' ? 'white' : '#08071A',
+          background: state === 'spinning' ? '#F3F4F6' : 'linear-gradient(135deg, #F5C518, #F59E0B)',
+          color: state === 'spinning' ? '#9CA3AF' : '#08071A',
           boxShadow: state !== 'spinning' ? '0 8px 32px rgba(245,197,24,0.45)' : 'none',
         }}
         animate={state === 'idle'
