@@ -75,7 +75,7 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
     const accent = accentFrom ?? '#7C3AED'
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-violet-50">
         <Confetti />
         <div className="relative z-10 text-center px-8 w-full max-w-sm mx-auto">
           <motion.p
@@ -239,7 +239,7 @@ export function NoWin({ onClose, accentTo, theme = 'dark' }: { onClose?: () => v
     const accent = accentTo ?? '#7C3AED'
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-violet-50">
         <div className="text-center px-8 w-full max-w-sm mx-auto">
           <motion.div
             initial={{ scale: 0 }}
