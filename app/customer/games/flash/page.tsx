@@ -47,7 +47,8 @@ export default function FlashDealPage() {
     >
       <div className="flex justify-center">
         <motion.span
-          className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/20 text-white"
+          className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full"
+          style={{ background: `${meta.cardFrom}15`, color: meta.cardFrom }}
           animate={{ opacity: [1, 0.6, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
@@ -58,9 +59,9 @@ export default function FlashDealPage() {
         <ClaimInfoRow icon={CalendarDays} label="Claim Before" value={fmtDate(CLAIM_BEFORE)} accent={meta.cardFrom} />
         <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
-      <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
-        <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
-        <p className="text-[11px] text-white/75 leading-relaxed">{TERMS}</p>
+      <div className="rounded-2xl px-4 py-3 bg-gray-50 border border-gray-200">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
+        <p className="text-[11px] text-gray-500 leading-relaxed">{TERMS}</p>
       </div>
     </ClaimReward>
   )

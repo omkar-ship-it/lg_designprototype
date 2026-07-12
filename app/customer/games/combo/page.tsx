@@ -42,9 +42,9 @@ export default function ComboDealPage() {
     >
       <div className="flex items-center justify-center flex-wrap gap-1.5">
         {PAID_ITEMS.map((it, i) => (
-          <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white/85">{it}</span>
+          <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{it}</span>
         ))}
-        <span className="text-white/60 font-bold text-xs">+</span>
+        <span className="text-gray-400 font-bold text-xs">+</span>
         {FREE_ITEMS.map((it, i) => (
           <span key={i} className="text-[11px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
             {it} FREE
@@ -55,9 +55,9 @@ export default function ComboDealPage() {
         <ClaimInfoRow icon={CalendarDays} label="Claim Before" value={fmtDate(CLAIM_BEFORE)} accent={meta.cardFrom} />
         <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
-      <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
-        <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
-        <p className="text-[11px] text-white/75 leading-relaxed">{TERMS}</p>
+      <div className="rounded-2xl px-4 py-3 bg-gray-50 border border-gray-200">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
+        <p className="text-[11px] text-gray-500 leading-relaxed">{TERMS}</p>
       </div>
     </ClaimReward>
   )

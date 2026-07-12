@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { hexMix } from '@/lib/utils'
 
 interface ClaimRewardProps {
   /** Mechanic title shown large, e.g. "Buy X Get Y" */
@@ -23,30 +22,29 @@ interface ClaimRewardProps {
 
 /**
  * The single "claim your reward" screen every campaign mechanic uses —
- * one flat card + one tap, no rubbing/dragging/summoning animation. The
- * whole screen (background, reward card, button) is tinted from the
- * mechanic's own campaign color so it stays visually tied to the rest
- * of that campaign's screens.
+ * one flat card + one tap, no rubbing/dragging/summoning animation. Light
+ * background (white, tinted with a whisper of the mechanic's own campaign
+ * color) rather than a saturated gradient, matching the light theme used
+ * everywhere else in the app — the accent color still carries through in
+ * the reward card, button, and every child element, just without painting
+ * the whole screen in it.
  */
 export function ClaimReward({ title, businessName, emoji, rewardLabel, description, accentFrom, accentTo, onClaim, children }: ClaimRewardProps) {
   const router = useRouter()
-  const glow = hexMix(accentFrom, '#FFFFFF', 0.25)
-  const deep = hexMix(accentTo, '#000000', 0.35)
-  const buttonFrom = hexMix(accentFrom, '#FFFFFF', 0.2)
 
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: `linear-gradient(180deg, ${accentFrom} 0%, ${accentTo} 55%, ${deep} 100%)` }}
+      style={{ background: `linear-gradient(160deg, #FFFFFF 0%, ${accentFrom}0F 55%, ${accentFrom}1F 100%)` }}
     >
-      <div className="absolute inset-x-0 top-0 h-96 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow}77 0%, transparent 70%)` }} />
+      <div className="absolute inset-x-0 top-0 h-72 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${accentFrom}18 0%, transparent 70%)` }} />
 
       <button
         onClick={() => router.back()}
-        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center z-20"
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/5 backdrop-blur-md flex items-center justify-center z-20"
       >
-        <ArrowLeft className="w-4 h-4 text-white" />
+        <ArrowLeft className="w-4 h-4 text-gray-700" />
       </button>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-6 relative z-10">
@@ -60,8 +58,8 @@ export function ClaimReward({ title, businessName, emoji, rewardLabel, descripti
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-center mb-8">
-          <h1 className="text-2xl font-extrabold text-white mb-1">{title}</h1>
-          <p className="text-white/60 text-base">{businessName}</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{title}</h1>
+          <p className="text-gray-500 text-base">{businessName}</p>
         </motion.div>
 
         <motion.div
@@ -69,11 +67,11 @@ export function ClaimReward({ title, businessName, emoji, rewardLabel, descripti
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="w-full max-w-xs rounded-3xl p-6 mb-4"
-          style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)' }}
+          style={{ background: `${accentFrom}0D`, border: `1px solid ${accentFrom}30` }}
         >
-          <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest mb-2">Your Reward</p>
-          <p className="text-3xl font-black text-white mb-2">{rewardLabel}</p>
-          {description && <p className="text-sm text-white/75 leading-relaxed">{description}</p>}
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: `${accentFrom}99` }}>Your Reward</p>
+          <p className="text-3xl font-black mb-2" style={{ color: accentFrom }}>{rewardLabel}</p>
+          {description && <p className="text-sm text-gray-600 leading-relaxed">{description}</p>}
         </motion.div>
 
         {children && (
@@ -97,11 +95,10 @@ export function ClaimReward({ title, businessName, emoji, rewardLabel, descripti
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={onClaim}
-          className="w-full py-5 rounded-2xl text-lg font-extrabold text-center"
+          className="w-full py-5 rounded-2xl text-lg font-extrabold text-center text-white"
           style={{
-            background: `linear-gradient(135deg, ${buttonFrom}, ${accentFrom})`,
-            color: '#08071A',
-            boxShadow: `0 8px 32px ${accentFrom}55`,
+            background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
+            boxShadow: `0 8px 32px ${accentFrom}45`,
           }}
         >
           Claim Reward

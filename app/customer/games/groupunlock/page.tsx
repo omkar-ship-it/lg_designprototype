@@ -112,7 +112,7 @@ export default function GroupUnlockPage() {
       onClaim={() => setState('earned')}
     >
       <div className="flex justify-center">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/20 text-white">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${meta.cardFrom}15`, color: meta.cardFrom }}>
           <Handshake className="w-3 h-3" /> {GROUP_JOINED}/{GROUP_TARGET} joined — group complete!
         </span>
       </div>
