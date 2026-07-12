@@ -149,32 +149,32 @@ export function CouponTicketArt({ className = '' }: { className?: string }) {
     <svg viewBox="0 0 170 100" className={className} aria-hidden="true">
       <defs>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#92400E" floodOpacity="0.28" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7F1D1D" floodOpacity="0.28" />
         </filter>
       </defs>
 
       <g filter={`url(#${gid}-shadow)`}>
-        <rect x="10" y="14" width="140" height="72" rx="10" fill="#FFFBEB" />
+        <rect x="10" y="14" width="140" height="72" rx="10" fill="#FEF2F2" />
         {/* perforation notches */}
-        <circle cx={perfX} cy="14" r="6" fill="#F59E0B" />
-        <circle cx={perfX} cy="86" r="6" fill="#F59E0B" />
-        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#F59E0B" strokeWidth="2" strokeDasharray="4 4" />
+        <circle cx={perfX} cy="14" r="6" fill="#DC2626" />
+        <circle cx={perfX} cy="86" r="6" fill="#DC2626" />
+        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#DC2626" strokeWidth="2" strokeDasharray="4 4" />
 
         {/* left zone: tag icon + code lines */}
-        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#D97706" strokeWidth="2.5" transform="rotate(-8 36 40)" />
-        <circle cx="32" cy="38" r="1.4" fill="#D97706" transform="rotate(-8 36 40)" />
-        <rect x="50" y="38" width="42" height="4" rx="2" fill="#FDBA74" />
-        <rect x="50" y="48" width="30" height="4" rx="2" fill="#FDE68A" />
+        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#991B1B" strokeWidth="2.5" transform="rotate(-8 36 40)" />
+        <circle cx="32" cy="38" r="1.4" fill="#991B1B" transform="rotate(-8 36 40)" />
+        <rect x="50" y="38" width="42" height="4" rx="2" fill="#FCA5A5" />
+        <rect x="50" y="48" width="30" height="4" rx="2" fill="#FECACA" />
 
         {/* barcode */}
         {holes.map((y, i) => (
-          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#78350F" opacity="0.85" />
+          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#7F1D1D" opacity="0.85" />
         ))}
       </g>
 
       {/* percent starburst badge */}
       <g filter={`url(#${gid}-shadow)`}>
-        <path d={burstPath(148, 82, 20, 15, 10)} fill="#EA580C" />
+        <path d={burstPath(148, 82, 20, 15, 10)} fill="#DC2626" />
         <text x="148" y="82" fontSize="15" fontWeight="700" fill="#FFFFFF" textAnchor="middle" dominantBaseline="central">%</text>
       </g>
     </svg>
@@ -325,31 +325,31 @@ export function SpendGetArt({ className = '' }: { className?: string }) {
     <svg viewBox="0 0 170 120" className={className} aria-hidden="true">
       <defs>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1E1B4B" floodOpacity="0.3" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#14532D" floodOpacity="0.3" />
         </filter>
       </defs>
 
-      <ellipse cx="80" cy="112" rx="55" ry="5" fill="#1E1B4B" opacity="0.15" />
+      <ellipse cx="80" cy="112" rx="55" ry="5" fill="#14532D" opacity="0.15" />
 
       <g filter={`url(#${gid}-shadow)`}>
         {/* gift box, tucked behind */}
-        <rect x="86" y="58" width="30" height="26" rx="2" fill="#4338CA" stroke="#1E1B4B" strokeWidth="1.5" />
-        <rect x="86" y="58" width="30" height="7" fill="#312E81" stroke="#1E1B4B" strokeWidth="1.5" />
-        <rect x="98" y="58" width="6" height="26" fill="#FBBF24" />
+        <rect x="86" y="58" width="30" height="26" rx="2" fill="#15803D" stroke="#14532D" strokeWidth="1.5" />
+        <rect x="86" y="58" width="30" height="7" fill="#14532D" stroke="#14532D" strokeWidth="1.5" />
+        <rect x="98" y="58" width="6" height="26" fill="#BBF7D0" />
 
         {/* bag with X */}
-        <path d="M18,44 L64,44 L70,104 L12,104 Z" fill="#6D28D9" stroke="#1E1B4B" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M28,44 C28,33 54,33 54,44" fill="none" stroke="#1E1B4B" strokeWidth="3" strokeLinecap="round" />
-        <text x="41" y="82" fontSize="26" fontWeight="800" fill="#FBBF24" textAnchor="middle">X</text>
+        <path d="M18,44 L64,44 L70,104 L12,104 Z" fill="#16A34A" stroke="#14532D" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M28,44 C28,33 54,33 54,44" fill="none" stroke="#14532D" strokeWidth="3" strokeLinecap="round" />
+        <text x="41" y="82" fontSize="26" fontWeight="800" fill="#FFFFFF" textAnchor="middle">X</text>
 
         {/* arrow */}
-        <path d="M74,74 L92,74" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" />
-        <path d="M87,68 L93,74 L87,80" fill="none" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M74,74 L92,74" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+        <path d="M87,68 L93,74 L87,80" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* tag with Y */}
-        <rect x="118" y="68" width="38" height="30" rx="4" fill="#FBBF24" stroke="#1E1B4B" strokeWidth="2" transform="rotate(-6 137 83)" />
-        <circle cx="126" cy="76" r="2.2" fill="#1E1B4B" transform="rotate(-6 137 83)" />
-        <text x="139" y="90" fontSize="20" fontWeight="800" fill="#4338CA" textAnchor="middle" transform="rotate(-6 137 83)">Y</text>
+        <rect x="118" y="68" width="38" height="30" rx="4" fill="#DCFCE7" stroke="#14532D" strokeWidth="2" transform="rotate(-6 137 83)" />
+        <circle cx="126" cy="76" r="2.2" fill="#14532D" transform="rotate(-6 137 83)" />
+        <text x="139" y="90" fontSize="20" fontWeight="800" fill="#15803D" textAnchor="middle" transform="rotate(-6 137 83)">Y</text>
       </g>
     </svg>
   )

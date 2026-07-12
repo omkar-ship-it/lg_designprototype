@@ -35,7 +35,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   coupon: {
     headline: 'Exclusive Savings', tagline: 'Apply your code at checkout and save more.',
-    bgFrom: '#FEFCE8', bgTo: '#FEF9C3', textColor: '#713F12', layout: 'side', art: CouponTicketArt,
+    bgFrom: '#FEF2F2', bgTo: '#FEE2E2', textColor: '#7F1D1D', layout: 'side', art: CouponTicketArt,
     features: [
       { icon: Tag, label: 'Extra Savings' },
       { icon: ShoppingCart, label: 'Easy to Use' },
@@ -75,7 +75,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   buyxgety: {
     headline: 'Spend X, Get Y', tagline: 'Spend or buy a minimum amount and get exciting rewards!',
-    bgFrom: '#FFF7ED', bgTo: '#FFEDD5', textColor: '#7C2D12', layout: 'side', art: SpendGetArt,
+    bgFrom: '#F0FDF4', bgTo: '#DCFCE7', textColor: '#14532D', layout: 'side', art: SpendGetArt,
     features: [
       { icon: Wallet, label: 'More You Spend' },
       { icon: Gift, label: 'Exciting Rewards' },
