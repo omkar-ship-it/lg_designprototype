@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
-import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
+import { ClaimReward } from '@/components/customer/claim-reward'
 import { ClaimInfoRow } from '@/components/customer/claim-info-row'
 import { MECHANIC_META } from '@/lib/utils'
 
@@ -30,23 +30,24 @@ export default function CouponPage() {
   }
 
   return (
-    <RubLampClaim
-      title={`Claim your coupon`}
-      onComplete={() => setState('earned')}
+    <ClaimReward
+      title="Coupon Codes"
+      businessName={`${BUSINESS_NAME} ${BUSINESS_EMOJI}`}
+      emoji={REWARD_EMOJI}
+      rewardLabel={REWARD_LABEL}
+      description="Apply your code at checkout and save more."
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}
+      onClaim={() => setState('earned')}
     >
-      <p className="text-white font-bold text-base text-center mb-4">
-        Coupon Codes — {BUSINESS_NAME} {BUSINESS_EMOJI}
-      </p>
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-2 gap-3">
         <ClaimInfoRow icon={CalendarDays} label="Claim Before" value={fmtDate(CLAIM_BEFORE)} accent={meta.cardFrom} />
         <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
-      <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-        <p className="text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
-        <p className="text-[11px] text-white/60 leading-relaxed">{TERMS}</p>
+      <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
+        <p className="text-[10px] font-bold text-white/60 uppercase tracking-wide mb-1">Terms &amp; Conditions</p>
+        <p className="text-[11px] text-white/75 leading-relaxed">{TERMS}</p>
       </div>
-    </RubLampClaim>
+    </ClaimReward>
   )
 }

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { CalendarDays, Users } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
-import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
+import { ClaimReward } from '@/components/customer/claim-reward'
 import { ClaimInfoRow } from '@/components/customer/claim-info-row'
 import { MECHANIC_META } from '@/lib/utils'
 
@@ -31,17 +31,18 @@ export default function BringFriendPage() {
   const metRequirement = FRIENDS_BROUGHT >= MIN_FRIENDS
 
   return (
-    <RubLampClaim
-      title={`Claim your reward`}
-      onComplete={() => setState('earned')}
+    <ClaimReward
+      title="Bring a Friend"
+      businessName={`${BUSINESS_NAME} ${BUSINESS_EMOJI}`}
+      emoji={REWARD_EMOJI}
+      rewardLabel={REWARD_LABEL}
+      description="Bring friends along and unlock a reward together."
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}
+      onClaim={() => setState('earned')}
     >
-      <p className="text-white font-bold text-base text-center mb-2">
-        Bring a Friend — {BUSINESS_NAME} {BUSINESS_EMOJI}
-      </p>
-      <div className="flex justify-center mb-4">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/15 text-white">
+      <div className="flex justify-center">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/20 text-white">
           <Users className="w-3 h-3" /> {FRIENDS_BROUGHT}/{MIN_FRIENDS} friends brought
           {!metRequirement && ` · ${MIN_FRIENDS - FRIENDS_BROUGHT} more to go`}
         </span>
@@ -50,6 +51,6 @@ export default function BringFriendPage() {
         <ClaimInfoRow icon={CalendarDays} label="Claim Before" value={fmtDate(CLAIM_BEFORE)} accent={meta.cardFrom} />
         <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
-    </RubLampClaim>
+    </ClaimReward>
   )
 }

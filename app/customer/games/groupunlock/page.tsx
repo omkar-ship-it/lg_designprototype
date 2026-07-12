@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Handshake } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
-import { RubLampClaim } from '@/components/customer/rub-lamp-claim'
+import { ClaimReward } from '@/components/customer/claim-reward'
 import { ClaimInfoRow } from '@/components/customer/claim-info-row'
 import { MECHANIC_META } from '@/lib/utils'
 
@@ -101,17 +101,18 @@ export default function GroupUnlockPage() {
   }
 
   return (
-    <RubLampClaim
-      title={`Claim your reward`}
-      onComplete={() => setState('earned')}
+    <ClaimReward
+      title="Community Offer"
+      businessName={`${BUSINESS_NAME} ${BUSINESS_EMOJI}`}
+      emoji={REWARD_EMOJI}
+      rewardLabel={REWARD_LABEL}
+      description="Your community hit the target — enjoy this reward together."
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}
+      onClaim={() => setState('earned')}
     >
-      <p className="text-white font-bold text-base text-center mb-2">
-        Community Offer — {BUSINESS_NAME} {BUSINESS_EMOJI}
-      </p>
-      <div className="flex justify-center mb-4">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/15 text-white">
+      <div className="flex justify-center">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-white/20 text-white">
           <Handshake className="w-3 h-3" /> {GROUP_JOINED}/{GROUP_TARGET} joined — group complete!
         </span>
       </div>
@@ -119,6 +120,6 @@ export default function GroupUnlockPage() {
         <ClaimInfoRow icon={CalendarDays} label="Reserved By" value={fmtDate(RESERVE_BEFORE)} accent={meta.cardFrom} />
         <ClaimInfoRow icon={CalendarDays} label="Redeem Before" value={fmtDate(REDEEM_BEFORE)} accent={meta.cardFrom} />
       </div>
-    </RubLampClaim>
+    </ClaimReward>
   )
 }
