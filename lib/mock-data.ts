@@ -433,7 +433,7 @@ export const customers: Customer[] = [
     rewards: [
       // ── Active (pending) rewards ───────────────────────────────
       {
-        id: 'cr-shake-amber', campaignId: 'camp-3', campaignName: 'Scratch & Win',
+        id: 'cr-shake-amber', campaignId: 'camp-3', campaignName: 'Monsoon Shake & Win',
         mechanic: 'shake', reward: '₹30 Off Your Next Bill',
         earnedAt: '2026-06-13T11:00:00Z', expiresAt: '2026-06-18T23:59:59Z',
         status: 'pending', code: 'PRIYA-SW-002',
@@ -465,7 +465,7 @@ export const customers: Customer[] = [
         businessCoverFrom: '#7C2D12', businessCoverTo: '#B45309',
       },
       {
-        id: 'cr-shake-noir', campaignId: 'camp-noir-shake', campaignName: 'Scratch Card',
+        id: 'cr-shake-noir', campaignId: 'camp-noir-shake', campaignName: 'Shake & Win',
         mechanic: 'shake', reward: '₹200 Off Any Service',
         earnedAt: '2026-06-09T12:30:00Z', expiresAt: '2026-07-09T23:59:59Z',
         status: 'pending', code: 'PRIYA-NS-009',
@@ -508,7 +508,7 @@ export const customers: Customer[] = [
     ],
     gameHistory: [
       { id: 'gh1', campaignId: 'camp-1', campaignName: 'Weekend Spin Fiesta', mechanic: 'spin', playedAt: '2026-06-12T14:30:00Z', won: true, reward: 'Free Coffee' },
-      { id: 'gh2', campaignId: 'camp-3', campaignName: 'Scratch & Win', mechanic: 'shake', playedAt: '2026-06-13T11:00:00Z', won: true, reward: '₹30 Off' },
+      { id: 'gh2', campaignId: 'camp-3', campaignName: 'Monsoon Shake & Win', mechanic: 'shake', playedAt: '2026-06-13T11:00:00Z', won: true, reward: '₹30 Off' },
     ],
   },
   {
@@ -630,14 +630,14 @@ export const customerBusinesses: CustomerBusiness[] = [
   ], mechanics: [
     { type: 'stamp',   label: 'Stamp Card',     description: 'Buy 9, get the 10th free. Classic, proven, beloved.',  status: 'active', startDate: '2026-05-01', endDate: '2026-07-31', participants: 198, totalRewards: 45,  activeToday: 23, playedToday: false, stampsCollected: 4,  totalStamps: 10, finalReward: 'Free Breakfast Combo' },
     { type: 'spin',    label: 'Spin the Wheel', description: 'A flick of fortune at every checkout.',                status: 'active', startDate: '2026-06-01', endDate: '2026-06-30', participants: 312, totalRewards: 87,  activeToday: 41, playedToday: true,  prizes: ['Free Coffee ☕', '20% Off 🏷️', 'Free Muffin 🧁', 'Free Espresso ☕'] },
-    { type: 'shake',   label: 'Scratch Card',   description: 'Targeted offers, redeemable at the counter.',         status: 'paused', startDate: '2026-04-01', endDate: '2026-06-30', participants: 76,  totalRewards: 22,  activeToday: 0,  playedToday: false, prizes: ['₹50 Off 🏷️', 'Free Pastry 🥐', 'Free Latte ☕'] },
+    { type: 'shake',   label: 'Shake & Win',    description: 'Give your phone a shake at the counter for a surprise reward.', status: 'paused', startDate: '2026-04-01', endDate: '2026-06-30', participants: 76,  totalRewards: 22,  activeToday: 0,  playedToday: false, prizes: ['₹50 Off 🏷️', 'Free Pastry 🥐', 'Free Latte ☕'] },
     { type: 'checkin', label: 'Daily Check-in', description: 'Check in every day and earn 100 points per visit.',   status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 143, totalRewards: 143, activeToday: 67, playedToday: false, checkInStreak: 5, totalPoints: 500 },
     { type: 'buyxgety', label: 'Spend & Save',   description: 'Spend ₹1000 in a single visit and get ₹150 off your bill.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 214, totalRewards: 89, activeToday: 19, playedToday: false, buyReward: '₹150 Off', buyTotalSlots: 300, buyClaimed: 89, buyRedeemBefore: '2026-09-30' },
     { type: 'combo',    label: 'Buy 3 Coffees, Get 1 Free', description: 'Take 3 coffees, get the 4th one free.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 74, totalRewards: 74, activeToday: 11, playedToday: false, comboVariant: 'freeitem', comboPaidItems: ['Coffee', 'Coffee', 'Coffee'], comboFreeItems: ['Coffee'], comboTotalSpots: 150, comboClaimed: 74, comboRedeemBefore: '2026-09-30', comboTerms: 'Dine-in or takeaway. All 3 coffees must be the same size. Valid once per visit.' },
   ]},
   { id: 'biz-noir', name: 'Noir Hair Studio', category: 'Salon', tagline: 'Boutique cuts and colour. Quiet luxury for everyday.', rating: 4.9, reviews: 198, distance: '1.1 km', location: 'Koramangala, Bangalore', phone: '+91 80 2345 6789', openUntil: 'Open until 8 PM', coverImage: 'https://picsum.photos/seed/noir-studio/800/500', coverFrom: '#1C1917', coverTo: '#44403C', coverEmoji: '✂️', mechanics: [
     { type: 'stamp',   label: 'Stamp Card',     description: 'Get your 10th service free.',                          status: 'active', startDate: '2026-04-15', endDate: '2026-08-15', participants: 143, totalRewards: 31,  activeToday: 12, playedToday: false, stampsCollected: 7, totalStamps: 10, finalReward: 'Free Styling Session' },
-    { type: 'shake',   label: 'Scratch Card',   description: 'Tactile thrill — peel, reveal, smile.',               status: 'active', startDate: '2026-06-01', endDate: '2026-07-15', participants: 89,  totalRewards: 19,  activeToday: 18, playedToday: false, prizes: ['₹200 Off 🏷️', 'Free Hair Wash 🚿', 'Free Deep Condition 💆'] },
+    { type: 'shake',   label: 'Shake & Win',    description: 'Give it a shake and reveal your reward instantly.',   status: 'active', startDate: '2026-06-01', endDate: '2026-07-15', participants: 89,  totalRewards: 19,  activeToday: 18, playedToday: false, prizes: ['₹200 Off 🏷️', 'Free Hair Wash 🚿', 'Free Deep Condition 💆'] },
     { type: 'dice',    label: 'Mystery Box',    description: 'Curiosity converts. A surprise gift inside every box.',status: 'ended',  startDate: '2026-03-01', endDate: '2026-05-31', participants: 201, totalRewards: 56,  activeToday: 0,  playedToday: false, prizes: ['Free Serum 💧', '₹300 Off 🏷️', 'Free Treatment 💆'] },
     { type: 'checkin', label: 'Daily Check-in', description: 'Check in every day and earn 100 points per visit.',   status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 98,  totalRewards: 98,  activeToday: 31, playedToday: true,  checkInStreak: 3, totalPoints: 300 },
     { type: 'friend',  label: 'Bring Your Squad', description: 'Bring 2 friends along for a service and get a free hair wash.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 46, totalRewards: 18, activeToday: 6, playedToday: false, friendReward: 'Free Hair Wash', friendMinFriends: 2, friendsBrought: 1, friendRedeemBefore: '2026-09-14' },
@@ -658,7 +658,7 @@ export const customerBusinesses: CustomerBusiness[] = [
   ]},
   { id: 'biz-verde', name: 'Verde Bistro', category: 'Restaurant', tagline: 'Mediterranean small plates. Big-spirited Sunday toasts.', rating: 4.5, reviews: 340, distance: '1.8 km', location: 'Whitefield, Bangalore', phone: '+91 80 6789 0123', openUntil: 'Open until 11 PM', coverImage: 'https://picsum.photos/seed/verde-bistro/800/500', coverFrom: '#14532D', coverTo: '#065F46', coverEmoji: '🍝', mechanics: [
     { type: 'spin',    label: 'Spin the Wheel', description: 'A flick of fortune at every checkout.',         status: 'active', startDate: '2026-06-01', endDate: '2026-06-30', participants: 421, totalRewards: 110, activeToday: 57, playedToday: false, prizes: ['Free Dessert 🍮', '10% Off 🏷️', 'Free Mocktail 🍹', 'Free Starter 🫔'] },
-    { type: 'shake',   label: 'Scratch Card',   description: 'Peel, reveal, and redeem at checkout.',        status: 'active', startDate: '2026-05-01', endDate: '2026-07-31', participants: 188, totalRewards: 47,  activeToday: 34, playedToday: true,  prizes: ['₹100 Off 🏷️', 'Free Bread Basket 🥖', 'Free Dessert 🍮'] },
+    { type: 'shake',   label: 'Shake & Win',    description: 'Shake your phone at checkout for an instant reward.', status: 'active', startDate: '2026-05-01', endDate: '2026-07-31', participants: 188, totalRewards: 47,  activeToday: 34, playedToday: true,  prizes: ['₹100 Off 🏷️', 'Free Bread Basket 🥖', 'Free Dessert 🍮'] },
     { type: 'dice',    label: 'Mystery Dish',   description: 'Targeted offers, redeemable at the counter.', status: 'paused', startDate: '2026-04-01', endDate: '2026-06-15', participants: 65,  totalRewards: 18,  activeToday: 0,  playedToday: false, prizes: ['Free Starter 🫔', '₹150 Off 🏷️', 'Chef Special 🍝'] },
     { type: 'checkin', label: 'Daily Check-in', description: 'Check in every day and earn 100 points per visit.', status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 189, totalRewards: 189, activeToday: 73, playedToday: false, checkInStreak: 7, totalPoints: 700 },
     { type: 'coupon',  label: 'Launch Week Codes', description: 'Limited coupons — 20% off your bill. First come, first served.', status: 'active', startDate: '2026-06-01', endDate: '2026-06-30', participants: 132, totalRewards: 132, activeToday: 12, playedToday: false, couponReward: '20% Off', couponTotalSlots: 200, couponClaimed: 132, couponRedeemBefore: '2026-07-15', couponTerms: 'Valid on bills above ₹500. One coupon per customer. Not valid with other offers. Show coupon at billing to redeem.' },
@@ -681,6 +681,9 @@ export const customerBusinesses: CustomerBusiness[] = [
     { type: 'friend',  label: 'Bring Your Friend', description: 'Bring 2 friends along and get a free pastry on the house.',                status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 96,  totalRewards: 34,  activeToday: 8,  playedToday: false, friendReward: 'Free Pastry', friendMinFriends: 2, friendsBrought: 1, friendRedeemBefore: '2026-09-14' },
     { type: 'groupunlock', label: 'Community Offer - Group Unlock', description: 'Reserve a spot — once 30 people join, everyone unlocks 25% off.', status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 18, totalRewards: 0, activeToday: 5, playedToday: false, groupReward: '25% Off', groupTarget: 30, groupJoined: 18, groupRedeemBefore: '2026-09-30', hasReserved: true },
     { type: 'combo',   label: 'Bundle/Combo Offers', description: 'Take 3 coffees, get the 4th one free.',                                 status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 90,  totalRewards: 90,  activeToday: 12, playedToday: false, comboVariant: 'freeitem', comboPaidItems: ['Coffee', 'Coffee', 'Coffee'], comboFreeItems: ['Coffee'], comboTotalSpots: 150, comboClaimed: 90, comboRedeemBefore: '2026-09-30', comboTerms: 'Dine-in or takeaway. All 3 coffees must be the same size. Valid once per visit.' },
+    { type: 'checkin', label: 'Daily Check-in',   description: 'Check in every day and earn 100 points per visit.',                        status: 'active', startDate: '2026-06-01', endDate: '2026-12-31', participants: 143, totalRewards: 143, activeToday: 67, playedToday: false, checkInStreak: 5, totalPoints: 500 },
+    { type: 'shake',   label: 'Shake & Win',      description: 'Shake your phone at the counter for a chance at an instant reward.',       status: 'active', startDate: '2026-06-01', endDate: '2026-08-31', participants: 128, totalRewards: 38,  activeToday: 21, playedToday: false, prizes: ['Free Coffee ☕', 'Free Pastry 🥐', '₹50 Off 🏷️', 'Free Latte ☕'] },
+    { type: 'stamp',   label: 'Stamp Card',       description: 'Buy 9, get the 10th free. Classic, proven, beloved.',                      status: 'active', startDate: '2026-05-01', endDate: '2026-08-31', participants: 198, totalRewards: 45,  activeToday: 23, playedToday: false, stampsCollected: 3, totalStamps: 10, finalReward: 'Free Breakfast Combo' },
   ]},
 ]
 
