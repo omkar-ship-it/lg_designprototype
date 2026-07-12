@@ -35,7 +35,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   coupon: {
     headline: 'Exclusive Savings', tagline: 'Apply your code at checkout and save more.',
-    bgFrom: '#F59E0B', bgTo: '#92400E', textColor: '#FFFFFF', layout: 'center', badgeBg: '#FFFBEB', art: CouponTicketArt,
+    bgFrom: '#FEFCE8', bgTo: '#FEF9C3', textColor: '#713F12', layout: 'side', art: CouponTicketArt,
     features: [
       { icon: Tag, label: 'Extra Savings' },
       { icon: ShoppingCart, label: 'Easy to Use' },
@@ -45,7 +45,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   combo: {
     headline: 'Bundle & Save', tagline: 'The more you buy, the more you save!',
-    bgFrom: '#6D28D9', bgTo: '#3B0764', textColor: '#FFFFFF', layout: 'center', badgeBg: '#F5F3FF', art: BundleGiftArt,
+    bgFrom: '#EEF2FF', bgTo: '#E0E7FF', textColor: '#312E81', layout: 'side', art: BundleGiftArt,
     features: [
       { icon: ShoppingBag, label: 'Buy More' },
       { icon: Tag, label: 'Extra Rewards' },
@@ -55,7 +55,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   flash: {
     headline: 'Flash Sale', tagline: "Amazing offers, limited time — don't miss out!",
-    bgFrom: '#1E3A8A', bgTo: '#172554', textColor: '#FFFFFF', layout: 'center', badgeBg: '#EFF6FF', art: FlashClockArt,
+    bgFrom: '#EFF6FF', bgTo: '#DBEAFE', textColor: '#1E3A8A', layout: 'side', art: FlashClockArt,
     features: [
       { icon: Tag, label: 'Exciting Deals' },
       { icon: ShoppingBag, label: 'Limited Stock' },
@@ -75,7 +75,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   buyxgety: {
     headline: 'Spend X, Get Y', tagline: 'Spend or buy a minimum amount and get exciting rewards!',
-    bgFrom: '#4338CA', bgTo: '#1E1B4B', textColor: '#FFFFFF', layout: 'center', badgeBg: '#EEF2FF', art: SpendGetArt,
+    bgFrom: '#FFF7ED', bgTo: '#FFEDD5', textColor: '#7C2D12', layout: 'side', art: SpendGetArt,
     features: [
       { icon: Wallet, label: 'More You Spend' },
       { icon: Gift, label: 'Exciting Rewards' },
