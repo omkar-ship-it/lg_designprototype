@@ -5,12 +5,14 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
 import { campaigns } from '@/lib/mock-data'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
 import type { SpinSegment } from '@/lib/types'
 
 const spinCampaign = campaigns.find(c => c.mechanic === 'spin')!
 const segments = (spinCampaign.config as { segments: SpinSegment[] }).segments
 const meta = MECHANIC_META.spin
+const accentRgb = hexToRgb(meta.cardFrom).join(',')
+const lightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.35)
 
 type State = 'idle' | 'spinning' | 'result'
 
@@ -80,7 +82,7 @@ export default function SpinWheelPage() {
   if (state === 'result' && won)
     return (
       <WinCelebration
-        reward={wonReward} emoji="🎡" hidePlayAgain
+        reward={wonReward} emoji={meta.emoji} hidePlayAgain
         accentFrom={meta.cardFrom} accentTo={meta.cardTo}
         onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }}
       />
@@ -111,7 +113,7 @@ export default function SpinWheelPage() {
     >
       {/* Ambient orbs */}
       <div className="absolute top-20 -left-24 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(245,197,24,0.12) 0%, transparent 70%)', filter: 'blur(56px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.12) 0%, transparent 70%)`, filter: 'blur(56px)' }} />
       <div className="absolute bottom-28 -right-24 w-64 h-64 rounded-full pointer-events-none"
         style={{ background: `radial-gradient(circle, ${meta.cardFrom}18 0%, transparent 70%)`, filter: 'blur(48px)' }} />
 
@@ -126,7 +128,7 @@ export default function SpinWheelPage() {
 
       {/* Idle sparkles */}
       {state === 'idle' && SPARKLE_POS.map((pos, i) => (
-        <motion.div key={i} className="absolute text-amber-400/40 pointer-events-none select-none" style={pos}
+        <motion.div key={i} className="absolute pointer-events-none select-none" style={{ ...pos, color: `rgba(${accentRgb},0.4)` }}
           animate={{ opacity: [0.2, 0.8, 0.2], scale: [0.8, 1.3, 0.8], rotate: [0, 15, 0] }}
           transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}>
           ✦
@@ -148,20 +150,20 @@ export default function SpinWheelPage() {
             className="absolute rounded-full pointer-events-none"
             style={{ width: 330, height: 330 }}
             animate={state === 'spinning'
-              ? { boxShadow: ['0 0 40px rgba(245,197,24,0.3)', '0 0 90px rgba(245,197,24,0.65)', '0 0 40px rgba(245,197,24,0.3)'] }
-              : { boxShadow: '0 0 30px rgba(245,197,24,0.15)' }}
+              ? { boxShadow: [`0 0 40px rgba(${accentRgb},0.3)`, `0 0 90px rgba(${accentRgb},0.65)`, `0 0 40px rgba(${accentRgb},0.3)`] }
+              : { boxShadow: `0 0 30px rgba(${accentRgb},0.15)` }}
             transition={{ duration: 1.2, repeat: state === 'spinning' ? Infinity : 0, ease: 'easeInOut' }}
           />
 
-          {/* Gold pointer */}
+          {/* Pointer */}
           <div className="absolute top-[-4px] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center drop-shadow-lg">
             <div className="w-0 h-0" style={{
               borderLeft: '16px solid transparent',
               borderRight: '16px solid transparent',
-              borderTop: '36px solid #F5C518',
-              filter: 'drop-shadow(0 3px 8px rgba(245,197,24,0.8))',
+              borderTop: `36px solid ${meta.cardFrom}`,
+              filter: `drop-shadow(0 3px 8px rgba(${accentRgb},0.8))`,
             }} />
-            <div className="w-6 h-6 rounded-full -mt-1.5" style={{ background: 'linear-gradient(145deg, #FDE68A, #F5C518)' }} />
+            <div className="w-6 h-6 rounded-full -mt-1.5" style={{ background: `linear-gradient(145deg, ${lightAccent}, ${meta.cardFrom})` }} />
           </div>
 
           {/* Wheel — uses idleAngle when idle, rotation when spinning */}
@@ -214,7 +216,7 @@ export default function SpinWheelPage() {
                 )
               })}
 
-              <circle cx={cx} cy={cy} r={148} fill="none" stroke="rgba(245,197,24,0.25)" strokeWidth={5} />
+              <circle cx={cx} cy={cy} r={148} fill="none" stroke={`rgba(${accentRgb},0.25)`} strokeWidth={5} />
 
               {ticks.map((t, i) => (
                 <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
@@ -222,11 +224,11 @@ export default function SpinWheelPage() {
               ))}
 
               {studs.map((s, i) => (
-                <circle key={i} cx={s.x} cy={s.y} r="4.5" fill="#F5C518" opacity="0.7"
+                <circle key={i} cx={s.x} cy={s.y} r="4.5" fill={meta.cardFrom} opacity="0.7"
                   stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
               ))}
 
-              <circle cx={cx} cy={cy} r="32" fill="#08071A" stroke="#F5C518" strokeWidth="2.5" />
+              <circle cx={cx} cy={cy} r="32" fill="#08071A" stroke={meta.cardFrom} strokeWidth="2.5" />
               <circle cx={cx} cy={cy} r="26" fill="url(#centerGrad)" />
               <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="18">🧞</text>
 
@@ -258,16 +260,16 @@ export default function SpinWheelPage() {
         disabled={state === 'spinning'}
         className="w-full py-5 rounded-2xl text-xl font-extrabold transition-all disabled:opacity-50 z-10"
         style={{
-          background: state === 'spinning' ? '#F3F4F6' : 'linear-gradient(135deg, #F5C518, #F59E0B)',
-          color: state === 'spinning' ? '#9CA3AF' : '#08071A',
-          boxShadow: state !== 'spinning' ? '0 8px 32px rgba(245,197,24,0.45)' : 'none',
+          background: state === 'spinning' ? '#F3F4F6' : `linear-gradient(135deg, ${lightAccent}, ${meta.cardFrom})`,
+          color: state === 'spinning' ? '#9CA3AF' : 'white',
+          boxShadow: state !== 'spinning' ? `0 8px 32px rgba(${accentRgb},0.45)` : 'none',
         }}
         animate={state === 'idle'
-          ? { boxShadow: ['0 8px 32px rgba(245,197,24,0.35)', '0 8px 52px rgba(245,197,24,0.65)', '0 8px 32px rgba(245,197,24,0.35)'] }
+          ? { boxShadow: [`0 8px 32px rgba(${accentRgb},0.35)`, `0 8px 52px rgba(${accentRgb},0.65)`, `0 8px 32px rgba(${accentRgb},0.35)`] }
           : {}}
         transition={{ duration: 1.8, repeat: state === 'idle' ? Infinity : 0, ease: 'easeInOut' }}
       >
-        {state === 'spinning' ? '🎡 Spinning…' : '✨ SPIN'}
+        {state === 'spinning' ? `${meta.emoji} Spinning…` : '✨ SPIN'}
       </motion.button>
     </div>
   )

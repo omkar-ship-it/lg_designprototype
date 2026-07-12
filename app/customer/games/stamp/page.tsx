@@ -4,9 +4,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
 
 const meta = MECHANIC_META.stamp
+const accentRgb = hexToRgb(meta.cardFrom).join(',')
+const lightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.4)
+const lightAccentRgb = hexToRgb(lightAccent).join(',')
 
 const TOTAL            = 10
 const CURRENT_STAMPS   = 3
@@ -55,7 +58,7 @@ function SuccessfullyStamped({
   return (
     <div
       className="fixed inset-0 flex flex-col items-center justify-center"
-      style={{ background: 'linear-gradient(145deg, #180B35 0%, #2D1060 40%, #180B35 100%)' }}
+      style={{ background: `linear-gradient(145deg, #2A1605 0%, ${hexMix(meta.cardTo, '#000000', 0.35)} 40%, #2A1605 100%)` }}
     >
       {/* Scattered sparkles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -97,7 +100,7 @@ function SuccessfullyStamped({
             className="absolute rounded-full pointer-events-none"
             style={{
               inset: '-32px',
-              background: 'radial-gradient(circle, rgba(109,40,217,0.55) 0%, transparent 65%)',
+              background: `radial-gradient(circle, rgba(${accentRgb},0.55) 0%, transparent 65%)`,
               filter: 'blur(20px)',
             }}
           />
@@ -105,8 +108,8 @@ function SuccessfullyStamped({
           <div
             className="w-52 h-52 rounded-full relative overflow-hidden"
             style={{
-              background: 'radial-gradient(circle at 32% 28%, #C084FC 0%, #7C3AED 38%, #3B0764 72%, #1A0545 100%)',
-              boxShadow: '0 0 60px rgba(109,40,217,0.7), 0 0 30px rgba(109,40,217,0.5), 0 0 0 1.5px rgba(167,139,250,0.4)',
+              background: `radial-gradient(circle at 32% 28%, ${lightAccent} 0%, ${meta.cardFrom} 38%, ${hexMix(meta.cardTo, '#000000', 0.35)} 72%, ${hexMix(meta.cardTo, '#000000', 0.6)} 100%)`,
+              boxShadow: `0 0 60px rgba(${accentRgb},0.7), 0 0 30px rgba(${accentRgb},0.5), 0 0 0 1.5px rgba(${lightAccentRgb},0.4)`,
             }}
           >
             {/* Specular highlight */}
@@ -197,13 +200,13 @@ function StampCardInner() {
   return (
     <div
       className="min-h-screen flex flex-col px-5 pt-12 pb-8 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #1A0545 0%, #2D1B69 45%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, #2A1605 0%, ${hexMix(meta.cardTo, '#000000', 0.2)} 45%, #170D02 100%)` }}
     >
       {/* Ambient orbs */}
       <div className="absolute top-24 -right-20 w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.2) 0%, transparent 70%)`, filter: 'blur(48px)' }} />
       <div className="absolute bottom-40 -left-20 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${lightAccentRgb},0.18) 0%, transparent 70%)`, filter: 'blur(40px)' }} />
 
       {/* Back */}
       <button
@@ -278,14 +281,14 @@ function StampCardInner() {
                             className="absolute inset-0 rounded-full flex items-center justify-center text-xl select-none"
                             style={{
                               background: isBigReward
-                                ? 'linear-gradient(145deg, #F59E0B, #D97706)'
+                                ? `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})`
                                 : isReward
-                                  ? 'linear-gradient(145deg, #7C3AED, #5B21B6)'
+                                  ? `linear-gradient(145deg, ${lightAccent}, ${meta.cardFrom})`
                                   : 'linear-gradient(145deg, #4B5563, #374151)',
                               boxShadow: isBigReward
-                                ? '0 6px 20px rgba(245,158,11,0.6)'
+                                ? `0 6px 20px rgba(${accentRgb},0.6)`
                                 : isReward
-                                  ? '0 4px 14px rgba(124,58,237,0.45)'
+                                  ? `0 4px 14px rgba(${lightAccentRgb},0.45)`
                                   : '0 4px 10px rgba(0,0,0,0.2)',
                             }}
                             initial={isNew ? { scale: 0, rotate: -18 } : false}

@@ -4,9 +4,12 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
 
 const meta = MECHANIC_META.shake
+const accentRgb = hexToRgb(meta.cardFrom).join(',')
+const lightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.35)
+const lightAccentRgb = hexToRgb(lightAccent).join(',')
 
 const WIN_RATE    = 0.8
 const MAX_PLAYS   = 10
@@ -150,7 +153,7 @@ export default function ShakeWinPage() {
     setGameState('idle')
   }
 
-  if (gameState === 'result' && won)  return <WinCelebration reward={prize} emoji="🎰" accentFrom={meta.cardFrom} accentTo={meta.cardTo} onClose={handlePlayAgain} />
+  if (gameState === 'result' && won)  return <WinCelebration reward={prize} emoji={meta.emoji} accentFrom={meta.cardFrom} accentTo={meta.cardTo} onClose={handlePlayAgain} />
   if (gameState === 'result' && !won) return <NoWin accentTo={meta.cardFrom} onClose={handlePlayAgain} />
 
   // Circumference of the SVG ring (r=47): 2π×47 ≈ 295.3
@@ -159,13 +162,13 @@ export default function ShakeWinPage() {
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #0F0520 0%, #1A0845 50%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(145deg, #050B1F 0%, ${meta.cardTo} 50%, #03050F 100%)` }}
     >
       {/* Ambient orbs */}
       <div className="absolute top-16 -right-24 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.28) 0%, transparent 70%)', filter: 'blur(52px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.28) 0%, transparent 70%)`, filter: 'blur(52px)' }} />
       <div className="absolute bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%)', filter: 'blur(44px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${lightAccentRgb},0.22) 0%, transparent 70%)`, filter: 'blur(44px)' }} />
 
       {/* Back */}
       <button
@@ -206,21 +209,21 @@ export default function ShakeWinPage() {
           onPointerCancel={stopHold}
           className="relative w-56 h-56 rounded-full flex items-center justify-center cursor-pointer select-none mb-8"
           style={{
-            background: 'radial-gradient(circle at 40% 35%, rgba(109,40,217,0.55) 0%, rgba(29,10,90,0.92) 70%)',
+            background: `radial-gradient(circle at 40% 35%, rgba(${accentRgb},0.55) 0%, rgba(5,10,40,0.92) 70%)`,
           }}
           animate={isActive ? {
             scale: [1, 1.04, 0.97, 1.03, 1],
             boxShadow: [
-              '0 0 0 14px rgba(109,40,217,0.12), 0 0 0 28px rgba(109,40,217,0.06)',
-              '0 0 0 22px rgba(109,40,217,0.18), 0 0 0 44px rgba(109,40,217,0.08)',
-              '0 0 0 16px rgba(109,40,217,0.14), 0 0 0 32px rgba(109,40,217,0.07)',
+              `0 0 0 14px rgba(${accentRgb},0.12), 0 0 0 28px rgba(${accentRgb},0.06)`,
+              `0 0 0 22px rgba(${accentRgb},0.18), 0 0 0 44px rgba(${accentRgb},0.08)`,
+              `0 0 0 16px rgba(${accentRgb},0.14), 0 0 0 32px rgba(${accentRgb},0.07)`,
             ],
           } : {
             scale: [1, 1.02, 1],
             boxShadow: [
-              '0 0 0 10px rgba(109,40,217,0.1), 0 0 0 20px rgba(109,40,217,0.05)',
-              '0 0 0 16px rgba(109,40,217,0.13), 0 0 0 32px rgba(109,40,217,0.06)',
-              '0 0 0 10px rgba(109,40,217,0.1), 0 0 0 20px rgba(109,40,217,0.05)',
+              `0 0 0 10px rgba(${accentRgb},0.1), 0 0 0 20px rgba(${accentRgb},0.05)`,
+              `0 0 0 16px rgba(${accentRgb},0.13), 0 0 0 32px rgba(${accentRgb},0.06)`,
+              `0 0 0 10px rgba(${accentRgb},0.1), 0 0 0 20px rgba(${accentRgb},0.05)`,
             ],
           }}
           transition={isActive
@@ -237,7 +240,7 @@ export default function ShakeWinPage() {
               <circle
                 cx="50" cy="50" r="47"
                 fill="none"
-                stroke="rgba(167,139,250,0.55)"
+                stroke={`rgba(${lightAccentRgb},0.55)`}
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={`${(charge / 100) * CIRC} ${CIRC}`}
@@ -267,7 +270,7 @@ export default function ShakeWinPage() {
             animate={{ opacity: 1, y: 0 }}
             onClick={requestPermission}
             className="mb-5 px-6 py-2.5 rounded-2xl text-sm font-bold border"
-            style={{ color: '#A78BFA', borderColor: 'rgba(167,139,250,0.35)', background: 'rgba(109,40,217,0.15)' }}
+            style={{ color: lightAccent, borderColor: `rgba(${lightAccentRgb},0.35)`, background: `rgba(${accentRgb},0.15)` }}
           >
             Enable Shake Detection
           </motion.button>
@@ -279,10 +282,10 @@ export default function ShakeWinPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="flex items-center gap-2 px-4 py-2 rounded-full mb-4"
-          style={{ background: 'rgba(180,83,9,0.3)', border: '1px solid rgba(217,119,6,0.3)' }}
+          style={{ background: `rgba(${accentRgb},0.18)`, border: `1px solid rgba(${accentRgb},0.35)` }}
         >
           <span>🎁</span>
-          <span className="text-sm font-bold" style={{ color: '#FCD34D' }}>
+          <span className="text-sm font-bold" style={{ color: lightAccent }}>
             {Math.round(WIN_RATE * 100)}% Chances to win
           </span>
         </motion.div>

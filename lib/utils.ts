@@ -44,7 +44,7 @@ export function getMechanicEmoji(mechanic: MechanicType): string {
   const map: Record<MechanicType, string> = {
     shake: '🤳',
     stamp: '🎯',
-    spin: '🎡',
+    spin: '🎰',
     dice: '🎲',
     lottery: '🎟️',
     checkin: '📍',
@@ -58,22 +58,11 @@ export function getMechanicEmoji(mechanic: MechanicType): string {
   return map[mechanic]
 }
 
+// Delegates to MECHANIC_META so there's exactly one source of truth for a
+// mechanic's brand color — badges, hero art, play screens, and reward
+// screens all end up tinted identically instead of drifting apart.
 export function getMechanicColor(mechanic: MechanicType): string {
-  const map: Record<MechanicType, string> = {
-    shake: '#EC4899',
-    stamp: '#F59E0B',
-    spin: '#06B6D4',
-    dice: '#22C55E',
-    lottery: '#8B5CF6',
-    checkin: '#1F2937',
-    buyxgety: '#F97316',
-    coupon: '#CA8A04',
-    flash: '#2563EB',
-    friend: '#F43F5E',
-    groupunlock: '#0D9488',
-    combo: '#4F46E5',
-  }
-  return map[mechanic]
+  return MECHANIC_META[mechanic].cardFrom
 }
 
 export function getStatusColor(status: CampaignStatus): string {
@@ -109,14 +98,14 @@ export function capPercent(current: number, cap: number): number {
 }
 
 export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: string; badgeText: string; cardFrom: string; cardTo: string; emoji: string }> = {
-  stamp:   { label: 'STAMP',        badgeBg: '#FEF3C7', badgeText: '#92400E', cardFrom: '#F59E0B', cardTo: '#D97706', emoji: '🧾' },
-  spin:    { label: 'SPIN A WHEEL', badgeBg: '#EDE9FE', badgeText: '#5B21B6', cardFrom: '#7C3AED', cardTo: '#4C1D95', emoji: '🎡' },
-  shake:   { label: 'SCRATCH',      badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#3B82F6', cardTo: '#1D4ED8', emoji: '🃏' },
+  stamp:   { label: 'STAMP',        badgeBg: '#FEF3C7', badgeText: '#92400E', cardFrom: '#F59E0B', cardTo: '#D97706', emoji: '🎯' },
+  spin:    { label: 'SPIN A WHEEL', badgeBg: '#EDE9FE', badgeText: '#5B21B6', cardFrom: '#7C3AED', cardTo: '#4C1D95', emoji: '🎰' },
+  shake:   { label: 'SHAKE & WIN',  badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#3B82F6', cardTo: '#1D4ED8', emoji: '🤳' },
   dice:    { label: 'ROLL A DICE',  badgeBg: '#FCE7F3', badgeText: '#9D174D', cardFrom: '#BE185D', cardTo: '#831843', emoji: '🎲' },
   lottery: { label: 'LOTTERY',      badgeBg: '#EDE9FE', badgeText: '#4C3FA8', cardFrom: '#7C6EF0', cardTo: '#4C3FA8', emoji: '🎟️' },
   checkin: { label: 'CHECK-IN',     badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '📍' },
-  buyxgety: { label: 'BUY X GET Y', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#F97316', cardTo: '#C2410C', emoji: '💰' },
-  coupon:  { label: 'COUPON CODES', badgeBg: '#FEF9C3', badgeText: '#854D0E', cardFrom: '#CA8A04', cardTo: '#854D0E', emoji: '🎫' },
+  buyxgety: { label: 'BUY X GET Y', badgeBg: '#DCFCE7', badgeText: '#166534', cardFrom: '#16A34A', cardTo: '#15803D', emoji: '💰' },
+  coupon:  { label: 'COUPON CODES', badgeBg: '#FEE2E2', badgeText: '#991B1B', cardFrom: '#DC2626', cardTo: '#991B1B', emoji: '🎫' },
   flash:   { label: 'FLASH DEAL',   badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#2563EB', cardTo: '#1E3A8A', emoji: '⚡' },
   friend:  { label: 'BRING A FRIEND', badgeBg: '#FFE4E6', badgeText: '#9F1239', cardFrom: '#F43F5E', cardTo: '#9F1239', emoji: '👫' },
   groupunlock: { label: 'COMMUNITY OFFER', badgeBg: '#CCFBF1', badgeText: '#115E59', cardFrom: '#0D9488', cardTo: '#115E59', emoji: '🤝' },

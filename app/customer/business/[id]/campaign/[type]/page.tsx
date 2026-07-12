@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, ChartPie, Dices, Ticket, ArrowRightLeft, TicketPercent, Zap, Handshake, UserPlus, Package, Delete } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
 import type { MechanicType } from '@/lib/types'
@@ -97,12 +97,20 @@ interface ClaimRedeemGridProps {
   }
   reward?: string
   terms?: string
+  /** Shown as a small "N people already joined" line — replaces the separate Duration/players box these mechanics no longer need, since Claim Before already covers the relevant date. */
+  participants?: number
 }
 
 // Shared claim/redeem/spots/reward grid — reused by buyxgety, coupon, flash, friend, groupunlock, combo
-function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms }: ClaimRedeemGridProps) {
+function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants }: ClaimRedeemGridProps) {
   return (
     <>
+      {participants !== undefined && (
+        <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold mb-3" style={{ color: cardFrom }}>
+          <Users className="w-3 h-3" />
+          <span>{participants.toLocaleString()} people already joined</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
           <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">{claimLabel}</p>
@@ -232,9 +240,11 @@ function PlayedTodayNote({ label }: { label: string }) {
 }
 
 // Single white card: mechanic-specific info (children) + duration/players + inline keypad — the shared shell for every non-groupunlock, non-spin mechanic
-function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, participants, playedToday, playedLabel, submitLabel, digits, pressDigit, pressBackspace, onSubmit, disabled }: {
+function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, participants, showDuration = true, playedToday, playedLabel, submitLabel, digits, pressDigit, pressBackspace, onSubmit, disabled }: {
   cardFrom: string; cardTo: string; children?: ReactNode
   startDate: string; endDate: string; participants: number
+  /** Skip when the mechanic-specific content (e.g. ClaimRedeemGrid) already shows the relevant date, to avoid showing the same date twice. */
+  showDuration?: boolean
   playedToday?: boolean; playedLabel: string; submitLabel: string
   digits: string[]; pressDigit: (d: string) => void; pressBackspace: () => void; onSubmit: () => void; disabled: boolean
 }) {
@@ -242,7 +252,9 @@ function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, particip
     <div className="mb-6">
       <div className="rounded-3xl bg-white px-5 py-5" style={{ boxShadow: `0 16px 48px ${cardFrom}20, 0 0 0 1px ${cardFrom}1A` }}>
         {children}
-        <DurationPlayersBox cardFrom={cardFrom} startDate={startDate} endDate={endDate} participants={participants} className="mb-5" />
+        {showDuration && (
+          <DurationPlayersBox cardFrom={cardFrom} startDate={startDate} endDate={endDate} participants={participants} className="mb-5" />
+        )}
         {playedToday ? (
           <PlayedTodayNote label={playedLabel} />
         ) : (
@@ -269,6 +281,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const biz      = customerBusinesses.find(b => b.id === id) ?? customerBusinesses[0]
   const mechanic = biz.mechanics.find(m => m.type === type) ?? biz.mechanics[0]
   const meta     = MECHANIC_META[mechanic.type as MechanicType]
+  const metaAccentRgb = hexToRgb(meta.cardFrom).join(',')
+  const metaDeep = hexMix(meta.cardTo, '#000000', 0.55)
   const hero     = HERO_COVER[mechanic.type as MechanicType]
   const Art      = hero?.art
   // Every mechanic except stamp/checkin now enters its PIN inline within its own card
@@ -521,18 +535,21 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               { n: collected,     date: 'Today',   item: 'Latte at ' + biz.name },
               { n: collected - 2, date: '16th Jun', item: 'Cappuccino' },
             ].filter(h => h.n > 0)
+            const stampAccentRgb = hexToRgb(meta.cardFrom).join(',')
+            const stampLightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.4)
+            const stampLightAccentRgb = hexToRgb(stampLightAccent).join(',')
 
             return (
               <div className="mb-6">
                 {/* Loyalty card */}
                 <div
                   className="rounded-3xl overflow-hidden mb-4"
-                  style={{ boxShadow: '0 16px 48px rgba(91,33,182,0.2), 0 0 0 1px rgba(109,40,217,0.2)' }}
+                  style={{ boxShadow: `0 16px 48px rgba(${stampAccentRgb},0.2), 0 0 0 1px rgba(${stampAccentRgb},0.2)` }}
                 >
-                  {/* Purple header */}
+                  {/* Header */}
                   <div
                     className="relative px-5 py-4 overflow-hidden"
-                    style={{ background: 'linear-gradient(135deg, #6D28D9, #4C1D95)' }}
+                    style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                   >
                     <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">🎁</span>
                     <div className="flex items-end justify-between">
@@ -550,7 +567,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
 
-                  <div className="h-0" style={{ borderTop: '2px dashed rgba(109,40,217,0.25)' }} />
+                  <div className="h-0" style={{ borderTop: `2px dashed rgba(${stampAccentRgb},0.25)` }} />
 
                   {/* Stamp grid */}
                   <div className="bg-white px-5 pt-5 pb-4">
@@ -567,7 +584,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                               {isLatest && isFilled && (
                                 <motion.div
                                   className="absolute inset-0 rounded-full pointer-events-none"
-                                  style={{ boxShadow: '0 0 0 3px rgba(109,40,217,0.5), 0 0 0 6px rgba(109,40,217,0.15)' }}
+                                  style={{ boxShadow: `0 0 0 3px rgba(${stampAccentRgb},0.5), 0 0 0 6px rgba(${stampAccentRgb},0.15)` }}
                                   animate={{ opacity: [0.6, 1, 0.6] }}
                                   transition={{ duration: 2, repeat: Infinity }}
                                 />
@@ -577,9 +594,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                                   className="absolute inset-0 rounded-full flex items-center justify-center text-lg"
                                   style={
                                     isFinal
-                                      ? { background: 'linear-gradient(145deg, #F59E0B, #D97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.5)' }
+                                      ? { background: `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 4px 14px rgba(${stampAccentRgb},0.5)` }
                                       : isReward
-                                        ? { background: 'linear-gradient(145deg, #7C3AED, #5B21B6)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }
+                                        ? { background: `linear-gradient(145deg, ${stampLightAccent}, ${meta.cardFrom})`, boxShadow: `0 4px 14px rgba(${stampLightAccentRgb},0.4)` }
                                         : { background: 'linear-gradient(145deg, #6B7280, #4B5563)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
                                   }
                                 >
@@ -597,7 +614,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     </div>
 
                     <p className="text-[11px] text-center text-gray-500 mb-1">
-                      <span className="font-bold text-purple-700">{collected}</span> collected · {total - collected} more surprises await 🎁
+                      <span className="font-bold" style={{ color: meta.cardFrom }}>{collected}</span> collected · {total - collected} more surprises await 🎁
                     </p>
                   </div>
                 </div>
@@ -608,13 +625,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: 'linear-gradient(90deg, #7C3AED, #5B21B6)' }}
+                      style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
                     />
                   </div>
-                  <p className="text-xs font-bold text-purple-700 shrink-0">{pct}% complete</p>
+                  <p className="text-xs font-bold shrink-0" style={{ color: meta.cardFrom }}>{pct}% complete</p>
                 </div>
 
                 {/* Activity log */}
@@ -623,7 +640,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <div key={i} className="flex items-center gap-3">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
-                        style={{ background: 'linear-gradient(145deg, #7C3AED, #5B21B6)' }}
+                        style={{ background: `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})` }}
                       >
                         ✓
                       </div>
@@ -859,6 +876,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                showDuration={false}
                 playedToday={mechanic.playedToday}
                 playedLabel="Claimed today"
                 submitLabel={`Claim Now ${meta.emoji}`}
@@ -878,6 +896,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       label: 'Spots Claimed', current: mechanic.buyClaimed, total: mechanic.buyTotalSlots, remainingLabel: 'remaining',
                     } : undefined}
                     reward={mechanic.buyReward}
+                    participants={mechanic.participants}
                   />
                 </div>
               </MechanicCard>
@@ -891,6 +910,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                showDuration={false}
                 playedToday={mechanic.playedToday}
                 playedLabel="Claimed today"
                 submitLabel={`Claim Now ${meta.emoji}`}
@@ -911,6 +931,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     } : undefined}
                     reward={mechanic.couponReward}
                     terms={mechanic.couponTerms}
+                    participants={mechanic.participants}
                   />
                 </div>
               </MechanicCard>
@@ -924,6 +945,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                showDuration={false}
                 playedToday={mechanic.playedToday}
                 playedLabel="Claimed today"
                 submitLabel={`Claim Now ${meta.emoji}`}
@@ -944,6 +966,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     } : undefined}
                     reward={mechanic.flashReward}
                     terms={mechanic.flashTerms}
+                    participants={mechanic.participants}
                   />
                 </div>
               </MechanicCard>
@@ -957,6 +980,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                showDuration={false}
                 playedToday={mechanic.playedToday}
                 playedLabel="Claimed today"
                 submitLabel={`Claim Now ${meta.emoji}`}
@@ -976,6 +1000,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       label: 'Friends Brought', current: mechanic.friendsBrought ?? 0, total: mechanic.friendMinFriends, remainingLabel: 'more to go', showBar: true,
                     } : undefined}
                     reward={mechanic.friendReward}
+                    participants={mechanic.participants}
                   />
                 </div>
               </MechanicCard>
@@ -1000,7 +1025,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                         reward={mechanic.groupReward}
                       />
                     </div>
-                    <DurationPlayersBox cardFrom={meta.cardFrom} startDate={mechanic.startDate} endDate={mechanic.endDate} participants={mechanic.participants} className="mb-5" />
 
                     {mechanic.hasReserved && groupFull ? (
                       <InlineKeypad
@@ -1049,6 +1073,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                showDuration={false}
                 playedToday={mechanic.playedToday}
                 playedLabel="Claimed today"
                 submitLabel={`Claim Now ${meta.emoji}`}
@@ -1111,6 +1136,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       label: 'Spots Claimed', current: mechanic.comboClaimed ?? 0, total: mechanic.comboTotalSpots, remainingLabel: 'remaining',
                     } : undefined}
                     terms={mechanic.comboTerms}
+                    participants={mechanic.participants}
                   />
                 </div>
               </MechanicCard>
@@ -1168,7 +1194,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             />
             <motion.div
               className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto z-50 rounded-t-3xl overflow-hidden"
-              style={{ background: 'linear-gradient(180deg, #1E0A5C 0%, #0D0B1E 100%)' }}
+              style={{ background: `linear-gradient(180deg, ${hexMix(meta.cardFrom, '#000000', 0.55)} 0%, ${metaDeep} 100%)` }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -1209,9 +1235,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       className="w-[72px] h-[80px] text-center text-4xl font-black text-white outline-none rounded-2xl tracking-widest"
                       style={{
                         background: 'rgba(255,255,255,0.07)',
-                        border: digits[i] ? '2px solid rgba(167,139,250,0.8)' : '2px solid rgba(255,255,255,0.12)',
+                        border: digits[i] ? `2px solid rgba(${metaAccentRgb},0.8)` : '2px solid rgba(255,255,255,0.12)',
                         transition: 'border-color 0.15s ease',
-                        boxShadow: digits[i] ? '0 0 0 4px rgba(139,92,246,0.15)' : 'none',
+                        boxShadow: digits[i] ? `0 0 0 4px rgba(${metaAccentRgb},0.15)` : 'none',
                       }}
                     />
                   ))}

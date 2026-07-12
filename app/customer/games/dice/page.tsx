@@ -4,6 +4,10 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
+import { MECHANIC_META, hexToRgb } from '@/lib/utils'
+
+const meta = MECHANIC_META.dice
+const accentRgb = hexToRgb(meta.cardFrom).join(',')
 
 type State = 'idle' | 'rolling' | 'announcing' | 'result'
 
@@ -78,13 +82,13 @@ export default function DicePage() {
   if (state === 'result' && won)
     return (
       <WinCelebration
-        reward={wonReward} emoji="🎲" hidePlayAgain
-        accentFrom="#16A34A" accentTo="#15803D"
+        reward={wonReward} emoji={meta.emoji} hidePlayAgain
+        accentFrom={meta.cardFrom} accentTo={meta.cardTo}
         onClose={() => { setFinalValue(null); setState('idle') }}
       />
     )
   if (state === 'result' && !won)
-    return <NoWin accentTo="#16A34A" onClose={() => { setFinalValue(null); setState('idle') }} />
+    return <NoWin accentTo={meta.cardFrom} onClose={() => { setFinalValue(null); setState('idle') }} />
 
   return (
     <div
@@ -92,28 +96,29 @@ export default function DicePage() {
     >
       {/* Ambient orbs */}
       <div className="absolute top-16 -right-20 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.14) 0%, transparent 70%)', filter: 'blur(56px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.14) 0%, transparent 70%)`, filter: 'blur(56px)' }} />
       <div className="absolute bottom-32 -left-20 w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        style={{ background: `radial-gradient(circle, rgba(${accentRgb},0.1) 0%, transparent 70%)`, filter: 'blur(48px)' }} />
 
       {/* Ghost dice */}
       {GHOST_DICE.map((g, i) => (
         <motion.div
           key={i}
-          className="absolute pointer-events-none rounded-xl bg-green-50 border border-green-100"
+          className="absolute pointer-events-none rounded-xl"
           style={{ ...(g.top ? { top: g.top } : { bottom: (g as { bottom: string }).bottom }),
                    ...(g.left ? { left: g.left } : { right: (g as { right: string }).right }),
-                   width: g.size, height: g.size, opacity: g.opacity * 3, rotate: g.rotate }}
+                   width: g.size, height: g.size, opacity: g.opacity * 3, rotate: g.rotate,
+                   background: `${meta.cardFrom}0D`, border: `1px solid ${meta.cardFrom}1F` }}
           animate={{ y: [0, -8, 0], rotate: [g.rotate, g.rotate + 6, g.rotate] }}
           transition={{ duration: 5 + i * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
         >
-          <DiceFaceSVG value={(i % 6) + 1} fillColor="rgba(34,197,94,0.55)" />
+          <DiceFaceSVG value={(i % 6) + 1} fillColor={`rgba(${accentRgb},0.55)`} />
         </motion.div>
       ))}
 
       {/* Idle sparkles */}
       {state === 'idle' && SPARKLE_POS.map((pos, i) => (
-        <motion.div key={i} className="absolute text-green-400/40 pointer-events-none select-none" style={pos}
+        <motion.div key={i} className="absolute pointer-events-none select-none" style={{ ...pos, color: `rgba(${accentRgb},0.4)` }}
           animate={{ opacity: [0.15, 0.6, 0.15], scale: [0.8, 1.3, 0.8] }}
           transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}>
           ✦
@@ -142,7 +147,7 @@ export default function DicePage() {
           {/* Floor shadow */}
           <motion.div
             className="absolute -bottom-6 rounded-full pointer-events-none"
-            style={{ background: 'rgba(34,197,94,0.12)', filter: 'blur(20px)' }}
+            style={{ background: `rgba(${accentRgb},0.12)`, filter: 'blur(20px)' }}
             animate={state === 'rolling'
               ? { width: ['8rem', '5rem', '8rem'], height: ['1.5rem', '0.8rem', '1.5rem'] }
               : { width: '8rem', height: '1.5rem' }}
@@ -153,7 +158,7 @@ export default function DicePage() {
             <motion.div
               className="absolute rounded-3xl pointer-events-none"
               style={{ width: 204, height: 204 }}
-              animate={{ boxShadow: ['0 0 30px rgba(34,197,94,0.25)', '0 0 70px rgba(34,197,94,0.55)', '0 0 30px rgba(34,197,94,0.25)'] }}
+              animate={{ boxShadow: [`0 0 30px rgba(${accentRgb},0.25)`, `0 0 70px rgba(${accentRgb},0.55)`, `0 0 30px rgba(${accentRgb},0.25)`] }}
               transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
@@ -170,8 +175,8 @@ export default function DicePage() {
             style={{
               transformStyle: 'preserve-3d',
               boxShadow: state === 'rolling'
-                ? '0 24px 64px rgba(0,0,0,0.18), 0 0 40px rgba(34,197,94,0.3)'
-                : '0 16px 48px rgba(0,0,0,0.12), 0 0 20px rgba(34,197,94,0.1)',
+                ? `0 24px 64px rgba(0,0,0,0.18), 0 0 40px rgba(${accentRgb},0.3)`
+                : `0 16px 48px rgba(0,0,0,0.12), 0 0 20px rgba(${accentRgb},0.1)`,
             }}
           >
             <div className="w-32 h-32">
@@ -190,7 +195,7 @@ export default function DicePage() {
               className="text-center"
             >
               <p className="text-5xl font-black text-gray-900 mb-1">{finalValue}</p>
-              <p className="text-base font-bold" style={{ color: OUTCOMES[finalValue] ? '#16A34A' : '#9CA3AF' }}>
+              <p className="text-base font-bold" style={{ color: OUTCOMES[finalValue] ? meta.cardFrom : '#9CA3AF' }}>
                 {OUTCOMES[finalValue] ? `${OUTCOMES[finalValue]}! 🎉` : 'Not this time…'}
               </p>
             </motion.div>
@@ -212,14 +217,14 @@ export default function DicePage() {
               <div key={n}
                 className="rounded-xl p-2.5 flex flex-col items-center gap-1.5"
                 style={{
-                  background: reward ? 'rgba(34,197,94,0.08)' : 'white',
-                  border: reward ? '1px solid rgba(34,197,94,0.3)' : '1px solid #E5E7EB',
+                  background: reward ? `${meta.cardFrom}0D` : 'white',
+                  border: reward ? `1px solid ${meta.cardFrom}4D` : '1px solid #E5E7EB',
                 }}>
                 <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center">
                   <div className="w-6 h-6"><DiceFaceSVG value={n} /></div>
                 </div>
                 <p className="text-[9px] font-bold text-center leading-tight"
-                  style={{ color: reward ? '#16A34A' : '#9CA3AF' }}>
+                  style={{ color: reward ? meta.cardFrom : '#9CA3AF' }}>
                   {reward ? reward.split(' ')[0] : 'No win'}
                 </p>
               </div>
