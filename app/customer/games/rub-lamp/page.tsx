@@ -67,8 +67,8 @@ function StarField() {
       {STARS.map((s, i) => (
         <motion.div
           key={i}
-          className="absolute text-white"
-          style={{ left: `${s.x}%`, top: `${s.y}%`, opacity: s.o, fontSize: s.s }}
+          className="absolute"
+          style={{ left: `${s.x}%`, top: `${s.y}%`, opacity: s.o, fontSize: s.s, color: 'rgba(124,58,237,0.5)' }}
           animate={{ opacity: [s.o, s.o * 0.3, s.o], scale: [1, 1.3, 1] }}
           transition={{ duration: 2.2 + i * 0.28, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
         >
@@ -261,16 +261,16 @@ function RubLampContent() {
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden select-none"
-      style={{ background: 'linear-gradient(180deg, #2D0A6B 0%, #1A0D3A 45%, #0E060C 78%, #1C0410 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #FFFFFF 0%, #7C3AED0F 55%, #7C3AED1F 100%)' }}
     >
       <StarField />
       <ConfettiLayer show={showConfetti} />
 
       <button
         onClick={() => router.back()}
-        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center z-20"
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/5 backdrop-blur-md flex items-center justify-center z-20"
       >
-        <ArrowLeft className="w-4 h-4 text-white" />
+        <ArrowLeft className="w-4 h-4 text-gray-700" />
       </button>
 
       <div className="flex-1 flex flex-col items-center px-5 pt-20 pb-8 relative z-10">
@@ -285,15 +285,15 @@ function RubLampContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
               >
-                <p className="text-white text-[22px] font-bold leading-snug">★ Your wish is granted!</p>
-                <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
+                <p className="text-gray-900 text-[22px] font-bold leading-snug">★ Your wish is granted!</p>
+                <p className="text-gray-500 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
             ) : (
               <motion.div key="rub-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-white text-[22px] font-bold leading-snug">
+                <p className="text-gray-900 text-[22px] font-bold leading-snug">
                   Rub the lamp to<br />claim your reward
                 </p>
-                <p className="text-white/50 text-sm mt-1.5">The Magic is in your hand</p>
+                <p className="text-gray-500 text-sm mt-1.5">The Magic is in your hand</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -335,9 +335,9 @@ function RubLampContent() {
 
             {/* Guide ring — light neutral dashes */}
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(120,60,240,0.07)" strokeWidth="22" />
+              stroke="rgba(124,58,237,0.08)" strokeWidth="22" />
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(215,195,255,0.13)" strokeWidth="1.5" strokeDasharray="7 9" />
+              stroke="rgba(124,58,237,0.35)" strokeWidth="1.5" strokeDasharray="7 9" />
 
             {/* Progress arc — 4-layer soft warm amber */}
             {charge > 0 && !ringClaimed && (
@@ -523,7 +523,7 @@ function RubLampContent() {
             >
               <div
                 className="w-full h-2.5 rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.09)' }}
+                style={{ background: '#F3F4F6' }}
               >
                 <motion.div
                   className="h-full rounded-full"
@@ -544,7 +544,7 @@ function RubLampContent() {
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.25 }}
                     className="text-xs"
-                    style={{ color: 'rgba(255,255,255,0.32)' }}
+                    style={{ color: '#9CA3AF' }}
                   >
                     {charge === 0
                       ? '← Rub the lamp →'
@@ -577,7 +577,7 @@ function RubLampContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-white font-bold text-lg mb-4"
+              className="text-gray-900 font-bold text-lg mb-4"
             >
               Here is Your Reward ✨
             </motion.p>
@@ -593,44 +593,44 @@ function RubLampContent() {
               transition={{ type: 'spring', stiffness: 240, damping: 20 }}
               className="w-full max-w-xs rounded-2xl p-4"
               style={{
-                background: 'rgba(28,14,55,0.90)',
-                border: '1px solid rgba(255,255,255,0.09)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+                background: '#7C3AED0D',
+                border: '1px solid #7C3AED30',
+                boxShadow: '0 8px 32px rgba(124,58,237,0.12)',
               }}
             >
               <div className="flex items-center justify-between mb-3">
                 <span
                   className="text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(234,179,8,0.18)', color: '#EAB308', border: '1px solid rgba(234,179,8,0.2)' }}
+                  style={{ background: 'rgba(234,179,8,0.15)', color: '#B45309', border: '1px solid rgba(234,179,8,0.3)' }}
                 >
                   {pts} pts
                 </span>
-                <div className="flex items-center gap-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <div className="flex items-center gap-1 text-[11px] text-gray-400">
                   <Gift className="w-3 h-3" />
                   <span>{available - 1} Available</span>
                 </div>
               </div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-white border border-gray-100 flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
                   🎁
                 </div>
                 <div>
-                  <p className="text-white font-bold text-[15px] leading-tight">{name}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{subtitle}</p>
+                  <p className="text-gray-900 font-bold text-[15px] leading-tight">{name}</p>
+                  <p className="text-[11px] mt-0.5 text-gray-400">{subtitle}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[10px] flex-wrap" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <div className="flex items-center gap-2 text-[10px] flex-wrap text-gray-400">
                 <div className="flex items-center gap-1">
                   <CalendarDays className="w-3 h-3" />
                   <span>Claim Before</span>
                 </div>
-                <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{claimBefore}</span>
+                <span className="font-semibold text-gray-700">{claimBefore}</span>
                 <span className="opacity-30 mx-0.5">|</span>
                 <div className="flex items-center gap-1">
                   <Gift className="w-3 h-3" />
                   <span>Redeem Before</span>
                 </div>
-                <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{redeemBefore}</span>
+                <span className="font-semibold text-gray-700">{redeemBefore}</span>
               </div>
             </motion.div>
           )}
@@ -648,7 +648,7 @@ function RubLampContent() {
               <Link
                 href="/customer/wallet"
                 className="flex items-center justify-center w-full py-4 rounded-2xl font-bold text-base text-white"
-                style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)' }}
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
               >
                 View in Wallet →
               </Link>

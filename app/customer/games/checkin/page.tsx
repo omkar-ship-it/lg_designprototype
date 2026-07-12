@@ -3,6 +3,9 @@ import { Suspense, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
+import { MECHANIC_META } from '@/lib/utils'
+
+const meta = MECHANIC_META.checkin
 
 const POINTS_PER_CHECKIN = 100
 const INITIAL_STREAK     = 5
@@ -43,24 +46,24 @@ function CheckInInner() {
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #0F0520 0%, #1E0A5C 50%, #0D0B1E 100%)' }}
+      style={{ background: `linear-gradient(160deg, #FFFFFF 0%, ${meta.cardFrom}0F 55%, ${meta.cardFrom}1F 100%)` }}
     >
       {/* Ambient orbs */}
       <div className="absolute top-0 left-0 right-0 h-64 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(109,40,217,0.25) 0%, transparent 70%)' }} />
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${meta.cardFrom}18 0%, transparent 70%)` }} />
       <div className="absolute bottom-0 -left-20 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        style={{ background: `radial-gradient(circle, ${meta.cardFrom}14 0%, transparent 70%)`, filter: 'blur(48px)' }} />
 
       {/* Back button */}
       <button
         onClick={() => router.back()}
-        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center z-20"
+        className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/5 backdrop-blur-md flex items-center justify-center z-20"
       >
-        <ArrowLeft className="w-4 h-4 text-white" />
+        <ArrowLeft className="w-4 h-4 text-gray-700" />
       </button>
 
       {/* Date */}
-      <p className="absolute top-14 right-4 text-[11px] font-semibold text-white/60 z-20">{today}</p>
+      <p className="absolute top-14 right-4 text-[11px] font-semibold text-gray-400 z-20">{today}</p>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
@@ -75,10 +78,10 @@ function CheckInInner() {
               className="w-full flex flex-col items-center"
             >
               {/* Greeting */}
-              <p className="text-white/70 text-base font-semibold mb-1">{getGreeting()}</p>
+              <p className="text-gray-500 text-base font-semibold mb-1">{getGreeting()}</p>
 
               {/* Business name */}
-              <h1 className="text-3xl font-extrabold text-white mb-6 text-center drop-shadow-lg">
+              <h1 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
                 {BUSINESS_NAME} {BUSINESS_EMOJI}
               </h1>
 
@@ -87,15 +90,16 @@ function CheckInInner() {
                 <motion.div
                   animate={{ scale: [1, 1.08, 1] }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-7xl font-black text-white leading-none drop-shadow-xl"
+                  className="text-7xl font-black leading-none"
+                  style={{ color: meta.cardFrom }}
                 >
                   {streak}
                 </motion.div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="text-xl">🔥</span>
-                  <span className="text-sm font-bold text-white/80">day streak</span>
+                  <span className="text-sm font-bold text-gray-700">day streak</span>
                 </div>
-                <p className="text-xs text-white/50 mt-1">Keep it going — don't break it!</p>
+                <p className="text-xs text-gray-400 mt-1">Keep it going — don't break it!</p>
               </div>
 
               {/* Check-in stamp button */}
@@ -105,15 +109,15 @@ function CheckInInner() {
                 whileTap={{ scale: 0.94 }}
                 className="relative w-36 h-36 rounded-full flex items-center justify-center mb-8 select-none"
                 style={{
-                  background: 'rgba(0,0,0,0.25)',
-                  border: '3px solid rgba(255,255,255,0.4)',
-                  boxShadow: '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
+                  background: `${meta.cardFrom}12`,
+                  border: `3px solid ${meta.cardFrom}40`,
+                  boxShadow: `0 0 0 8px ${meta.cardFrom}0D, 0 20px 60px rgba(0,0,0,0.08)`,
                 }}
                 animate={state === 'idle' ? {
                   boxShadow: [
-                    '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
-                    '0 0 0 16px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.3)',
-                    '0 0 0 8px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.25)',
+                    `0 0 0 8px ${meta.cardFrom}0D, 0 20px 60px rgba(0,0,0,0.08)`,
+                    `0 0 0 16px ${meta.cardFrom}14, 0 20px 60px rgba(0,0,0,0.1)`,
+                    `0 0 0 8px ${meta.cardFrom}0D, 0 20px 60px rgba(0,0,0,0.08)`,
                   ],
                 } : {}}
                 transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
@@ -123,6 +127,7 @@ function CheckInInner() {
                     className="text-5xl"
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 0.5, repeat: Infinity }}
+                    style={{ color: meta.cardFrom }}
                   >
                     ✓
                   </motion.span>
@@ -132,10 +137,10 @@ function CheckInInner() {
               </motion.button>
 
               {/* Points + social */}
-              <p className="text-sm font-semibold text-white/70 mb-1">
-                Tap to earn <span className="text-white font-bold">+{POINTS_PER_CHECKIN} pts</span>
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                Tap to earn <span className="font-bold" style={{ color: meta.cardFrom }}>+{POINTS_PER_CHECKIN} pts</span>
               </p>
-              <p className="text-xs text-white/40">{ACTIVE_TODAY} others checked in today</p>
+              <p className="text-xs text-gray-400">{ACTIVE_TODAY} others checked in today</p>
             </motion.div>
           ) : (
             /* Confirmed state */
@@ -152,13 +157,13 @@ function CheckInInner() {
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 320, damping: 16, delay: 0.1 }}
                 className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
-                style={{ background: 'rgba(255,255,255,0.25)', border: '3px solid rgba(255,255,255,0.6)' }}
+                style={{ background: `${meta.cardFrom}12`, border: `3px solid ${meta.cardFrom}40` }}
               >
-                <span className="text-5xl">✓</span>
+                <span className="text-5xl" style={{ color: meta.cardFrom }}>✓</span>
               </motion.div>
 
-              <p className="text-white/70 text-sm font-semibold mb-1">Checked in at</p>
-              <h2 className="text-2xl font-extrabold text-white mb-6">{BUSINESS_NAME} {BUSINESS_EMOJI}</h2>
+              <p className="text-gray-500 text-sm font-semibold mb-1">Checked in at</p>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-6">{BUSINESS_NAME} {BUSINESS_EMOJI}</h2>
 
               {/* Updated streak */}
               <div className="flex flex-col items-center mb-6">
@@ -166,13 +171,14 @@ function CheckInInner() {
                   initial={{ scale: 0.5 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.2 }}
-                  className="text-7xl font-black text-white leading-none"
+                  className="text-7xl font-black leading-none"
+                  style={{ color: meta.cardFrom }}
                 >
                   {streak}
                 </motion.div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="text-xl">🔥</span>
-                  <span className="text-sm font-bold text-white/80">day streak!</span>
+                  <span className="text-sm font-bold text-gray-700">day streak!</span>
                 </div>
               </div>
 
@@ -182,16 +188,16 @@ function CheckInInner() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
                 className="flex items-center gap-3 rounded-2xl px-6 py-3 mb-4"
-                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.2)' }}
+                style={{ background: `${meta.cardFrom}0D`, border: `1px solid ${meta.cardFrom}30` }}
               >
                 <div className="text-center">
-                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Earned today</p>
-                  <p className="text-xl font-black text-white">+{POINTS_PER_CHECKIN} pts</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">Earned today</p>
+                  <p className="text-xl font-black text-gray-900">+{POINTS_PER_CHECKIN} pts</p>
                 </div>
-                <div className="w-px h-8 bg-white/20" />
+                <div className="w-px h-8" style={{ background: `${meta.cardFrom}30` }} />
                 <div className="text-center">
-                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Total</p>
-                  <p className="text-xl font-black text-white">⭐ {points}</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">Total</p>
+                  <p className="text-xl font-black text-gray-900">⭐ {points}</p>
                 </div>
               </motion.div>
 
@@ -199,7 +205,7 @@ function CheckInInner() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-sm text-white/60 mb-8 text-center"
+                className="text-sm text-gray-500 mb-8 text-center"
               >
                 See you tomorrow for Day {streak + 1}! ⭐
               </motion.p>
@@ -210,8 +216,7 @@ function CheckInInner() {
                 transition={{ delay: 0.55 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => router.back()}
-                className="w-full py-4 rounded-2xl font-bold text-sm"
-                style={{ background: 'rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)', color: 'white' }}
+                className="w-full py-4 rounded-2xl font-bold text-sm bg-gray-100 border border-gray-200 text-gray-700"
               >
                 ← Back to {BUSINESS_NAME}
               </motion.button>
@@ -225,7 +230,7 @@ function CheckInInner() {
 
 export default function CheckInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen" style={{ background: 'linear-gradient(145deg, #92400E, #F59E0B)' }} />}>
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
       <CheckInInner />
     </Suspense>
   )
