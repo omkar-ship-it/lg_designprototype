@@ -30,7 +30,7 @@ export default function BuyXGetYPage() {
 
   return (
     <RubLampClaim
-      title={`Rub the lamp to\nclaim ${BUSINESS_NAME}'s reward`}
+      title={`Claim ${BUSINESS_NAME}'s reward`}
       onComplete={() => setState('earned')}
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}

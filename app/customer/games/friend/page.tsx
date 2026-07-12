@@ -32,7 +32,7 @@ export default function BringFriendPage() {
 
   return (
     <RubLampClaim
-      title={`Rub the lamp to\nclaim your reward`}
+      title={`Claim your reward`}
       onComplete={() => setState('earned')}
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}

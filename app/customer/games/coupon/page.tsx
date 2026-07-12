@@ -31,7 +31,7 @@ export default function CouponPage() {
 
   return (
     <RubLampClaim
-      title={`Rub the lamp to\nclaim your coupon`}
+      title={`Claim your coupon`}
       onComplete={() => setState('earned')}
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}

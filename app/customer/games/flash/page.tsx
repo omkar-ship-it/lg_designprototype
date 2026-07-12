@@ -36,7 +36,7 @@ export default function FlashDealPage() {
 
   return (
     <RubLampClaim
-      title={`Rub the lamp to\nclaim this spot`}
+      title={`Claim this spot`}
       onComplete={() => setState('earned')}
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}

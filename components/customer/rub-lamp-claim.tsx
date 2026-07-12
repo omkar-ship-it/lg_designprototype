@@ -9,15 +9,8 @@ import { hexMix, hexToRgb } from '@/lib/utils'
 const R    = 95
 const CX   = 110
 const CY   = 110
-const CIRC = 2 * Math.PI * R
 
 const CONTAINER = 260
-const SCREEN_R  = (R / 220) * CONTAINER
-const SCREEN_CX = CONTAINER / 2
-const SCREEN_CY = CONTAINER / 2
-
-const TOTAL_RUB_PX = 480
-const MAX_PARTICLES = 32
 
 const STARS = [
   { x:  8, y: 10, s: 14, o: 0.38 },
@@ -136,7 +129,7 @@ interface RubLampClaimProps {
 }
 
 export function RubLampClaim({
-  title = 'Rub the lamp to\nclaim your reward',
+  title = 'Claim your reward',
   subtitle = 'The Magic is in your hand',
   claimedTitle = '★ Your wish is granted!',
   claimedSubtitle = 'The Magic is in your hand',
@@ -158,26 +151,14 @@ export function RubLampClaim({
   const lightRgb = hexToRgb(light).join(',')
   const paleRgb  = hexToRgb(pale).join(',')
 
-  const [charge, setCharge]             = useState(0)
+  const [claiming, setClaiming]         = useState(false)
   const [claimed, setClaimed]           = useState(false)
   const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([])
-  const [isRubbing, setIsRubbing]       = useState(false)
   const [particles, setParticles]       = useState<SmokeParticle[]>([])
-  const [lampShakeKey, setLampShakeKey] = useState(0)
   const [genieVisible, setGenieVisible] = useState(false)
   const [ringClaimed, setRingClaimed]   = useState(false)
 
-  const rubPxRef       = useRef(0)
-  const firedRef        = useRef(false)
-  const isDownRef      = useRef(false)
-  const lastXRef       = useRef(0)
-  const lastEmitPxRef  = useRef(0)
-  const lastShakePxRef = useRef(0)
-
-  const ringFilled  = (charge / 100) * CIRC
-  const screenAngle = ((charge / 100) * 360 - 90) * (Math.PI / 180)
-  const dotX        = SCREEN_CX + SCREEN_R * Math.cos(screenAngle)
-  const dotY        = SCREEN_CY + SCREEN_R * Math.sin(screenAngle)
+  const firedRef = useRef(false)
 
   const emitSmoke = useCallback((count: number, intensity: number) => {
     const smokeColors = [
@@ -201,12 +182,14 @@ export function RubLampClaim({
         color:    isBright ? 'rgba(216,180,254,0.7)' : smokeColors[Math.floor(Math.random() * smokeColors.length)],
       }
     })
-    setParticles(prev => [...prev, ...newParticles].slice(-MAX_PARTICLES))
-  }, [])
+    setParticles(prev => [...prev, ...newParticles].slice(-32))
+  }, [baseRgb, lightRgb, paleRgb])
 
-  const triggerClaim = useCallback(() => {
+  const handleClaim = useCallback(() => {
+    if (firedRef.current) return
     firedRef.current = true
-    emitSmoke(24, 100)
+    setClaiming(true)
+    emitSmoke(28, 100)
     if (typeof navigator !== 'undefined') navigator.vibrate?.([60, 30, 80, 30, 120, 30, 160])
     setTimeout(() => {
       setClaimed(true)
@@ -221,62 +204,9 @@ export function RubLampClaim({
     }, completeDelayMs)
   }, [emitSmoke, onComplete, completeDelayMs])
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if (firedRef.current) return
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    isDownRef.current   = true
-    lastXRef.current    = e.clientX
-    setIsRubbing(true)
-  }, [])
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDownRef.current || firedRef.current) return
-
-    const x  = e.clientX
-    const dx = Math.abs(x - lastXRef.current)
-    lastXRef.current = x
-    if (dx < 0.5) return
-
-    const prev = rubPxRef.current
-    rubPxRef.current = Math.min(TOTAL_RUB_PX, prev + dx)
-    const newCharge = (rubPxRef.current / TOTAL_RUB_PX) * 100
-
-    // Shake lamp every 22px
-    if (rubPxRef.current - lastShakePxRef.current >= 22) {
-      lastShakePxRef.current = rubPxRef.current
-      setLampShakeKey(k => k + 1)
-    }
-
-    // Smoke: gets denser at higher charge
-    const emitEvery = newCharge > 80 ? 6 : newCharge > 55 ? 10 : newCharge > 30 ? 15 : 22
-    if (rubPxRef.current - lastEmitPxRef.current >= emitEvery) {
-      lastEmitPxRef.current = rubPxRef.current
-      const count = newCharge > 80 ? 4 : newCharge > 55 ? 3 : newCharge > 30 ? 2 : 1
-      emitSmoke(count, newCharge)
-    }
-
-    // Haptic every ~50px
-    if (Math.floor(rubPxRef.current / 50) > Math.floor(prev / 50)) {
-      if (typeof navigator !== 'undefined') navigator.vibrate?.(10)
-    }
-
-    setCharge(newCharge)
-
-    if (newCharge >= 100 && !firedRef.current) {
-      triggerClaim()
-    }
-  }, [emitSmoke, triggerClaim])
-
-  const onPointerUp = useCallback(() => {
-    isDownRef.current = false
-    setIsRubbing(false)
-  }, [])
-
   const removeParticle = useCallback((id: number) => {
     setParticles(prev => prev.filter(p => p.id !== id))
   }, [])
-
-  const glowIntensity = Math.max(0, charge - 20) / 80
 
   return (
     <div
@@ -309,7 +239,7 @@ export function RubLampClaim({
                 <p className="text-white/50 text-sm mt-1.5">{claimedSubtitle}</p>
               </motion.div>
             ) : (
-              <motion.div key="rub-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="claim-title" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <p className="text-white text-[22px] font-bold leading-snug whitespace-pre-line">
                   {title}
                 </p>
@@ -319,25 +249,16 @@ export function RubLampClaim({
           </AnimatePresence>
         </div>
 
-        {/* Ring + Lamp */}
+        {/* Lamp */}
         <div
-          className="relative flex items-center justify-center mb-5"
-          style={{
-            width: CONTAINER,
-            height: CONTAINER,
-            touchAction: 'none',
-            cursor: claimed ? 'default' : isRubbing ? 'grabbing' : 'grab',
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          className="relative flex items-center justify-center mb-6"
+          style={{ width: CONTAINER, height: CONTAINER }}
         >
-          {/* Progress ring SVG */}
+          {/* Guide ring */}
           <svg
             viewBox="0 0 220 220"
             className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}
+            style={{ overflow: 'visible' }}
           >
             <defs>
               <filter id="lampBloomWide" x="-150%" y="-150%" width="400%" height="400%">
@@ -353,44 +274,10 @@ export function RubLampClaim({
               </filter>
             </defs>
 
-            {/* Guide ring — light neutral dashes */}
             <circle cx={CX} cy={CY} r={R} fill="none"
               stroke="rgba(120,60,240,0.07)" strokeWidth="22" />
             <circle cx={CX} cy={CY} r={R} fill="none"
               stroke="rgba(215,195,255,0.13)" strokeWidth="1.5" strokeDasharray="7 9" />
-
-            {/* Progress arc — 4-layer soft warm amber */}
-            {charge > 0 && !ringClaimed && (
-              <>
-                <circle
-                  cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(${baseRgb},${0.08 + glowIntensity * 0.18})`}
-                  strokeWidth="36" strokeLinecap="round"
-                  strokeDasharray={`${ringFilled} ${CIRC}`}
-                  filter="url(#lampBloomWide)"
-                />
-                <circle
-                  cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(${lightRgb},${0.28 + glowIntensity * 0.28})`}
-                  strokeWidth="18" strokeLinecap="round"
-                  strokeDasharray={`${ringFilled} ${CIRC}`}
-                  filter="url(#lampBloomMed)"
-                />
-                <circle
-                  cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(${lightRgb},${0.86 + glowIntensity * 0.14})`}
-                  strokeWidth="7" strokeLinecap="round"
-                  strokeDasharray={`${ringFilled} ${CIRC}`}
-                  style={{ filter: `drop-shadow(0 0 8px rgba(${baseRgb},0.80))` }}
-                />
-                <circle
-                  cx={CX} cy={CY} r={R} fill="none"
-                  stroke={`rgba(${paleRgb},0.92)`}
-                  strokeWidth="2" strokeLinecap="round"
-                  strokeDasharray={`${ringFilled} ${CIRC}`}
-                />
-              </>
-            )}
 
             {/* Claimed full ring — soft warm glow */}
             {ringClaimed && (
@@ -410,40 +297,6 @@ export function RubLampClaim({
             )}
           </svg>
 
-          {/* Tip dot — warm amber sunburst */}
-          {charge > 1 && !ringClaimed && (
-            <>
-              <div className="absolute rounded-full pointer-events-none" style={{
-                width: 64, height: 64,
-                left: dotX - 32, top: dotY - 32,
-                background: `rgba(${baseRgb},0.14)`,
-                filter: 'blur(18px)',
-              }} />
-              <div className="absolute rounded-full pointer-events-none" style={{
-                width: 38, height: 38,
-                left: dotX - 19, top: dotY - 19,
-                background: `rgba(${lightRgb},0.48)`,
-                filter: 'blur(8px)',
-              }} />
-              <motion.div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 20, height: 20,
-                  left: dotX - 10, top: dotY - 10,
-                  background: base,
-                  boxShadow: `0 0 ${12 + glowIntensity * 16}px 4px rgba(${baseRgb},${0.65 + glowIntensity * 0.30})`,
-                }}
-                animate={{ scale: [1, 1.28, 1] }}
-                transition={{ duration: 0.4, repeat: Infinity }}
-              />
-              <div className="absolute rounded-full pointer-events-none" style={{
-                width: 8, height: 8,
-                left: dotX - 4, top: dotY - 4,
-                background: `rgba(${paleRgb},0.94)`,
-              }} />
-            </>
-          )}
-
           {/* Inner circle */}
           <motion.div
             className="absolute inset-3 rounded-full flex items-center justify-center overflow-visible"
@@ -451,8 +304,8 @@ export function RubLampClaim({
               background: 'radial-gradient(circle at 40% 35%, rgba(110,45,210,0.75) 0%, rgba(18,6,50,0.96) 70%)',
               boxShadow: ringClaimed
                 ? `0 0 0 2px rgba(${baseRgb},0.70), 0 0 50px 20px rgba(${baseRgb},0.38), 0 0 100px 34px rgba(${baseRgb},0.22), inset 0 0 60px 20px rgba(${lightRgb},0.14)`
-                : charge > 3
-                  ? `0 0 0 ${0.5 + glowIntensity * 2}px rgba(${baseRgb},${0.14 + glowIntensity * 0.52}), 0 0 ${14 + glowIntensity * 52}px ${5 + glowIntensity * 22}px rgba(${baseRgb},${0.10 + glowIntensity * 0.34}), 0 0 ${30 + glowIntensity * 75}px ${8 + glowIntensity * 28}px rgba(${baseRgb},${0.04 + glowIntensity * 0.20}), inset 0 0 ${5 + glowIntensity * 52}px ${1.5 + glowIntensity * 20}px rgba(${lightRgb},${0.02 + glowIntensity * 0.16})`
+                : claiming
+                  ? `0 0 0 3px rgba(${baseRgb},0.5), 0 0 60px 22px rgba(${baseRgb},0.32), inset 0 0 40px 14px rgba(${lightRgb},0.12)`
                   : accentFrom ? `0 0 20px rgba(${baseRgb},0.14)` : '0 0 20px rgba(109,40,217,0.14)',
             }}
           >
@@ -480,21 +333,19 @@ export function RubLampClaim({
                 </motion.div>
               ) : (
                 <motion.div
-                  key={`lamp-${lampShakeKey}`}
-                  animate={lampShakeKey > 0
-                    ? { rotate: [-9, 9, -7, 7, -4, 4, 0], scale: [1, 1.04, 1] }
+                  key="lamp"
+                  animate={claiming
+                    ? { rotate: [-9, 9, -7, 7, -4, 4, 0], scale: [1, 1.06, 1] }
                     : { scale: [1, 1.02, 1] }
                   }
-                  transition={lampShakeKey > 0
-                    ? { duration: 0.35, ease: 'easeInOut' }
+                  transition={claiming
+                    ? { duration: 0.4, ease: 'easeInOut' }
                     : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
                   }
                   style={{
-                    filter: charge > 55
-                      ? `drop-shadow(0 0 ${10 + (charge - 55) / 3}px rgba(${baseRgb},0.95)) drop-shadow(0 0 ${22 + (charge - 55) / 2}px rgba(${baseRgb},0.55))`
-                      : charge > 20
-                        ? `drop-shadow(0 0 8px rgba(${baseRgb},0.55))`
-                        : `drop-shadow(0 0 3px rgba(${baseRgb},0.2))`,
+                    filter: claiming
+                      ? `drop-shadow(0 0 14px rgba(${baseRgb},0.9)) drop-shadow(0 0 26px rgba(${baseRgb},0.5))`
+                      : `drop-shadow(0 0 6px rgba(${baseRgb},0.35))`,
                   }}
                 >
                   <Image
@@ -537,7 +388,7 @@ export function RubLampClaim({
           </motion.div>
         </div>
 
-        {/* Progress bar */}
+        {/* Claim button */}
         <AnimatePresence>
           {!claimed && (
             <motion.div
@@ -545,51 +396,22 @@ export function RubLampClaim({
               transition={{ duration: 0.3 }}
               className="w-full max-w-xs mb-5"
             >
-              <div
-                className="w-full h-2.5 rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.09)' }}
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={handleClaim}
+                disabled={claiming}
+                className="w-full py-4 rounded-2xl text-base font-extrabold text-white disabled:opacity-70"
+                style={{
+                  background: `linear-gradient(135deg, ${light}, ${base}, ${dark})`,
+                  boxShadow: `0 8px 32px rgba(${baseRgb},0.4)`,
+                }}
+                animate={!claiming
+                  ? { boxShadow: [`0 8px 32px rgba(${baseRgb},0.3)`, `0 8px 48px rgba(${baseRgb},0.6)`, `0 8px 32px rgba(${baseRgb},0.3)`] }
+                  : {}}
+                transition={{ duration: 1.8, repeat: !claiming ? Infinity : 0, ease: 'easeInOut' }}
               >
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    background: `linear-gradient(90deg, ${light}, ${base}, ${dark})`,
-                    boxShadow: charge > 0 ? `0 0 ${8 + glowIntensity * 10}px rgba(${baseRgb},${0.6 + glowIntensity * 0.4})` : 'none',
-                  }}
-                  animate={{ width: `${charge}%` }}
-                  transition={{ duration: 0.1, ease: 'easeOut' }}
-                />
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={charge < 30 ? 'hint1' : charge < 60 ? 'hint2' : charge < 90 ? 'hint3' : 'hint4'}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-xs"
-                    style={{ color: 'rgba(255,255,255,0.32)' }}
-                  >
-                    {charge === 0
-                      ? '← Rub the lamp →'
-                      : charge < 30
-                      ? 'Keep rubbing...'
-                      : charge < 60
-                      ? 'The genie is stirring... ✨'
-                      : charge < 90
-                      ? 'Almost there! The magic is building 🔥'
-                      : ''}
-                  </motion.p>
-                </AnimatePresence>
-                {charge > 0 && (
-                  <motion.p
-                    className="text-xs font-bold tabular-nums ml-2 flex-shrink-0"
-                    style={{ color: `rgba(${baseRgb},0.85)` }}
-                  >
-                    {Math.round(charge)}%
-                  </motion.p>
-                )}
-              </div>
+                {claiming ? '✨ Summoning the genie…' : '🪔 Claim Reward'}
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

@@ -31,7 +31,7 @@ export default function ComboDealPage() {
 
   return (
     <RubLampClaim
-      title={`Rub the lamp to\nclaim your combo`}
+      title={`Claim your combo`}
       onComplete={() => setState('earned')}
       accentFrom={meta.cardFrom}
       accentTo={meta.cardTo}
