@@ -539,10 +539,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                                 ))}
                               </div>
                             )}
-
-                            <div className={`absolute ${hero.features ? 'top-14' : 'bottom-3'} right-3 w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm`}>
-                              {meta.emoji}
-                            </div>
                           </div>
                         )
                       }
@@ -643,9 +639,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           >
                             {STATUS_STYLES[m.status]?.label}
                           </span>
-                          <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-sm">
-                            {meta.emoji}
-                          </div>
                         </div>
                       )
                     })()}
