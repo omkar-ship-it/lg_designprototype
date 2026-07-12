@@ -336,6 +336,7 @@ export interface CustomerBusiness {
     couponClaimed?: number
     couponRedeemBefore?: string
     couponTerms?: string
+    couponClaimExperience?: 'rub'
     // flash
     flashReward?: string
     flashTotalSlots?: number

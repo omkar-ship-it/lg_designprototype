@@ -340,7 +340,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const joinCampaign = () => {
     if (digits.some(d => !d)) return
     closeOTP()
-    const base = MECHANIC_GAME_LINKS[mechanic.type as MechanicType]
+    const base = mechanic.type === 'coupon' && mechanic.couponClaimExperience === 'rub'
+      ? '/customer/games/coupon-rub'
+      : MECHANIC_GAME_LINKS[mechanic.type as MechanicType]
     router.push(mechanic.type === 'stamp' ? `${base}?stamp=1` : base)
   }
 
