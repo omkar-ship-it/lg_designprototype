@@ -78,13 +78,13 @@ export default function DicePage() {
   if (state === 'result' && won)
     return (
       <WinCelebration
-        reward={wonReward} emoji="🎲" hidePlayAgain theme="light"
+        reward={wonReward} emoji="🎲" hidePlayAgain
         accentFrom="#16A34A" accentTo="#15803D"
         onClose={() => { setFinalValue(null); setState('idle') }}
       />
     )
   if (state === 'result' && !won)
-    return <NoWin theme="light" accentTo="#16A34A" onClose={() => { setFinalValue(null); setState('idle') }} />
+    return <NoWin accentTo="#16A34A" onClose={() => { setFinalValue(null); setState('idle') }} />
 
   return (
     <div

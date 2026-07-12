@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration, NoWin } from '@/components/customer/win-celebration'
+import { MECHANIC_META } from '@/lib/utils'
+
+const meta = MECHANIC_META.shake
 
 const WIN_RATE    = 0.8
 const MAX_PLAYS   = 10
@@ -147,8 +150,8 @@ export default function ShakeWinPage() {
     setGameState('idle')
   }
 
-  if (gameState === 'result' && won)  return <WinCelebration reward={prize} emoji="🎰" onClose={handlePlayAgain} />
-  if (gameState === 'result' && !won) return <NoWin onClose={handlePlayAgain} />
+  if (gameState === 'result' && won)  return <WinCelebration reward={prize} emoji="🎰" accentFrom={meta.cardFrom} accentTo={meta.cardTo} onClose={handlePlayAgain} />
+  if (gameState === 'result' && !won) return <NoWin accentTo={meta.cardFrom} onClose={handlePlayAgain} />
 
   // Circumference of the SVG ring (r=47): 2π×47 ≈ 295.3
   const CIRC = 295.3

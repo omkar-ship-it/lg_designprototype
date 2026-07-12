@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { WinCelebration } from '@/components/customer/win-celebration'
+import { MECHANIC_META } from '@/lib/utils'
+
+const meta = MECHANIC_META.stamp
 
 const TOTAL            = 10
 const CURRENT_STAMPS   = 3
@@ -185,9 +188,9 @@ function StampCardInner() {
       />
     )
   if (state === 'big-win')
-    return <WinCelebration reward={REWARDS[10].reward} emoji={REWARDS[10].emoji} hidePlayAgain onClose={() => setState('card')} />
+    return <WinCelebration reward={REWARDS[10].reward} emoji={REWARDS[10].emoji} hidePlayAgain accentFrom={meta.cardFrom} accentTo={meta.cardTo} onClose={() => setState('card')} />
   if (state === 'surprise' && surpriseReward)
-    return <WinCelebration reward={surpriseReward.reward} emoji={surpriseReward.emoji} hidePlayAgain onClose={() => setState('card')} />
+    return <WinCelebration reward={surpriseReward.reward} emoji={surpriseReward.emoji} hidePlayAgain accentFrom={meta.cardFrom} accentTo={meta.cardTo} onClose={() => setState('card')} />
 
   const justStamped = searchParams.get('stamp') === '1'
 

@@ -80,13 +80,13 @@ export default function SpinWheelPage() {
   if (state === 'result' && won)
     return (
       <WinCelebration
-        reward={wonReward} emoji="🎡" hidePlayAgain theme="light"
+        reward={wonReward} emoji="🎡" hidePlayAgain
         accentFrom={meta.cardFrom} accentTo={meta.cardTo}
         onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }}
       />
     )
   if (state === 'result' && !won)
-    return <NoWin theme="light" accentTo={meta.cardFrom} onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }} />
+    return <NoWin accentTo={meta.cardFrom} onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }} />
 
   const cx = 150, cy = 150, r = 140
 
