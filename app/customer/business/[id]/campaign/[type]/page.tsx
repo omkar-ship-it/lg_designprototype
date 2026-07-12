@@ -514,7 +514,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       <div className="px-5 pt-3">
 
         {/* Title + points badge */}
-        <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-start justify-between gap-2 mb-1.5">
           <h1 className="text-xl font-extrabold text-gray-900">{mechanic.label}</h1>
           {mechanic.type === 'checkin' && (
             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 shrink-0 mt-0.5">
@@ -522,6 +522,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </span>
           )}
         </div>
+
+        {/* Offered by — who this campaign belongs to, up front rather than buried at the bottom */}
+        <div className="flex items-center gap-1.5 mb-3">
+          <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[11px] shrink-0">{biz.coverEmoji}</div>
+          <p className="text-xs font-semibold text-gray-500">{biz.name}</p>
+        </div>
+
         <p className="text-sm text-gray-500 mb-5 leading-relaxed">{mechanic.description}</p>
 
         {/* Stamp card layout */}
@@ -1154,10 +1161,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             )}
           </>
         )}
-
-        {/* Business name */}
-        <p className="text-xs text-gray-400 mb-1">Offered by</p>
-        <p className="text-sm font-bold text-gray-800 mb-8">{biz.name}</p>
 
         {/* PLAY CTA — only stamp/checkin still use the bottom-sheet PIN flow; every other mechanic enters its code inline in its card above */}
         {!usesInlineKeypad && (
