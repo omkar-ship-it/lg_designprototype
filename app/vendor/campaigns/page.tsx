@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, LayoutList, LayoutGrid, ArrowUpDown,
   Users, Trophy, TrendingUp, MoreVertical, Gift,
-  Pause, Copy, StopCircle, Eye,
+  Pause, Copy, StopCircle, Eye, Calendar, Pencil,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -116,6 +116,7 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
   const urgent = dl !== null && dl <= 3
   const muted  = c.status === 'ended'
   const color  = getMechanicColor(c.mechanic)
+  const capPct = c.userCap > 0 ? Math.round((c.currentUsers / c.userCap) * 100) : 0
 
   return (
     <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
@@ -144,33 +145,59 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
                   <MechanicBadge mechanic={c.mechanic} />
                   {urgent && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-v-danger border border-red-200">
-                      ⚠ {dl}d left
+                      ⚠ {dl <= 1 ? 'Last day' : `${dl}d left`}
                     </span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4 text-xs text-v-text-3">
-                  <div className="rounded-2xl bg-v-surface-2 p-3">
-                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Status</p>
-                    <StatusBadge status={c.status} />
-                  </div>
-                  <div className="rounded-2xl bg-v-surface-2 p-3">
-                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Duration</p>
-                    <p className="text-sm font-semibold text-v-text">{formatDate(c.startDate)} → {formatDate(c.endDate)}</p>
-                  </div>
-                  <div className="rounded-2xl bg-v-surface-2 p-3">
-                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Participants</p>
-                    <p className="text-sm font-semibold text-v-text">{c.currentUsers.toLocaleString()}</p>
-                  </div>
-                  <div className="rounded-2xl bg-v-surface-2 p-3">
-                    <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Total Rewards</p>
-                    <p className="text-sm font-semibold text-v-text">{c.rewardsClaimed.toLocaleString()}</p>
-                  </div>
+                {/* Row 2: date range */}
+                <div className="flex items-center gap-1.5 text-xs text-v-text-3 mb-3">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {formatDate(c.startDate)} → {formatDate(c.endDate)}
+                  {dl !== null && !urgent && <span> · {dl}d left</span>}
+                </div>
+
+                {/* Row 3: players / winners / redeems */}
+                <div className="flex items-center gap-5 flex-wrap text-xs">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-v-purple" />
+                    <span className="font-bold text-v-purple">{c.currentUsers.toLocaleString()}</span>
+                    <span className="text-v-text-3">players</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                    <span className="font-bold text-green-600">{c.rewardsClaimed.toLocaleString()}</span>
+                    <span className="text-v-text-3">winners</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                    <span className="font-bold text-amber-600">{c.redeemedCount.toLocaleString()}</span>
+                    <span className="text-v-text-3">redeems</span>
+                  </span>
                 </div>
               </div>
 
-              {/* Actions */}
-              <QuickMenu id={c.id} />
+              {/* Actions + cap progress */}
+              <div className="flex flex-col items-end gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Link href={`/vendor/campaigns/${c.id}`}>
+                    <Button variant="secondary" size="sm"><Eye className="w-3.5 h-3.5" /> View</Button>
+                  </Link>
+                  <Link href={`/vendor/campaigns/${c.id}/edit`}>
+                    <Button variant="secondary" size="sm" className="bg-purple-50 text-v-purple border-purple-200 hover:bg-purple-100 shadow-none">
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </Button>
+                  </Link>
+                  <QuickMenu id={c.id} />
+                </div>
+                <div className="w-40">
+                  <p className="text-[11px] text-v-text-3 text-right mb-1">{c.currentUsers.toLocaleString()}/{c.userCap.toLocaleString()} users</p>
+                  <div className="h-1.5 bg-purple-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-v-purple rounded-full transition-all duration-500" style={{ width: `${capPct}%` }} />
+                  </div>
+                  <p className="text-[11px] text-v-text-3 text-right mt-1">{capPct}% cap</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -252,16 +279,9 @@ export default function CampaignsPage() {
   const windowDays = DATE_WINDOWS.find(w => w.key === dateWindow)!.days
   const wCampaigns = campaignsInWindow(windowDays)
 
-  const wPlayers       = wCampaigns.reduce((s, c) => s + c.currentUsers, 0)
-  const wCap           = wCampaigns.reduce((s, c) => s + c.userCap, 0)
-  const wEngagePct     = wCap > 0 ? Math.round((wPlayers / wCap) * 100) : 0
-
-  const wParticipations = wCampaigns.reduce((s, c) => s + c.participations, 0)
-  const wRewards        = wCampaigns.reduce((s, c) => s + c.rewardsClaimed, 0)
-  const wWinPct         = wParticipations > 0 ? Math.round((wRewards / wParticipations) * 100) : 0
-
-  const wRedeemed      = wCampaigns.reduce((s, c) => s + c.redeemedCount, 0)
-  const wRedemptionPct = wRewards > 0 ? Math.round((wRedeemed / wRewards) * 100) : 0
+  const wPlayers  = wCampaigns.reduce((s, c) => s + c.currentUsers, 0)
+  const wRewards  = wCampaigns.reduce((s, c) => s + c.rewardsClaimed, 0)
+  const wRedeemed = wCampaigns.reduce((s, c) => s + c.redeemedCount, 0)
 
   const filtered = campaigns
     .filter(c => (filter === 'all' || c.status === filter) && c.name.toLowerCase().includes(search.toLowerCase()))
@@ -332,69 +352,6 @@ export default function CampaignsPage() {
           </div>
           <div className="text-4xl font-black text-amber-600 leading-none mb-2">{wRedeemed.toLocaleString()}</div>
           <p className="text-xs text-v-text-3">claimed at the counter</p>
-        </Card>
-
-      </motion.div>
-
-      {/* ── Metric cards ── */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-
-        {/* Engagement Rate */}
-        <Card className="p-5 border border-purple-100 bg-gradient-to-br from-white to-purple-50">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-v-purple" />
-            </div>
-            <span className="text-xs font-semibold text-v-text-2">Engagement Rate</span>
-          </div>
-          <div className="text-4xl font-black text-v-purple leading-none mb-2">{wEngagePct}%</div>
-          <p className="text-xs text-v-text-3 mb-3">
-            <span className="text-v-text font-semibold">{wPlayers.toLocaleString()}</span> players
-            {' · '}
-            <span className="text-v-text font-semibold">{wCap.toLocaleString()}</span> cap
-          </p>
-          <div className="h-1.5 bg-purple-100 rounded-full overflow-hidden">
-            <div className="h-full bg-v-purple rounded-full transition-all duration-500" style={{ width: `${wEngagePct}%` }} />
-          </div>
-        </Card>
-
-        {/* Win Rate */}
-        <Card className="p-5 border border-green-100 bg-gradient-to-br from-white to-green-50">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-            </div>
-            <span className="text-xs font-semibold text-v-text-2">Win Rate</span>
-          </div>
-          <div className="text-4xl font-black text-green-600 leading-none mb-2">{wWinPct}%</div>
-          <p className="text-xs text-v-text-3 mb-3">
-            <span className="text-v-text font-semibold">{wRewards.toLocaleString()}</span> rewards given
-            {' · '}
-            <span className="text-v-text font-semibold">{wParticipations.toLocaleString()}</span> plays
-          </p>
-          <div className="h-1.5 bg-green-100 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${wWinPct}%` }} />
-          </div>
-        </Card>
-
-        {/* Redemption Rate */}
-        <Card className="p-5 border border-amber-100 bg-gradient-to-br from-white to-amber-50">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-              <Trophy className="w-4 h-4 text-amber-600" />
-            </div>
-            <span className="text-xs font-semibold text-v-text-2">Redemption Rate</span>
-          </div>
-          <div className="text-4xl font-black text-amber-600 leading-none mb-2">{wRedemptionPct}%</div>
-          <p className="text-xs text-v-text-3 mb-3">
-            <span className="text-v-text font-semibold">{wRedeemed.toLocaleString()}</span> redeemed
-            {' · '}
-            <span className="text-v-text font-semibold">{wRewards.toLocaleString()}</span> rewards given
-          </p>
-          <div className="h-1.5 bg-amber-100 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${wRedemptionPct}%` }} />
-          </div>
         </Card>
 
       </motion.div>
