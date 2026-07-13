@@ -709,7 +709,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </MechanicCard>
             )}
 
-            {/* Check-in — streak + points, duration/players + inline keypad */}
+            {/* Check-in — points per visit + total points, duration/players + inline keypad */}
             {mechanic.type === 'checkin' && (
               <MechanicCard
                 cardFrom={meta.cardFrom}
@@ -728,11 +728,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               >
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                    <p className="text-2xl mb-0.5">🔥</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Streak</p>
+                    <p className="text-2xl mb-0.5">🎯</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Points per Check-in</p>
                     <p className="text-2xl font-black text-gray-900">
-                      {mechanic.checkInStreak ?? 0}
-                      <span className="text-xs font-semibold text-gray-400 ml-1">days</span>
+                      +100
+                      <span className="text-xs font-semibold text-gray-400 ml-1">pts</span>
                     </p>
                   </div>
                   <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>

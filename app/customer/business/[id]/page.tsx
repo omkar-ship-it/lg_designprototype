@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Flame, Ticket, Smartphone, Target, ChartPie, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Ticket, Smartphone, Target, ChartPie, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -737,16 +737,13 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       )}
 
-                      {/* Check-in: streak + points */}
-                      {m.type === 'checkin' && (m.checkInStreak || m.totalPoints) && (
+                      {/* Check-in: points per visit + total points */}
+                      {m.type === 'checkin' && (
                         <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
                           <div className="flex items-center gap-3">
-                            {m.checkInStreak && (
-                              <div className="flex items-center gap-1 text-[11px] font-bold text-orange-500">
-                                <Flame className="w-3 h-3" />
-                                <span>{m.checkInStreak} day streak</span>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-1 text-[11px] font-bold" style={{ color: meta.cardFrom }}>
+                              <span>🎯 +100 pts / check-in</span>
+                            </div>
                             {m.totalPoints !== undefined && (
                               <div className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: meta.cardFrom }}>
                                 <span>⭐ {m.totalPoints} pts total</span>
