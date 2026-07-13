@@ -251,16 +251,18 @@ export function FlashClockArt({ className = '' }: { className?: string }) {
 export function LotteryDrawArt({ className = '' }: { className?: string }) {
   const rawId = useId()
   const gid = `ld-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
-  const cx = 68, cy = 56, r = 42
+  const cx = 64, cy = 56, r = 44
   const balls = [
-    { angle: 200, dist: 16, n: 7, isWhite: true,  r: 12 },
-    { angle: 40,  dist: 18, n: 3, isWhite: false, r: 13 },
-    { angle: 320, dist: 14, n: 5, isWhite: true,  r: 11 },
-    { angle: 120, dist: 10, n: 1, isWhite: false, r: 10 },
-  ].map(b => ({ ...b, ...polarToCartesian(cx, cy, b.dist, b.angle) }))
+    { angle: 205, dist: 15, n: 8, color: '#8B7CF6' },
+    { angle: 55,  dist: 17, n: 1, color: '#FBBF24' },
+    { angle: 330, dist: 13, n: 3, color: '#60A5FA' },
+    { angle: 140, dist: 12, n: 5, color: '#F472B6' },
+    { angle: 265, dist: 10, n: 7, color: '#4ADE80' },
+    { angle: 15,  dist: 7,  n: 2, color: '#A78BFA' },
+  ].map((b, i) => ({ ...b, r: 13.5 - i * 0.7, ...polarToCartesian(cx, cy, b.dist, b.angle) }))
 
   return (
-    <svg viewBox="0 0 150 130" className={className} aria-hidden="true">
+    <svg viewBox="0 0 150 140" className={className} aria-hidden="true">
       <defs>
         <clipPath id={`${gid}-clip`}>
           <circle cx={cx} cy={cy} r={r - 3} />
@@ -275,41 +277,46 @@ export function LotteryDrawArt({ className = '' }: { className?: string }) {
       </defs>
 
       {/* stand */}
-      <rect x="44" y="108" width="48" height="13" rx="3.5" fill={`url(#${gid}-stand)`} />
-      <rect x="62" y="90" width="12" height="22" fill="#7C6EF0" />
+      <rect x="30" y="118" width="56" height="13" rx="4" fill={`url(#${gid}-stand)`} />
+      <rect x="50" y="98" width="16" height="22" fill="#7C6EF0" />
 
-      {/* axle */}
-      <line x1={cx - r - 11} y1={cy} x2={cx + r + 11} y2={cy} stroke="#D9CFFF" strokeWidth="4" strokeLinecap="round" />
-      <circle cx={cx - r - 11} cy={cy} r="4.5" fill="#FBBF24" />
-      <circle cx={cx + r + 11} cy={cy} r="4.5" fill="#FBBF24" />
+      {/* single hand-crank, right side */}
+      <line x1={cx + r + 1} y1={cy} x2={cx + r + 20} y2={cy} stroke="#B9AEFA" strokeWidth="4" strokeLinecap="round" />
+      <circle cx={cx + r + 1} cy={cy} r="4" fill="#FBBF24" />
+      <line x1={cx + r + 20} y1={cy} x2={cx + r + 20} y2={cy + 13} stroke="#B9AEFA" strokeWidth="4" strokeLinecap="round" />
+      <circle cx={cx + r + 20} cy={cy + 15} r="5" fill="#7C6EF0" />
 
       <g filter={`url(#${gid}-shadow)`}>
-        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.6" stroke="#7C6EF0" strokeWidth="3.5" />
-        {/* cage lattice */}
-        {Array.from({ length: 6 }, (_, i) => {
-          const p1 = polarToCartesian(cx, cy, r, i * 30)
-          const p2 = polarToCartesian(cx, cy, r, i * 30 + 180)
-          return <line key={i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#C4B5FD" strokeWidth="1" opacity="0.4" />
-        })}
+        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.7" stroke="#7C6EF0" strokeWidth="4" />
         <g clipPath={`url(#${gid}-clip)`}>
           {balls.map((b, i) => (
             <g key={i}>
-              <circle cx={b.x} cy={b.y} r={b.r} fill={b.isWhite ? '#FFFFFF' : '#8B7CF6'} stroke={b.isWhite ? '#C4B5FD' : 'none'} strokeWidth="1.5" />
-              <text x={b.x} y={b.y + 3.5} fontSize="12" fontWeight="800" textAnchor="middle" fill={b.isWhite ? '#5B4FC7' : '#FFFFFF'}>{b.n}</text>
+              <circle cx={b.x} cy={b.y} r={b.r} fill={b.color} />
+              <ellipse cx={b.x - b.r * 0.32} cy={b.y - b.r * 0.38} rx={b.r * 0.32} ry={b.r * 0.2} fill="#FFFFFF" opacity="0.5" />
+              <circle cx={b.x} cy={b.y + b.r * 0.12} r={b.r * 0.55} fill="#FFFFFF" />
+              <text x={b.x} y={b.y + b.r * 0.12 + 3.5} fontSize={b.r} fontWeight="800" textAnchor="middle" fill="#312E81">{b.n}</text>
             </g>
           ))}
         </g>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="2.5" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="3" />
+        {/* glass sheen */}
+        <path d={`M ${cx - r * 0.5},${cy - r * 0.72} A ${r} ${r} 0 0 1 ${cx + r * 0.28},${cy - r * 0.86}`}
+          stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" opacity="0.4" fill="none" />
       </g>
 
-      {/* jackpot star burst */}
-      <g filter={`url(#${gid}-shadow)`}>
-        <path d={burstPath(122, 26, 15, 8, 8)} fill="#FBBF24" />
+      {/* prize ticket tag */}
+      <g transform="rotate(-8 116 108)">
+        <rect x="94" y="96" width="44" height="24" rx="3" fill="#FDF2E9" stroke="#7C6EF0" strokeWidth="1.5" />
+        <text x="116" y="112" fontSize="7" fontWeight="800" textAnchor="middle" fill="#4C3FA8">PRIZES</text>
       </g>
 
-      {/* sparkle accents */}
-      <text x="10" y="30" fontSize="16" fill="#C4B5FD">✦</text>
-      <text x="16" y="98" fontSize="10" fill="#FBBF24">✦</text>
+      {/* confetti + sparkles */}
+      <rect x="6" y="18" width="6" height="15" rx="2" fill="#7C6EF0" transform="rotate(20 9 25)" />
+      <rect x="122" y="16" width="5" height="13" rx="2" fill="#F472B6" transform="rotate(-15 124 22)" />
+      <rect x="118" y="60" width="5" height="11" rx="2" fill="#4ADE80" transform="rotate(12 120 65)" />
+      <text x="18" y="62" fontSize="14" fill="#C4B5FD">✦</text>
+      <text x="132" y="46" fontSize="10" fill="#FBBF24">✦</text>
+      <text x="14" y="96" fontSize="9" fill="#A78BFA">✦</text>
     </svg>
   )
 }

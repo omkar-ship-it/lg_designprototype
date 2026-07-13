@@ -70,10 +70,10 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   lottery: {
     headline: 'Your Chance to', headlineAccent: 'Win Big!', accentColor: '#7C6EF0',
-    tagline: 'Earn a ticket every visit — big prizes await.',
+    tagline: 'Earn a ticket every visit and stand a chance to win exciting prizes.',
     bgFrom: '#F5F3FF', bgTo: '#EDE9FE', textColor: '#2E1065', layout: 'side', art: LotteryDrawArt,
     features: [
-      { icon: Ticket, label: 'Earn Entries' },
+      { icon: Ticket, label: 'Earn Tickets' },
       { icon: CalendarDays, label: 'Weekly Draw' },
       { icon: Trophy, label: 'Exciting Prizes' },
     ],
