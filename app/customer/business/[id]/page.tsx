@@ -488,16 +488,22 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
                             <span
                               className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/70"
-                              style={{ color: hero.textColor }}
+                              style={{ color: hero.badgeTextColor ?? hero.textColor }}
                             >
                               {meta.label}
                             </span>
-                            <span
-                              className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                              style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
-                            >
-                              {STATUS_STYLES[m.status]?.label}
-                            </span>
+                            {hero.badgeRight ? (
+                              <span className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/25 backdrop-blur-md text-white text-right max-w-[110px] leading-tight">
+                                {hero.badgeRight}
+                              </span>
+                            ) : (
+                              <span
+                                className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                                style={{ background: STATUS_STYLES[m.status]?.bg, color: STATUS_STYLES[m.status]?.text }}
+                              >
+                                {STATUS_STYLES[m.status]?.label}
+                              </span>
+                            )}
 
                             <div className={`flex items-center justify-between w-full pl-4 pr-6 pt-4 ${hero.features ? '' : 'h-full'}`}>
                               <div className="max-w-[52%]">
@@ -655,7 +661,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                             </span>
                           )}
                           {m.type === 'checkin' && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                               +100 pts
                             </span>
                           )}
@@ -747,7 +753,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                             </div>
                           )}
                           {m.totalPoints !== undefined && (
-                            <div className="flex items-center gap-1 text-[11px] font-semibold text-purple-600">
+                            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                               <span>⭐ {m.totalPoints} pts total</span>
                             </div>
                           )}

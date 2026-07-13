@@ -7,6 +7,7 @@ import {
 import {
   SpinWheelArt, RollDiceArt, CouponTicketArt, BundleGiftArt, FlashClockArt,
   LotteryDrawArt, SpendGetArt, FriendHeartArt, GroupUnlockArt,
+  CheckInCalendarArt, StampCupArt, ShakePhoneArt,
 } from '@/components/customer/mechanic-cover-art'
 import type { MechanicType } from '@/lib/types'
 
@@ -20,6 +21,10 @@ export interface HeroCover {
   textColor: string
   layout: 'side' | 'center'
   badgeBg?: string
+  /** Overrides textColor just for the top-left label pill — needed when textColor is white (vivid cover) but the pill keeps its light bg/dark-text treatment. */
+  badgeTextColor?: string
+  /** When set, replaces the top-right status pill with this reward/marketing teaser (dark pill, white text). */
+  badgeRight?: string
   art?: ComponentType<{ className?: string }>
   features?: { icon: LucideIcon; label: string }[]
 }
@@ -96,5 +101,23 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
       { icon: Gift, label: 'Exclusive Rewards' },
       { icon: TicketPercent, label: 'Special Offers' },
     ],
+  },
+  checkin: {
+    headline: 'Check In &', headlineAccent: 'WIN', accentColor: '#BBF7D0',
+    tagline: 'Show up daily. Stack your points.',
+    bgFrom: '#34D399', bgTo: '#047857', textColor: '#FFFFFF', badgeTextColor: '#065F46',
+    layout: 'side', art: CheckInCalendarArt, badgeRight: '50 pts',
+  },
+  stamp: {
+    headline: 'Collect & Win',
+    tagline: 'Every visit gets you closer to a surprise reward.',
+    bgFrom: '#FCD34D', bgTo: '#B45309', textColor: '#451A03', badgeTextColor: '#92400E',
+    layout: 'side', art: StampCupArt, badgeRight: 'Surprise + big rewards',
+  },
+  shake: {
+    headline: 'Shake & Win',
+    tagline: 'Shake your phone to reveal your reward',
+    bgFrom: '#A78BFA', bgTo: '#5B21B6', textColor: '#FFFFFF', badgeTextColor: '#5B21B6',
+    layout: 'side', art: ShakePhoneArt, badgeRight: '25 prizes for 25 players',
   },
 }

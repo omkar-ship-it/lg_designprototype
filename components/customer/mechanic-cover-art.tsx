@@ -371,6 +371,127 @@ export function FriendHeartArt({ className = '' }: { className?: string }) {
   )
 }
 
+export function CheckInCalendarArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `ci-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+  const cells: (true | 'warn' | false)[] = [true, true, true, true, true, 'warn', false, false]
+
+  return (
+    <svg viewBox="0 0 130 120" className={className} aria-hidden="true">
+      <defs>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#065F46" floodOpacity="0.35" />
+        </filter>
+      </defs>
+
+      <g filter={`url(#${gid}-shadow)`}>
+        <rect x="8" y="10" width="114" height="100" rx="18" fill="#FFFFFF" opacity="0.16" />
+        <rect x="8" y="10" width="114" height="100" rx="18" fill="none" stroke="#FFFFFF" strokeOpacity="0.35" strokeWidth="1.5" />
+
+        {cells.map((c, i) => {
+          const col = i % 4
+          const row = Math.floor(i / 4)
+          const x = 22 + col * 24
+          const y = 30 + row * 40
+          const isWarn = c === 'warn'
+          const isDone = c === true
+          return (
+            <g key={i}>
+              <rect
+                x={x} y={y} width="18" height="18" rx="6"
+                fill={isWarn ? '#FBBF24' : '#FFFFFF'}
+                opacity={isDone ? 1 : isWarn ? 1 : 0.25}
+              />
+              {isDone && (
+                <path
+                  d={`M ${x + 4},${y + 9.5} L ${x + 7.5},${y + 13} L ${x + 14},${y + 5.5}`}
+                  stroke="#059669" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"
+                />
+              )}
+              {isWarn && (
+                <text x={x + 9} y={y + 13.5} fontSize="12" fontWeight="800" textAnchor="middle" fill="#78350F">!</text>
+              )}
+            </g>
+          )
+        })}
+      </g>
+    </svg>
+  )
+}
+
+export function StampCupArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `sc-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+  const cells: (true | number)[] = [true, true, true, true, true, 6, 7, 8]
+
+  return (
+    <svg viewBox="0 0 130 120" className={className} aria-hidden="true">
+      <defs>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#78350F" floodOpacity="0.35" />
+        </filter>
+      </defs>
+
+      <g filter={`url(#${gid}-shadow)`}>
+        {cells.map((c, i) => {
+          const col = i % 4
+          const row = Math.floor(i / 4)
+          const cx = 26 + col * 26
+          const cy = 30 + row * 42
+          const isFilled = c === true
+          return (
+            <g key={i}>
+              <circle cx={cx} cy={cy} r="13" fill={isFilled ? '#B45309' : '#FDE9C4'} opacity={isFilled ? 1 : 0.75} />
+              {isFilled ? (
+                <text x={cx} y={cy + 5} fontSize="13" textAnchor="middle">☕</text>
+              ) : (
+                <text x={cx} y={cy + 4.5} fontSize="11" fontWeight="800" textAnchor="middle" fill="#B45309" opacity="0.55">{c}</text>
+              )}
+            </g>
+          )
+        })}
+      </g>
+    </svg>
+  )
+}
+
+export function ShakePhoneArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `sh-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+
+  return (
+    <svg viewBox="0 0 120 140" className={className} aria-hidden="true">
+      <defs>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#3B0764" floodOpacity="0.35" />
+        </filter>
+        <linearGradient id={`${gid}-screen`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#EDE4FF" />
+          <stop offset="100%" stopColor="#C4B5FD" />
+        </linearGradient>
+      </defs>
+
+      {/* motion rings */}
+      <ellipse cx="60" cy="72" rx="52" ry="58" fill="none" stroke="#FFFFFF" strokeOpacity="0.3" strokeWidth="2" strokeDasharray="4 7" />
+      <ellipse cx="60" cy="72" rx="40" ry="46" fill="none" stroke="#FFFFFF" strokeOpacity="0.22" strokeWidth="2" strokeDasharray="3 6" />
+
+      <g filter={`url(#${gid}-shadow)`} transform="rotate(-6 60 72)">
+        <rect x="26" y="20" width="68" height="104" rx="16" fill="#FFFFFF" />
+        <rect x="32" y="30" width="56" height="76" rx="6" fill={`url(#${gid}-screen)`} />
+        <rect x="52" y="22" width="16" height="3" rx="1.5" fill="#E5E7EB" />
+        <text x="60" y="72" fontSize="26" textAnchor="middle">☕</text>
+        <path d="M40,90 L48,90" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+        <path d="M46,96 L58,96" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+        <path d="M40,102 L52,102" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+      </g>
+
+      {/* shake burst accents */}
+      <path d="M14,50 L18,58 L12,58 L16,66" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+      <path d="M104,86 L100,94 L106,94 L102,102" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+    </svg>
+  )
+}
+
 export function GroupUnlockArt({ className = '' }: { className?: string }) {
   const badgeCx = 90, badgeCy = 40, badgeR = 26
 

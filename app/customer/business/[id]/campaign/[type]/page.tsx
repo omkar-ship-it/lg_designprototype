@@ -373,16 +373,22 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           <div className="absolute top-12 right-4 z-10 flex flex-col items-end gap-1.5">
             <span
               className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/70"
-              style={{ color: hero.textColor }}
+              style={{ color: hero.badgeTextColor ?? hero.textColor }}
             >
               {meta.label}
             </span>
-            <span
-              className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-              style={{ background: STATUS_STYLES[mechanic.status]?.bg, color: STATUS_STYLES[mechanic.status]?.text }}
-            >
-              {STATUS_STYLES[mechanic.status]?.label}
-            </span>
+            {hero.badgeRight ? (
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/25 backdrop-blur-md text-white text-right max-w-[130px] leading-tight">
+                {hero.badgeRight}
+              </span>
+            ) : (
+              <span
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                style={{ background: STATUS_STYLES[mechanic.status]?.bg, color: STATUS_STYLES[mechanic.status]?.text }}
+              >
+                {STATUS_STYLES[mechanic.status]?.label}
+              </span>
+            )}
           </div>
 
           {hero.layout === 'side' ? (
@@ -519,7 +525,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <h1 className="text-xl font-extrabold text-gray-900">{mechanic.label}</h1>
           {mechanic.type === 'checkin' && (
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 shrink-0 mt-0.5">
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
               +100 pts / visit
             </span>
           )}

@@ -100,10 +100,10 @@ export function capPercent(current: number, cap: number): number {
 export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: string; badgeText: string; cardFrom: string; cardTo: string; emoji: string }> = {
   stamp:   { label: 'STAMP',        badgeBg: '#FEF3C7', badgeText: '#92400E', cardFrom: '#F59E0B', cardTo: '#D97706', emoji: '🎯' },
   spin:    { label: 'SPIN A WHEEL', badgeBg: '#EDE9FE', badgeText: '#5B21B6', cardFrom: '#7C3AED', cardTo: '#4C1D95', emoji: '🎰' },
-  shake:   { label: 'SHAKE & WIN',  badgeBg: '#CFFAFE', badgeText: '#164E63', cardFrom: '#06B6D4', cardTo: '#0E7490', emoji: '🤳' },
+  shake:   { label: 'SHAKE & WIN',  badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '🤳' },
   dice:    { label: 'ROLL A DICE',  badgeBg: '#FCE7F3', badgeText: '#9D174D', cardFrom: '#BE185D', cardTo: '#831843', emoji: '🎲' },
   lottery: { label: 'LOTTERY',      badgeBg: '#EDE9FE', badgeText: '#4C3FA8', cardFrom: '#7C6EF0', cardTo: '#4C3FA8', emoji: '🎟️' },
-  checkin: { label: 'CHECK-IN',     badgeBg: '#F3E8FF', badgeText: '#6B21A8', cardFrom: '#8B5CF6', cardTo: '#7C3AED', emoji: '📍' },
+  checkin: { label: 'CHECK-IN',     badgeBg: '#D1FAE5', badgeText: '#065F46', cardFrom: '#10B981', cardTo: '#047857', emoji: '📍' },
   buyxgety: { label: 'BUY X GET Y', badgeBg: '#DCFCE7', badgeText: '#166534', cardFrom: '#16A34A', cardTo: '#15803D', emoji: '💰' },
   coupon:  { label: 'COUPON CODES', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#EA580C', cardTo: '#9A3412', emoji: '🎫' },
   flash:   { label: 'FLASH DEAL',   badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#2563EB', cardTo: '#1E3A8A', emoji: '⚡' },
