@@ -835,19 +835,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           claimBefore={m.endDate}
                           redeemBefore={m.comboRedeemBefore}
                           extra={
-                            m.comboVariant === 'freeitem' ? (
-                              <div className="flex items-center flex-wrap gap-1.5 mb-2">
-                                {(m.comboPaidItems ?? []).map((it, idx) => (
-                                  <span key={idx} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-gray-600">{it}</span>
-                                ))}
-                                <span className="text-xs text-gray-400 font-bold">+</span>
-                                {(m.comboFreeItems ?? []).map((it, idx) => (
-                                  <span key={idx} className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                                    {it} FREE
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
+                            m.comboVariant === 'freeitem' ? undefined : (
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-baseline gap-1.5">
                                   {m.comboOriginalPrice !== undefined && (

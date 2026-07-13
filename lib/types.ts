@@ -362,8 +362,6 @@ export interface CustomerBusiness {
     comboItems?: string[]
     comboOriginalPrice?: number
     comboBundlePrice?: number
-    comboPaidItems?: string[]
-    comboFreeItems?: string[]
     comboTotalSpots?: number
     comboClaimed?: number
     comboRedeemBefore?: string

@@ -991,48 +991,31 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 onSubmit={joinCampaign}
                 disabled={!codeComplete}
               >
-                <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
-                  {mechanic.comboVariant === 'freeitem' ? (
-                    <>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">The Deal</p>
-                      <div className="flex items-center flex-wrap gap-2">
-                        {(mechanic.comboPaidItems ?? []).map((it, idx) => (
-                          <span key={idx} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 shadow-sm">{it}</span>
-                        ))}
-                        <span className="text-sm text-gray-400 font-bold">+</span>
-                        {(mechanic.comboFreeItems ?? []).map((it, idx) => (
-                          <span key={idx} className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}>
-                            {it} FREE
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">What&apos;s Included</p>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {(mechanic.comboItems ?? []).map((it, idx) => (
-                          <span key={idx} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 shadow-sm">{it}</span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-baseline gap-2">
-                          {mechanic.comboOriginalPrice !== undefined && (
-                            <span className="text-sm text-gray-400 line-through">₹{mechanic.comboOriginalPrice}</span>
-                          )}
-                          {mechanic.comboBundlePrice !== undefined && (
-                            <span className="text-xl font-black" style={{ color: meta.cardFrom }}>₹{mechanic.comboBundlePrice}</span>
-                          )}
-                        </div>
-                        {mechanic.comboOriginalPrice !== undefined && mechanic.comboBundlePrice !== undefined && mechanic.comboOriginalPrice > mechanic.comboBundlePrice && (
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-white" style={{ color: meta.cardFrom }}>
-                            Save ₹{mechanic.comboOriginalPrice - mechanic.comboBundlePrice} ({Math.round(((mechanic.comboOriginalPrice - mechanic.comboBundlePrice) / mechanic.comboOriginalPrice) * 100)}%)
-                          </span>
+                {mechanic.comboVariant !== 'freeitem' && (
+                  <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">What&apos;s Included</p>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {(mechanic.comboItems ?? []).map((it, idx) => (
+                        <span key={idx} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 shadow-sm">{it}</span>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-2">
+                        {mechanic.comboOriginalPrice !== undefined && (
+                          <span className="text-sm text-gray-400 line-through">₹{mechanic.comboOriginalPrice}</span>
+                        )}
+                        {mechanic.comboBundlePrice !== undefined && (
+                          <span className="text-xl font-black" style={{ color: meta.cardFrom }}>₹{mechanic.comboBundlePrice}</span>
                         )}
                       </div>
-                    </>
-                  )}
-                </div>
+                      {mechanic.comboOriginalPrice !== undefined && mechanic.comboBundlePrice !== undefined && mechanic.comboOriginalPrice > mechanic.comboBundlePrice && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-white" style={{ color: meta.cardFrom }}>
+                          Save ₹{mechanic.comboOriginalPrice - mechanic.comboBundlePrice} ({Math.round(((mechanic.comboOriginalPrice - mechanic.comboBundlePrice) / mechanic.comboOriginalPrice) * 100)}%)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-5">
                   <ClaimRedeemGrid
