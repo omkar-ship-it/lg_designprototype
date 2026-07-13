@@ -2,7 +2,7 @@
 import { use, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Ticket, Smartphone, Target, ChartPie, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package } from 'lucide-react'
+import { ArrowLeft, MapPin, Star, Phone, ExternalLink, CalendarDays, Gift, Ticket, Smartphone, Target, ChartPie, Dices, Zap, Lock, ChevronRight, ArrowRightLeft, TicketPercent, UserPlus, Handshake, Package, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -796,6 +796,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           progress={m.flashTotalSlots !== undefined && m.flashClaimed !== undefined ? { current: m.flashClaimed, total: m.flashTotalSlots, label: 'claimed' } : undefined}
                           claimBefore={m.endDate}
                           redeemBefore={m.flashRedeemBefore}
+                          extra={m.flashTimeWindow ? (
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-2" style={{ color: meta.cardFrom }}>
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span>{m.flashTimeWindow}</span>
+                            </div>
+                          ) : undefined}
                         />
                       )}
 

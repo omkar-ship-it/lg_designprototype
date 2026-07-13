@@ -344,6 +344,8 @@ export interface CustomerBusiness {
     flashClaimed?: number
     flashRedeemBefore?: string
     flashTerms?: string
+    /** Daily active window, e.g. "3:00 PM – 5:00 PM" — omit for deals that run all day */
+    flashTimeWindow?: string
     // friend (bring a friend)
     friendReward?: string
     friendMinFriends?: number
