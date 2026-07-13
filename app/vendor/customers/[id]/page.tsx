@@ -209,8 +209,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     r.status === 'redeemed' && r.redeemedAt && daysSince(r.redeemedAt) <= periodDays
   ).length
   const visitsInPeriod = period === 'all' ? customer.totalVisits : Math.round(customer.totalVisits * PERIOD_SCALE[period])
-  // Mirrors the customer-facing app's check-in convention of 100 pts per visit — no separate points ledger on the vendor side yet.
-  const pointsInPeriod = visitsInPeriod * 100
+  // Points stay a lifetime total regardless of the period filter — unlike visits, a points
+  // balance isn't something that resets or is meaningfully "scoped" to a date window.
+  const points = customer.totalVisits * 100
 
   const filteredHistory = visitHistory.filter(e => {
     if (visitFilter === 'all') return true
@@ -327,8 +328,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           },
           {
             label: 'Points',
-            value: pointsInPeriod.toLocaleString(),
-            sub: `100 pts / visit`,
+            value: points.toLocaleString(),
+            sub: `100 pts / visit · lifetime`,
             icon: '⭐', color: '#2563EB',
           },
         ].map((s, i) => (
