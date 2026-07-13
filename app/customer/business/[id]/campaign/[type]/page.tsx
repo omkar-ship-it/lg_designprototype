@@ -991,7 +991,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 onSubmit={joinCampaign}
                 disabled={!codeComplete}
               >
-                {mechanic.comboVariant !== 'freeitem' && (
+                {mechanic.comboVariant === 'freeitem' ? (
+                  <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">The Deal</p>
+                    <p className="text-sm font-bold text-gray-900">{mechanic.label}</p>
+                  </div>
+                ) : (
                   <div className="rounded-2xl p-4 mb-3" style={{ background: `${meta.cardFrom}12` }}>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">What&apos;s Included</p>
                     <div className="flex flex-wrap gap-2 mb-3">

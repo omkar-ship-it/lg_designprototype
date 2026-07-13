@@ -835,7 +835,9 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           claimBefore={m.endDate}
                           redeemBefore={m.comboRedeemBefore}
                           extra={
-                            m.comboVariant === 'freeitem' ? undefined : (
+                            m.comboVariant === 'freeitem' ? (
+                              <p className="text-sm font-bold mb-2" style={{ color: meta.cardFrom }}>{m.label}</p>
+                            ) : (
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-baseline gap-1.5">
                                   {m.comboOriginalPrice !== undefined && (
