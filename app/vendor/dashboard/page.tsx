@@ -3,15 +3,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Plus, ArrowRight, TrendingUp, TrendingDown, Minus,
+  Plus, TrendingUp, TrendingDown, Minus,
   Users, UserCheck, RotateCcw, ShieldCheck, Zap,
 } from 'lucide-react'
-import { Card, ProgressBar } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MechanicBadge } from '@/components/ui/badge'
 import { campaigns, customers } from '@/lib/mock-data'
-import { getMechanicEmoji, capPercent } from '@/lib/utils'
-import { LivePIN } from '@/components/vendor/live-pin'
 import { RedemptionQueue } from '@/components/vendor/redemption-queue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -238,48 +235,6 @@ export default function DashboardPage() {
                     <TrendOrLifetime period={period} now={m.value} prev={m.prev} unit="" />
                   </div>
                 </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Active Campaigns */}
-          <motion.div variants={fadeUp(6)} initial="hidden" animate="show">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-v-text">Active Campaigns</h2>
-              <Link href="/vendor/campaigns" className="text-xs text-v-purple hover:underline flex items-center gap-1">
-                View all <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="space-y-2.5">
-              {activeCamps.map((c, i) => (
-                <Link href={`/vendor/campaigns/${c.id}`} key={c.id}>
-                  <motion.div variants={fadeUp(7 + i)} initial="hidden" animate="show"
-                    className="vendor-card vendor-card-hover p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-v-surface-3 flex items-center justify-center text-xl shrink-0">
-                        {getMechanicEmoji(c.mechanic)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-bold text-v-text truncate">{c.name}</span>
-                          <MechanicBadge mechanic={c.mechanic} />
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs text-v-purple font-bold">{scaled(c.currentUsers).toLocaleString()} players</span>
-                          <span className="text-xs text-emerald-600 font-bold">{scaled(c.rewardsClaimed).toLocaleString()} wins</span>
-                          <span className="text-xs text-amber-600 font-bold">{scaled(c.redeemedCount).toLocaleString()} redeemed</span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <ProgressBar value={c.currentUsers} max={c.userCap} className="flex-1" />
-                          <span className="text-[10px] text-v-text-3 shrink-0">{capPercent(c.currentUsers, c.userCap)}% cap (all-time)</span>
-                        </div>
-                      </div>
-                      <div className="shrink-0">
-                        <LivePIN campaign={c} compact />
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
               ))}
             </div>
           </motion.div>

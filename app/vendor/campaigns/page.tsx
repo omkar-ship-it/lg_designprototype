@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MechanicBadge, StatusBadge } from '@/components/ui/badge'
+import { LivePIN } from '@/components/vendor/live-pin'
 import { campaigns } from '@/lib/mock-data'
 import { getMechanicEmoji, getMechanicColor, formatDate } from '@/lib/utils'
 
@@ -177,6 +178,13 @@ function ListCard({ c }: { c: typeof campaigns[0] }) {
                 </div>
               </div>
 
+              {/* Staff PIN */}
+              {c.status === 'active' && (
+                <div className="shrink-0">
+                  <LivePIN campaign={c} compact />
+                </div>
+              )}
+
               {/* Actions + cap progress */}
               <div className="flex flex-col items-end gap-3 shrink-0">
                 <div className="flex items-center gap-2">
@@ -260,6 +268,12 @@ function GridCard({ c }: { c: typeof campaigns[0] }) {
               <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4 mb-2">Total Rewards</p>
               <p className="text-sm font-semibold text-v-text">{c.rewardsClaimed.toLocaleString()}</p>
             </div>
+            {c.status === 'active' && (
+              <div className="col-span-2 rounded-2xl bg-v-surface-2 p-3 flex items-center justify-between">
+                <p className="uppercase tracking-[0.18em] text-[10px] text-v-text-4">Staff PIN</p>
+                <LivePIN campaign={c} compact />
+              </div>
+            )}
           </div>
         </div>
       </div>
