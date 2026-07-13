@@ -27,6 +27,8 @@ export interface HeroCover {
   badgeRight?: string
   art?: ComponentType<{ className?: string }>
   features?: { icon: LucideIcon; label: string }[]
+  /** Optional closing banner rendered below the features row (campaign detail hero only), e.g. "More tickets, more chances, more rewards!" */
+  footerBanner?: string
 }
 
 export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
@@ -77,6 +79,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
       { icon: CalendarDays, label: 'Weekly Draw' },
       { icon: Trophy, label: 'Exciting Prizes' },
     ],
+    footerBanner: 'More tickets, more chances, more rewards!',
   },
   buyxgety: {
     headline: 'Spend X, Get Y', tagline: 'Spend or buy a minimum amount and get exciting rewards!',

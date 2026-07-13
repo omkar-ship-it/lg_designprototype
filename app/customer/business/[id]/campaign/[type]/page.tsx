@@ -3,7 +3,7 @@ import { use, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Delete } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Delete, Gift, Sparkles } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -309,7 +309,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       {/* Cover */}
       {hero ? (
         <div
-          className={`relative overflow-hidden ${hero.features ? 'h-80' : 'h-64'}`}
+          className={`relative overflow-hidden ${hero.footerBanner ? 'h-96' : hero.features ? 'h-80' : 'h-64'}`}
           style={{ background: `linear-gradient(135deg, ${hero.bgFrom}, ${hero.bgTo})` }}
         >
           <span className="absolute top-24 right-16 w-2 h-2 rounded-full" style={{ background: hero.textColor, opacity: 0.25 }} />
@@ -373,18 +373,34 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 )}
               </div>
 
-              {hero.features && (
-                <div className="rounded-xl bg-white/40 backdrop-blur-sm px-3 py-2.5 flex items-center justify-center gap-2">
-                  {hero.features.map((f, fi) => (
-                    <div key={fi} className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ background: hero.accentColor ?? hero.textColor }}>
-                        <f.icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <span className="text-[10px] leading-tight font-medium" style={{ color: hero.textColor }}>
-                        {f.label}
-                      </span>
+              {(hero.features || hero.footerBanner) && (
+                <div className="flex flex-col gap-2">
+                  {hero.features && (
+                    <div className="rounded-xl bg-white/40 backdrop-blur-sm px-3 py-2.5 flex items-center justify-center gap-2">
+                      {hero.features.map((f, fi) => (
+                        <div key={fi} className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ background: hero.accentColor ?? hero.textColor }}>
+                            <f.icon className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <span className="text-[10px] leading-tight font-medium" style={{ color: hero.textColor }}>
+                            {f.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {hero.footerBanner && (
+                    <div className="rounded-xl bg-white/60 backdrop-blur-sm px-4 py-3 flex items-center justify-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ background: hero.accentColor ?? hero.textColor }}>
+                        <Gift className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-xs font-bold text-center" style={{ color: hero.accentColor ?? hero.textColor }}>
+                        {hero.footerBanner}
+                      </span>
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: hero.accentColor ?? hero.textColor }} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

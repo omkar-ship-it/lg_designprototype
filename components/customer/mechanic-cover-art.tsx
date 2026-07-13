@@ -251,72 +251,77 @@ export function FlashClockArt({ className = '' }: { className?: string }) {
 export function LotteryDrawArt({ className = '' }: { className?: string }) {
   const rawId = useId()
   const gid = `ld-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
-  const cx = 64, cy = 56, r = 44
-  const balls = [
-    { angle: 205, dist: 15, n: 8, color: '#8B7CF6' },
-    { angle: 55,  dist: 17, n: 1, color: '#FBBF24' },
-    { angle: 330, dist: 13, n: 3, color: '#60A5FA' },
-    { angle: 140, dist: 12, n: 5, color: '#F472B6' },
-    { angle: 265, dist: 10, n: 7, color: '#4ADE80' },
-    { angle: 15,  dist: 7,  n: 2, color: '#A78BFA' },
-  ].map((b, i) => ({ ...b, r: 13.5 - i * 0.7, ...polarToCartesian(cx, cy, b.dist, b.angle) }))
+  const boxCx = 65, boxTop = 78
+  const rays = Array.from({ length: 8 }, (_, i) => {
+    const inner = polarToCartesian(boxCx, boxTop - 4, 14, i * 45)
+    const outer = polarToCartesian(boxCx, boxTop - 4, 46, i * 45)
+    return { inner, outer }
+  })
 
   return (
-    <svg viewBox="0 0 150 140" className={className} aria-hidden="true">
+    <svg viewBox="0 0 150 150" className={className} aria-hidden="true">
       <defs>
-        <clipPath id={`${gid}-clip`}>
-          <circle cx={cx} cy={cy} r={r - 3} />
-        </clipPath>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#4C3FA8" floodOpacity="0.3" />
         </filter>
-        <linearGradient id={`${gid}-stand`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`${gid}-box`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#9B8FF5" />
-          <stop offset="100%" stopColor="#5B4FC7" />
+          <stop offset="100%" stopColor="#6D5DD3" />
         </linearGradient>
       </defs>
 
-      {/* stand */}
-      <rect x="30" y="118" width="56" height="13" rx="4" fill={`url(#${gid}-stand)`} />
-      <rect x="50" y="98" width="16" height="22" fill="#7C6EF0" />
-
-      {/* single hand-crank, right side */}
-      <line x1={cx + r + 1} y1={cy} x2={cx + r + 20} y2={cy} stroke="#B9AEFA" strokeWidth="4" strokeLinecap="round" />
-      <circle cx={cx + r + 1} cy={cy} r="4" fill="#FBBF24" />
-      <line x1={cx + r + 20} y1={cy} x2={cx + r + 20} y2={cy + 13} stroke="#B9AEFA" strokeWidth="4" strokeLinecap="round" />
-      <circle cx={cx + r + 20} cy={cy + 15} r="5" fill="#7C6EF0" />
-
-      <g filter={`url(#${gid}-shadow)`}>
-        <circle cx={cx} cy={cy} r={r} fill="#F5F3FF" opacity="0.7" stroke="#7C6EF0" strokeWidth="4" />
-        <g clipPath={`url(#${gid}-clip)`}>
-          {balls.map((b, i) => (
-            <g key={i}>
-              <circle cx={b.x} cy={b.y} r={b.r} fill={b.color} />
-              <ellipse cx={b.x - b.r * 0.32} cy={b.y - b.r * 0.38} rx={b.r * 0.32} ry={b.r * 0.2} fill="#FFFFFF" opacity="0.5" />
-              <circle cx={b.x} cy={b.y + b.r * 0.12} r={b.r * 0.55} fill="#FFFFFF" />
-              <text x={b.x} y={b.y + b.r * 0.12 + 3.5} fontSize={b.r} fontWeight="800" textAnchor="middle" fill="#312E81">{b.n}</text>
-            </g>
-          ))}
-        </g>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7C6EF0" strokeWidth="3" />
-        {/* glass sheen */}
-        <path d={`M ${cx - r * 0.5},${cy - r * 0.72} A ${r} ${r} 0 0 1 ${cx + r * 0.28},${cy - r * 0.86}`}
-          stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" opacity="0.4" fill="none" />
+      {/* light-ray burst from the box opening */}
+      <g opacity="0.35">
+        {rays.map((ray, i) => (
+          <line key={i} x1={ray.inner.x} y1={ray.inner.y} x2={ray.outer.x} y2={ray.outer.y}
+            stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+        ))}
       </g>
 
-      {/* prize ticket tag */}
-      <g transform="rotate(-8 116 108)">
-        <rect x="94" y="96" width="44" height="24" rx="3" fill="#FDF2E9" stroke="#7C6EF0" strokeWidth="1.5" />
-        <text x="116" y="112" fontSize="7" fontWeight="800" textAnchor="middle" fill="#4C3FA8">PRIZES</text>
+      {/* warm glow at the box opening */}
+      <circle cx={boxCx} cy={boxTop - 2} r="30" fill="#FDE68A" opacity="0.28" />
+      <circle cx={boxCx} cy={boxTop - 2} r="16" fill="#FEF3C7" opacity="0.45" />
+
+      {/* ticket rising out of the box */}
+      <g transform={`rotate(-8 ${boxCx + 6} 55)`}>
+        <rect x="45" y="18" width="46" height="64" rx="6" fill="#FCFBFF" stroke="#7C6EF0" strokeWidth="2" />
+        <text x="68" y="38" fontSize="10" fontWeight="800" textAnchor="middle" fill="#4C1D95">YOUR</text>
+        <text x="68" y="50" fontSize="10" fontWeight="800" textAnchor="middle" fill="#7C3AED">TICKET</text>
+        <line x1="51" y1="60" x2="85" y2="60" stroke="#C4B5FD" strokeWidth="1.5" strokeDasharray="3 3" />
+        <path d={burstPath(68, 71, 7, 3, 5)} fill="#7C6EF0" />
+      </g>
+
+      {/* main gift box */}
+      <g filter={`url(#${gid}-shadow)`}>
+        <rect x="35" y={boxTop} width="60" height="48" rx="5" fill={`url(#${gid}-box)`} />
+        <rect x="59" y={boxTop} width="12" height="48" fill="#FBBF24" />
+        <ellipse cx={boxCx} cy={boxTop} rx="30" ry="6" fill="#5B4FC7" />
+        <path d={burstPath(65, 106, 9, 4, 5)} fill="#FBBF24" />
+      </g>
+
+      {/* small ribboned gift box */}
+      <g filter={`url(#${gid}-shadow)`}>
+        <rect x="102" y="104" width="30" height="26" rx="3" fill="#7C6EF0" />
+        <rect x="102" y="104" width="30" height="7" fill="#6D28D9" />
+        <rect x="114" y="104" width="6" height="26" fill="#FBBF24" />
+        <path d="M108,104 C104,96 112,92 117,100 C122,92 130,96 126,104 Z" fill="#FBBF24" stroke="#B45309" strokeWidth="1" strokeLinejoin="round" />
+      </g>
+
+      {/* coin stack */}
+      <g filter={`url(#${gid}-shadow)`}>
+        <ellipse cx="24" cy="120" rx="13" ry="10" fill="#F59E0B" />
+        <ellipse cx="24" cy="114" rx="13" ry="10" fill="#FBBF24" />
+        <path d={burstPath(24, 114, 5.5, 2.5, 5)} fill="#B45309" />
       </g>
 
       {/* confetti + sparkles */}
-      <rect x="6" y="18" width="6" height="15" rx="2" fill="#7C6EF0" transform="rotate(20 9 25)" />
-      <rect x="122" y="16" width="5" height="13" rx="2" fill="#F472B6" transform="rotate(-15 124 22)" />
-      <rect x="118" y="60" width="5" height="11" rx="2" fill="#4ADE80" transform="rotate(12 120 65)" />
-      <text x="18" y="62" fontSize="14" fill="#C4B5FD">✦</text>
-      <text x="132" y="46" fontSize="10" fill="#FBBF24">✦</text>
-      <text x="14" y="96" fontSize="9" fill="#A78BFA">✦</text>
+      <rect x="10" y="24" width="6" height="15" rx="2" fill="#7C6EF0" transform="rotate(20 13 31)" />
+      <rect x="126" y="20" width="5" height="13" rx="2" fill="#F472B6" transform="rotate(-15 128 26)" />
+      <rect x="118" y="70" width="5" height="11" rx="2" fill="#4ADE80" transform="rotate(12 120 75)" />
+      <text x="16" y="60" fontSize="14" fill="#C4B5FD">✦</text>
+      <text x="132" y="52" fontSize="11" fill="#FBBF24">✦</text>
+      <text x="100" y="20" fontSize="9" fill="#A78BFA">✦</text>
+      <text x="30" y="16" fontSize="9" fill="#FBBF24">✦</text>
     </svg>
   )
 }
