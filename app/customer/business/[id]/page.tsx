@@ -288,7 +288,9 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   const joinCampaign = () => {
     if (!activeCampaign || digits.some(d => !d)) return
     closeCampaign()
-    const base = MECHANIC_GAME_LINKS[activeCampaign.type]
+    const base = activeCampaign.type === 'coupon' && activeCampaign.couponClaimExperience === 'rub'
+      ? '/customer/games/coupon-rub'
+      : MECHANIC_GAME_LINKS[activeCampaign.type]
     // Stamp: code is the participation code — auto-apply on landing
     router.push(activeCampaign.type === 'stamp' ? `${base}?stamp=1` : base)
   }
