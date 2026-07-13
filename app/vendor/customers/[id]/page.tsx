@@ -262,13 +262,19 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
       {/* ── Decision Stats ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         {[
+          {
+            label: 'No. of Visits',
+            value: customer.totalVisits,
+            sub: `${visitsPerMonth}× / month`,
+            icon: '📅', color: '#7C3AED',
+          },
           {
             label: 'Plays',
             value: customer.gamesPlayed,
             sub: `${customer.totalVisits} total visits`,
-            icon: '🎮', color: '#7C3AED',
+            icon: '🎮', color: '#DB2777',
           },
           {
             label: 'Wins',
