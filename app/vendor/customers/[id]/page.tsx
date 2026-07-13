@@ -112,16 +112,21 @@ function buildVisitHistory(customer: typeof customers[0]): VisitEvent[] {
 function buildCampaignActivity(customer: typeof customers[0]) {
   const seen = new Map<string, {
     id: string; name: string; mechanic: MechanicType
-    plays: number; wins: number; status: string
+    plays: number; wins: number; redeems: number; status: string
   }>()
   customer.gameHistory.forEach(g => {
     const camp = campaigns.find(c => c.id === g.campaignId)
     if (!camp) return
     if (!seen.has(g.campaignId))
-      seen.set(g.campaignId, { id: g.campaignId, name: g.campaignName, mechanic: g.mechanic, plays: 0, wins: 0, status: camp.status })
+      seen.set(g.campaignId, { id: g.campaignId, name: g.campaignName, mechanic: g.mechanic, plays: 0, wins: 0, redeems: 0, status: camp.status })
     const entry = seen.get(g.campaignId)!
     entry.plays++
     if (g.won) entry.wins++
+  })
+  customer.rewards.forEach(r => {
+    if (r.status !== 'redeemed') return
+    const entry = seen.get(r.campaignId)
+    if (entry) entry.redeems++
   })
   const all = Array.from(seen.values())
   return { active: all.filter(c => c.status === 'active'), previous: all.filter(c => c.status !== 'active') }
@@ -260,10 +265,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           {
-            label: 'Visits / Month',
-            value: `${visitsPerMonth}×`,
+            label: 'Plays',
+            value: customer.gamesPlayed,
             sub: `${customer.totalVisits} total visits`,
-            icon: '📅', color: '#7C3AED',
+            icon: '🎮', color: '#7C3AED',
+          },
+          {
+            label: 'Wins',
+            value: customer.rewardsEarned,
+            sub: `of ${customer.gamesPlayed} plays`,
+            icon: '🎯', color: '#D97706',
           },
           {
             label: 'Redeems',
@@ -272,17 +283,10 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             icon: '🎁', color: '#16A34A',
           },
           {
-            label: 'Pending Rewards',
-            value: redemption.pending.length,
-            sub: redemption.pending.length > 0 ? 'Needs redemption' : 'All redeemed',
-            icon: redemption.pending.length > 0 ? '🔔' : '✅',
-            color: redemption.pending.length > 0 ? '#C2410C' : '#16A34A',
-          },
-          {
             label: 'Points',
             value: points.toLocaleString(),
             sub: `100 pts / visit`,
-            icon: '⭐', color: '#D97706',
+            icon: '⭐', color: '#2563EB',
           },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}>
@@ -530,7 +534,6 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {campaignAct.active.map(c => {
                     const camp = campaigns.find(x => x.id === c.id)
-                    const wr = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
                     return (
                       <Card key={c.id} className="p-4">
                         <div className="flex items-start gap-3">
@@ -545,9 +548,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-3">
                           {[
-                            { label: 'Plays',    value: c.plays },
-                            { label: 'Wins',     value: c.wins },
-                            { label: 'Win Rate', value: `${wr}%` },
+                            { label: 'Plays',   value: c.plays },
+                            { label: 'Wins',    value: c.wins },
+                            { label: 'Redeems', value: c.redeems },
                           ].map(s => (
                             <div key={s.label} className="text-center p-2 bg-v-surface-2 rounded-lg border border-v-border">
                               <div className="text-sm font-bold text-v-text">{s.value}</div>
@@ -580,14 +583,13 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               ) : (
                 <div className="space-y-2">
                   {campaignAct.previous.map(c => {
-                    const wr = c.plays > 0 ? Math.round((c.wins / c.plays) * 100) : 0
                     return (
                       <Card key={c.id} className="p-3.5 opacity-80">
                         <div className="flex items-center gap-3">
                           <div className="text-xl shrink-0">{getMechanicEmoji(c.mechanic)}</div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-v-text truncate">{c.name}</p>
-                            <p className="text-xs text-v-text-3">{c.plays} plays · {c.wins} wins · {wr}% win rate</p>
+                            <p className="text-xs text-v-text-3">{c.plays} plays · {c.wins} wins · {c.redeems} redeems</p>
                           </div>
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-v-surface-3 text-v-text-3 border border-v-border shrink-0">Ended</span>
                         </div>
