@@ -3,7 +3,7 @@ import { use, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Delete, Gift, Sparkles, Clock } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Users, Delete, Gift, Sparkles } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
 import { MECHANIC_META, combineDateTime } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
@@ -86,8 +86,6 @@ interface ClaimRedeemGridProps {
   terms?: string
   /** Shown as a small "N people already joined" line — replaces the separate Duration/players box these mechanics no longer need, since Claim Before already covers the relevant date. */
   participants?: number
-  /** Daily active window, e.g. "3:00 PM – 5:00 PM" — flash deals only */
-  timeWindow?: string
   /** Time of day the claim deadline falls at, e.g. "6:00 PM" — appended to the Claim Before date */
   claimTime?: string
   /** ISO datetime countdown shown above the grid — flash deals only */
@@ -95,19 +93,13 @@ interface ClaimRedeemGridProps {
 }
 
 // Shared claim/redeem/spots/reward grid — reused by buyxgety, coupon, flash, friend, groupunlock, combo
-function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, timeWindow, claimTime, countdown }: ClaimRedeemGridProps) {
+function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, claimTime, countdown }: ClaimRedeemGridProps) {
   return (
     <>
       {participants !== undefined && (
         <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold mb-3" style={{ color: cardFrom }}>
           <Users className="w-3 h-3" />
           <span>{participants.toLocaleString()} people already joined</span>
-        </div>
-      )}
-      {timeWindow && (
-        <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold mb-3" style={{ color: cardFrom }}>
-          <Clock className="w-3 h-3" />
-          <span>{timeWindow}</span>
         </div>
       )}
       {countdown && (
@@ -894,7 +886,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     reward={mechanic.flashReward}
                     terms={mechanic.flashTerms}
                     participants={mechanic.participants}
-                    timeWindow={mechanic.timeWindow}
                     claimTime={mechanic.flashClaimTime}
                     countdown={mechanic.flashClaimTime ? combineDateTime(mechanic.endDate, mechanic.flashClaimTime) : undefined}
                   />
