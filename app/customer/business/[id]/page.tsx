@@ -202,7 +202,7 @@ const CLAIM_STYLE_TYPES: MechanicType[] = ['buyxgety', 'coupon', 'flash', 'frien
 
 // Mechanics whose info box already embeds "playing today" + campaign duration,
 // so the standalone social-proof row underneath would just repeat it.
-const BOXED_ACTIVITY_TYPES: MechanicType[] = [...CLAIM_STYLE_TYPES, 'spin', 'dice', 'shake', 'lottery']
+const BOXED_ACTIVITY_TYPES: MechanicType[] = [...CLAIM_STYLE_TYPES, 'spin', 'dice', 'shake', 'lottery', 'stamp', 'checkin']
 
 function ClaimInfoBox({
   meta, reward, progress, claimBefore, redeemBefore, extra,
@@ -669,29 +669,23 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       </div>
                       <p className="text-xs text-gray-500 mb-2.5 leading-relaxed">{m.description}</p>
 
-                      {/* Stamp: sealed mini dot grid */}
+                      {/* Stamp: collected/total figure */}
                       {m.type === 'stamp' && m.stampsCollected !== undefined && m.totalStamps && (
-                        <div className="mb-2.5">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-gray-400 font-medium">Stamps</span>
-                            <span className="text-[11px] font-bold" style={{ color: meta.cardFrom }}>
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-semibold text-gray-700">Stamps Collected</span>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white shrink-0" style={{ color: meta.cardFrom }}>
                               {m.stampsCollected}/{m.totalStamps}
                             </span>
                           </div>
-                          <div className="flex gap-1.5 flex-wrap">
-                            {Array.from({ length: m.totalStamps }, (_, i) => {
-                              const filled = i < m.stampsCollected!
-                              return (
-                                <div
-                                  key={i}
-                                  className="w-4 h-4 rounded-full"
-                                  style={filled
-                                    ? { background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }
-                                    : { background: '#D1D5DB' }
-                                  }
-                                />
-                              )
-                            })}
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-2 pt-2 border-t" style={{ borderColor: `${meta.cardFrom}22` }}>
+                            {(m.activeToday ?? 0) > 0 && (
+                              <>
+                                <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.activeToday} playing today</span>
+                                <span className="text-gray-300">·</span>
+                              </>
+                            )}
+                            <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
                           </div>
                         </div>
                       )}
@@ -745,18 +739,29 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
                       {/* Check-in: streak + points */}
                       {m.type === 'checkin' && (m.checkInStreak || m.totalPoints) && (
-                        <div className="flex items-center gap-3 mb-2.5">
-                          {m.checkInStreak && (
-                            <div className="flex items-center gap-1 text-[11px] font-bold text-orange-500">
-                              <Flame className="w-3 h-3" />
-                              <span>{m.checkInStreak} day streak</span>
-                            </div>
-                          )}
-                          {m.totalPoints !== undefined && (
-                            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                              <span>⭐ {m.totalPoints} pts total</span>
-                            </div>
-                          )}
+                        <div className="mb-2.5 rounded-xl p-3" style={{ background: `${meta.cardFrom}0C`, border: `1px solid ${meta.cardFrom}22` }}>
+                          <div className="flex items-center gap-3">
+                            {m.checkInStreak && (
+                              <div className="flex items-center gap-1 text-[11px] font-bold text-orange-500">
+                                <Flame className="w-3 h-3" />
+                                <span>{m.checkInStreak} day streak</span>
+                              </div>
+                            )}
+                            {m.totalPoints !== undefined && (
+                              <div className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: meta.cardFrom }}>
+                                <span>⭐ {m.totalPoints} pts total</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-2 pt-2 border-t" style={{ borderColor: `${meta.cardFrom}22` }}>
+                            {(m.activeToday ?? 0) > 0 && (
+                              <>
+                                <span className="font-semibold" style={{ color: meta.cardFrom }}>{m.activeToday} playing today</span>
+                                <span className="text-gray-300">·</span>
+                              </>
+                            )}
+                            <span>{fmtDate(m.startDate)} – {fmtDate(m.endDate)}</span>
+                          </div>
                         </div>
                       )}
 

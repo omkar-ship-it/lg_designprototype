@@ -1,11 +1,11 @@
 'use client'
-import { use, useState, useRef, type ReactNode } from 'react'
+import { use, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, CalendarDays, Users, Gift, Smartphone, Target, ChartPie, Dices, Ticket, ArrowRightLeft, TicketPercent, Zap, Handshake, UserPlus, Package, Delete } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowLeft, CalendarDays, Users, Delete } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
+import { MECHANIC_META } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
 import type { MechanicType } from '@/lib/types'
@@ -24,21 +24,6 @@ const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
   groupunlock: '/customer/games/groupunlock',
   combo: '/customer/games/combo',
 }
-
-const MECHANIC_ICONS = {
-  stamp:   Gift,
-  shake:   Smartphone,
-  checkin: Target,
-  spin:    ChartPie,
-  dice:    Dices,
-  lottery: Ticket,
-  buyxgety: ArrowRightLeft,
-  coupon:  TicketPercent,
-  flash:   Zap,
-  friend:  UserPlus,
-  groupunlock: Handshake,
-  combo:   Package,
-} as const
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: '#D1FAE5', text: '#065F46', label: 'Active'  },
@@ -281,43 +266,10 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const biz      = customerBusinesses.find(b => b.id === id) ?? customerBusinesses[0]
   const mechanic = biz.mechanics.find(m => m.type === type) ?? biz.mechanics[0]
   const meta     = MECHANIC_META[mechanic.type as MechanicType]
-  const metaAccentRgb = hexToRgb(meta.cardFrom).join(',')
-  const metaDeep = hexMix(meta.cardTo, '#000000', 0.55)
   const hero     = HERO_COVER[mechanic.type as MechanicType]
   const Art      = hero?.art
-  // Every mechanic except stamp/checkin now enters its PIN inline within its own card
-  const usesInlineKeypad = mechanic.type !== 'stamp' && mechanic.type !== 'checkin'
 
-  // OTP state
-  const [showOTP, setShowOTP] = useState(false)
-  const [digits, setDigits]   = useState(['', '', ''])
-  const ref0 = useRef<HTMLInputElement>(null)
-  const ref1 = useRef<HTMLInputElement>(null)
-  const ref2 = useRef<HTMLInputElement>(null)
-  const digitRefs = [ref0, ref1, ref2]
-
-  const openOTP = () => {
-    setDigits(['', '', ''])
-    setShowOTP(true)
-    setTimeout(() => ref0.current?.focus(), 350)
-  }
-
-  const closeOTP = () => {
-    setShowOTP(false)
-    setDigits(['', '', ''])
-  }
-
-  const handleDigitChange = (i: number, val: string) => {
-    const clean = val.replace(/\D/g, '').slice(-1)
-    const next  = [...digits]
-    next[i]     = clean
-    setDigits(next)
-    if (clean && i < 2) digitRefs[i + 1].current?.focus()
-  }
-
-  const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !digits[i] && i > 0) digitRefs[i - 1].current?.focus()
-  }
+  const [digits, setDigits] = useState(['', '', ''])
 
   // Inline keypad — pressing a digit fills the first empty slot
   const pressDigit = (d: string) => {
@@ -339,7 +291,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   const joinCampaign = () => {
     if (digits.some(d => !d)) return
-    closeOTP()
     const base = mechanic.type === 'coupon' && mechanic.couponClaimExperience === 'rub'
       ? '/customer/games/coupon-rub'
       : MECHANIC_GAME_LINKS[mechanic.type as MechanicType]
@@ -539,137 +490,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
         <p className="text-sm text-gray-500 mb-5 leading-relaxed">{mechanic.description}</p>
 
-        {/* Stamp card layout */}
-        {mechanic.type === 'stamp' && mechanic.stampsCollected !== undefined && mechanic.totalStamps ? (
-          (() => {
-            const collected   = mechanic.stampsCollected!
-            const total       = mechanic.totalStamps
-            const rewardPos   = [4, 6, 8, 10]
-            const pct         = Math.round((collected / total) * 100)
-            const stampHistory = [
-              { n: collected,     date: 'Today',   item: 'Latte at ' + biz.name },
-              { n: collected - 2, date: '16th Jun', item: 'Cappuccino' },
-            ].filter(h => h.n > 0)
-            const stampAccentRgb = hexToRgb(meta.cardFrom).join(',')
-            const stampLightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.4)
-            const stampLightAccentRgb = hexToRgb(stampLightAccent).join(',')
-
-            return (
-              <div className="mb-6">
-                {/* Loyalty card */}
-                <div
-                  className="rounded-3xl overflow-hidden mb-4"
-                  style={{ boxShadow: `0 16px 48px rgba(${stampAccentRgb},0.2), 0 0 0 1px rgba(${stampAccentRgb},0.2)` }}
-                >
-                  {/* Header */}
-                  <div
-                    className="relative px-5 py-4 overflow-hidden"
-                    style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                  >
-                    <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[80px] opacity-10 select-none pointer-events-none leading-none">🎁</span>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-0.5">Loyalty Card</p>
-                        <p className="text-lg font-extrabold text-white/90">{biz.name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] text-white/40 font-bold uppercase tracking-wide mb-0.5">Stamps</p>
-                        <p className="text-4xl font-black text-white leading-none">
-                          {collected}
-                          <span className="text-base font-semibold text-white/40">/{total}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-0" style={{ borderTop: `2px dashed rgba(${stampAccentRgb},0.25)` }} />
-
-                  {/* Stamp grid */}
-                  <div className="bg-white px-5 pt-5 pb-4">
-                    <div className="grid grid-cols-5 gap-2.5 mb-3">
-                      {Array.from({ length: total }, (_, i) => {
-                        const n         = i + 1
-                        const isFilled  = n <= collected
-                        const isReward  = rewardPos.includes(n)
-                        const isFinal   = n === total
-                        const isLatest  = n === collected
-                        return (
-                          <div key={n} className="flex flex-col items-center relative">
-                            <div className="relative w-12 h-12 mb-1">
-                              {isLatest && isFilled && (
-                                <motion.div
-                                  className="absolute inset-0 rounded-full pointer-events-none"
-                                  style={{ boxShadow: `0 0 0 3px rgba(${stampAccentRgb},0.5), 0 0 0 6px rgba(${stampAccentRgb},0.15)` }}
-                                  animate={{ opacity: [0.6, 1, 0.6] }}
-                                  transition={{ duration: 2, repeat: Infinity }}
-                                />
-                              )}
-                              {isFilled ? (
-                                <div
-                                  className="absolute inset-0 rounded-full flex items-center justify-center text-lg"
-                                  style={
-                                    isFinal
-                                      ? { background: `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})`, boxShadow: `0 4px 14px rgba(${stampAccentRgb},0.5)` }
-                                      : isReward
-                                        ? { background: `linear-gradient(145deg, ${stampLightAccent}, ${meta.cardFrom})`, boxShadow: `0 4px 14px rgba(${stampLightAccentRgb},0.4)` }
-                                        : { background: 'linear-gradient(145deg, #6B7280, #4B5563)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
-                                  }
-                                >
-                                  {isFinal ? '🏆' : isReward ? '🎁' : '✓'}
-                                </div>
-                              ) : (
-                                <div className="absolute inset-0 rounded-full flex items-center justify-center" style={{ background: '#E5E7EB' }}>
-                                  <span className="text-[13px] font-bold text-gray-400 select-none">{n}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    <p className="text-[11px] text-center text-gray-500 mb-1">
-                      <span className="font-bold" style={{ color: meta.cardFrom }}>{collected}</span> collected · {total - collected} more surprises await 🎁
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="flex items-center gap-3 mb-4">
-                  <p className="text-xs font-semibold text-gray-500 shrink-0">Progress</p>
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-                    />
-                  </div>
-                  <p className="text-xs font-bold shrink-0" style={{ color: meta.cardFrom }}>{pct}% complete</p>
-                </div>
-
-                {/* Activity log */}
-                <div className="space-y-3 mb-4">
-                  {stampHistory.map((h, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
-                        style={{ background: `linear-gradient(145deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                      >
-                        ✓
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-gray-800">Stamp #{h.n} earned</p>
-                        <p className="text-[11px] text-gray-400">{h.date} · {h.item}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })()
-        ) : mechanic.type === 'spin' ? (
+        {mechanic.type === 'spin' ? (
           <div className="mb-6">
             <div
               className="rounded-3xl bg-white px-5 py-5"
@@ -790,6 +611,33 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <>
+            {/* Stamp Card — collected/total figure, duration/players + inline keypad */}
+            {mechanic.type === 'stamp' && mechanic.stampsCollected !== undefined && mechanic.totalStamps && (
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Collected today"
+                submitLabel={`Enter PIN & Collect Stamp ${meta.emoji}`}
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="rounded-2xl p-4 mb-5 text-center" style={{ background: `${meta.cardFrom}12` }}>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Stamps Collected</p>
+                  <p className="text-2xl font-black" style={{ color: meta.cardFrom }}>
+                    {mechanic.stampsCollected}
+                    <span className="text-sm font-semibold text-gray-400">/{mechanic.totalStamps}</span>
+                  </p>
+                </div>
+              </MechanicCard>
+            )}
+
             {/* Prizes — dice / shake, in a single card with duration/players + inline keypad */}
             {(mechanic.type === 'dice' || mechanic.type === 'shake') && (
               <MechanicCard
@@ -861,26 +709,42 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </MechanicCard>
             )}
 
-            {/* Check-in — streak + points */}
+            {/* Check-in — streak + points, duration/players + inline keypad */}
             {mechanic.type === 'checkin' && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-2xl mb-0.5">🔥</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Streak</p>
-                  <p className="text-2xl font-black text-gray-900">
-                    {mechanic.checkInStreak ?? 0}
-                    <span className="text-xs font-semibold text-gray-400 ml-1">days</span>
-                  </p>
+              <MechanicCard
+                cardFrom={meta.cardFrom}
+                cardTo={meta.cardTo}
+                startDate={mechanic.startDate}
+                endDate={mechanic.endDate}
+                participants={mechanic.participants}
+                playedToday={mechanic.playedToday}
+                playedLabel="Checked in today"
+                submitLabel="Check In & Earn Points ⭐"
+                digits={digits}
+                pressDigit={pressDigit}
+                pressBackspace={pressBackspace}
+                onSubmit={joinCampaign}
+                disabled={!codeComplete}
+              >
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-2xl mb-0.5">🔥</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Streak</p>
+                    <p className="text-2xl font-black text-gray-900">
+                      {mechanic.checkInStreak ?? 0}
+                      <span className="text-xs font-semibold text-gray-400 ml-1">days</span>
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
+                    <p className="text-2xl mb-0.5">⭐</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Total Points</p>
+                    <p className="text-2xl font-black text-gray-900">
+                      {mechanic.totalPoints ?? 0}
+                      <span className="text-xs font-semibold text-gray-400 ml-1">pts</span>
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-2xl p-4" style={{ background: `${meta.cardFrom}12` }}>
-                  <p className="text-2xl mb-0.5">⭐</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Total Points</p>
-                  <p className="text-2xl font-black text-gray-900">
-                    {mechanic.totalPoints ?? 0}
-                    <span className="text-xs font-semibold text-gray-400 ml-1">pts</span>
-                  </p>
-                </div>
-              </div>
+              </MechanicCard>
             )}
 
             {/* Buy X Get Y — claim window, spots, redeem window */}
@@ -1157,132 +1021,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               </MechanicCard>
             )}
 
-            {/* Duration + players — every other mechanic now renders its own copy inside its card above */}
-            {mechanic.type === 'checkin' && (
-              <DurationPlayersBox
-                cardFrom={meta.cardFrom}
-                startDate={mechanic.startDate}
-                endDate={mechanic.endDate}
-                participants={mechanic.participants}
-                className="mb-6"
-              />
-            )}
           </>
-        )}
-
-        {/* PLAY CTA — only stamp/checkin still use the bottom-sheet PIN flow; every other mechanic enters its code inline in its card above */}
-        {!usesInlineKeypad && (
-          mechanic.playedToday ? (
-            <div className="w-full py-4 rounded-2xl font-semibold text-sm text-center text-gray-400 bg-gray-100 flex items-center justify-center gap-2">
-              <span>✓</span> Played today · Come back tomorrow
-            </div>
-          ) : (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={openOTP}
-              className="w-full py-4 rounded-2xl font-bold text-base text-white shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`,
-                boxShadow: `0 8px 28px ${meta.cardFrom}55`,
-              }}
-            >
-              Play Now {meta.emoji}
-            </motion.button>
-          )
         )}
       </div>
-
-      {/* OTP bottom sheet */}
-      <AnimatePresence>
-        {showOTP && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeOTP}
-            />
-            <motion.div
-              className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto z-50 rounded-t-3xl overflow-hidden"
-              style={{ background: `linear-gradient(180deg, ${hexMix(meta.cardFrom, '#000000', 0.55)} 0%, ${metaDeep} 100%)` }}
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            >
-              <div className="px-6 pt-5 pb-10">
-                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6" />
-
-                <div className="text-center mb-7">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 22, delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
-                    style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
-                  >
-                    {(() => {
-                      const Icon = MECHANIC_ICONS[mechanic.type as keyof typeof MECHANIC_ICONS]
-                      return <Icon className="w-7 h-7 text-white" strokeWidth={1.8} />
-                    })()}
-                  </motion.div>
-                  <h3 className="text-lg font-extrabold text-white mb-1">{mechanic.label}</h3>
-                  <p className="text-sm text-white/40 leading-snug">
-                    Enter the 3-digit code<br />from the Staff to Participate
-                  </p>
-                </div>
-
-                <div className="flex gap-3 justify-center mb-7">
-                  {[0, 1, 2].map(i => (
-                    <input
-                      key={i}
-                      ref={digitRefs[i]}
-                      value={digits[i]}
-                      onChange={e => handleDigitChange(i, e.target.value)}
-                      onKeyDown={e => handleKeyDown(i, e)}
-                      maxLength={1}
-                      inputMode="numeric"
-                      className="w-[72px] h-[80px] text-center text-4xl font-black text-white outline-none rounded-2xl tracking-widest"
-                      style={{
-                        background: 'rgba(255,255,255,0.07)',
-                        border: digits[i] ? `2px solid rgba(${metaAccentRgb},0.8)` : '2px solid rgba(255,255,255,0.12)',
-                        transition: 'border-color 0.15s ease',
-                        boxShadow: digits[i] ? `0 0 0 4px rgba(${metaAccentRgb},0.15)` : 'none',
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={joinCampaign}
-                  disabled={!codeComplete}
-                  className="w-full py-4 rounded-2xl font-bold text-sm transition-all"
-                  style={{
-                    background: codeComplete
-                      ? `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})`
-                      : 'rgba(255,255,255,0.08)',
-                    color: codeComplete ? 'white' : 'rgba(255,255,255,0.3)',
-                    boxShadow: codeComplete ? `0 8px 28px ${meta.cardFrom}55` : 'none',
-                  }}
-                >
-                  {codeComplete ? 'Verify' : 'Enter 3 Digit Pin'}
-                </motion.button>
-
-                <button
-                  onClick={closeOTP}
-                  className="w-full mt-3 py-3 text-white/30 text-sm hover:text-white/50 transition-colors"
-                >
-                  Cancel
-                </button>
-
-                <p className="text-center text-[11px] text-white/20 mt-3">PIN Expires in 2 mins</p>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
