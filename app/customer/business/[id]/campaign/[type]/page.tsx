@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Users, Delete, Gift, Sparkles, Clock } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, combineDateTime } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
+import { CountdownTimer } from '@/components/customer/countdown-timer'
 import type { MechanicType } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
@@ -48,8 +49,8 @@ function splitReward(text: string): { label: string; icon: string } {
 }
 
 // Shared "Duration + players" stat box, tinted to the mechanic's brand color
-function DurationPlayersBox({ cardFrom, startDate, endDate, participants, className = '' }: {
-  cardFrom: string; startDate: string; endDate: string; participants: number; className?: string
+function DurationPlayersBox({ cardFrom, startDate, endDate, participants, timeWindow, className = '' }: {
+  cardFrom: string; startDate: string; endDate: string; participants: number; timeWindow?: string; className?: string
 }) {
   return (
     <div className={`rounded-2xl p-4 ${className}`} style={{ background: `${cardFrom}12` }}>
@@ -62,6 +63,7 @@ function DurationPlayersBox({ cardFrom, startDate, endDate, participants, classN
       </div>
       <p className="text-sm font-semibold text-gray-800">
         {fmtDateShort(startDate)} → {fmtDateShort(endDate)}
+        {timeWindow && <span className="text-gray-400 font-medium"> ({timeWindow})</span>}
       </p>
     </div>
   )
@@ -86,10 +88,14 @@ interface ClaimRedeemGridProps {
   participants?: number
   /** Daily active window, e.g. "3:00 PM – 5:00 PM" — flash deals only */
   timeWindow?: string
+  /** Time of day the claim deadline falls at, e.g. "6:00 PM" — appended to the Claim Before date */
+  claimTime?: string
+  /** ISO datetime countdown shown above the grid — flash deals only */
+  countdown?: string
 }
 
 // Shared claim/redeem/spots/reward grid — reused by buyxgety, coupon, flash, friend, groupunlock, combo
-function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, timeWindow }: ClaimRedeemGridProps) {
+function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, timeWindow, claimTime, countdown }: ClaimRedeemGridProps) {
   return (
     <>
       {participants !== undefined && (
@@ -104,10 +110,15 @@ function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimD
           <span>{timeWindow}</span>
         </div>
       )}
+      {countdown && (
+        <div className="flex justify-center mb-3">
+          <CountdownTimer target={countdown} color={cardFrom} />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
           <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">{claimLabel}</p>
-          <p className="text-sm font-bold text-gray-900">{fmtDate(claimDate)}</p>
+          <p className="text-sm font-bold text-gray-900">{fmtDate(claimDate)}{claimTime ? ` · ${claimTime}` : ''}</p>
         </div>
         <div className="rounded-2xl p-4" style={{ background: `${cardFrom}12` }}>
           <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Redeem Before</p>
@@ -233,9 +244,11 @@ function PlayedTodayNote({ label }: { label: string }) {
 }
 
 // Single white card: mechanic-specific info (children) + duration/players + inline keypad — the shared shell for every non-groupunlock, non-spin mechanic
-function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, participants, showDuration = true, playedToday, playedLabel, submitLabel, digits, pressDigit, pressBackspace, onSubmit, disabled }: {
+function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, participants, timeWindow, showDuration = true, playedToday, playedLabel, submitLabel, digits, pressDigit, pressBackspace, onSubmit, disabled }: {
   cardFrom: string; cardTo: string; children?: ReactNode
   startDate: string; endDate: string; participants: number
+  /** Daily active window, e.g. "4:00 PM – 6:00 PM" — shown alongside the duration */
+  timeWindow?: string
   /** Skip when the mechanic-specific content (e.g. ClaimRedeemGrid) already shows the relevant date, to avoid showing the same date twice. */
   showDuration?: boolean
   playedToday?: boolean; playedLabel: string; submitLabel: string
@@ -246,7 +259,7 @@ function MechanicCard({ cardFrom, cardTo, children, startDate, endDate, particip
       <div className="rounded-3xl bg-white px-5 py-5" style={{ boxShadow: `0 16px 48px ${cardFrom}20, 0 0 0 1px ${cardFrom}1A` }}>
         {children}
         {showDuration && (
-          <DurationPlayersBox cardFrom={cardFrom} startDate={startDate} endDate={endDate} participants={participants} className="mb-5" />
+          <DurationPlayersBox cardFrom={cardFrom} startDate={startDate} endDate={endDate} participants={participants} timeWindow={timeWindow} className="mb-5" />
         )}
         {playedToday ? (
           <PlayedTodayNote label={playedLabel} />
@@ -508,6 +521,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               +100 pts / visit
             </span>
           )}
+          {(mechanic.type === 'spin' || mechanic.type === 'dice') && mechanic.dailyTries !== undefined && (
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 mt-0.5" style={{ background: `${meta.cardFrom}18`, color: meta.cardFrom }}>
+              {mechanic.triesUsedToday ?? 0}/{mechanic.dailyTries} tries
+            </span>
+          )}
         </div>
 
         {/* Offered by — who this campaign belongs to, up front rather than buried at the bottom */}
@@ -557,6 +575,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Duration</p>
                     <p className="text-sm font-bold text-gray-800">
                       {fmtDateShort(mechanic.startDate)} → {fmtDateShort(mechanic.endDate)}
+                      {mechanic.timeWindow && <span className="text-gray-400 font-semibold"> ({mechanic.timeWindow})</span>}
                     </p>
                   </div>
                 </div>
@@ -674,6 +693,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 startDate={mechanic.startDate}
                 endDate={mechanic.endDate}
                 participants={mechanic.participants}
+                timeWindow={mechanic.timeWindow}
                 playedToday={mechanic.playedToday}
                 playedLabel="Played today"
                 submitLabel={`Play Now ${meta.emoji}`}
@@ -874,7 +894,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     reward={mechanic.flashReward}
                     terms={mechanic.flashTerms}
                     participants={mechanic.participants}
-                    timeWindow={mechanic.flashTimeWindow}
+                    timeWindow={mechanic.timeWindow}
+                    claimTime={mechanic.flashClaimTime}
+                    countdown={mechanic.flashClaimTime ? combineDateTime(mechanic.endDate, mechanic.flashClaimTime) : undefined}
                   />
                 </div>
               </MechanicCard>

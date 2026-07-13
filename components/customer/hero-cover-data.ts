@@ -29,6 +29,8 @@ export interface HeroCover {
   features?: { icon: LucideIcon; label: string }[]
   /** Optional closing banner rendered below the features row (campaign detail hero only), e.g. "More tickets, more chances, more rewards!" */
   footerBanner?: string
+  /** Extra top margin (Tailwind class) nudging the headline/tagline block down — business list card hero only, for mechanics whose headline sits too close to the top badges for comfortable reading. */
+  mainCardTextOffset?: string
 }
 
 export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
@@ -80,6 +82,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
       { icon: Trophy, label: 'Exciting Prizes' },
     ],
     footerBanner: 'More tickets, more chances, more rewards!',
+    mainCardTextOffset: 'mt-4',
   },
   buyxgety: {
     headline: 'Spend X, Get Y', tagline: 'Spend or buy a minimum amount and get exciting rewards!',
@@ -104,6 +107,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
       { icon: Gift, label: 'Exclusive Rewards' },
       { icon: TicketPercent, label: 'Special Offers' },
     ],
+    mainCardTextOffset: 'mt-4',
   },
   checkin: {
     headline: 'Check In &', headlineAccent: 'WIN', accentColor: '#BBF7D0',

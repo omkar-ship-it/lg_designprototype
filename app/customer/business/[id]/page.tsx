@@ -7,8 +7,9 @@ import Link from 'next/link'
 import { BottomNav } from '@/components/customer/bottom-nav'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
+import { CountdownTimer } from '@/components/customer/countdown-timer'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META } from '@/lib/utils'
+import { MECHANIC_META, combineDateTime } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
@@ -205,14 +206,18 @@ const CLAIM_STYLE_TYPES: MechanicType[] = ['buyxgety', 'coupon', 'flash', 'frien
 const BOXED_ACTIVITY_TYPES: MechanicType[] = [...CLAIM_STYLE_TYPES, 'spin', 'dice', 'shake', 'lottery', 'stamp', 'checkin']
 
 function ClaimInfoBox({
-  meta, reward, progress, claimBefore, redeemBefore, extra,
+  meta, reward, progress, claimBefore, claimTime, redeemBefore, extra, countdown,
 }: {
   meta: typeof MECHANIC_META[MechanicType]
   reward?: string
   progress?: { current: number; total: number; label: string }
   claimBefore: string
+  /** Time of day the claim deadline falls at, e.g. "6:00 PM" — appended to the Claim by date */
+  claimTime?: string
   redeemBefore?: string
   extra?: React.ReactNode
+  /** ISO datetime countdown shown above the date row, e.g. for time-limited Flash Deals */
+  countdown?: string
 }) {
   const pct = progress ? Math.min(100, Math.round((progress.current / progress.total) * 100)) : 0
   return (
@@ -233,10 +238,11 @@ function ClaimInfoBox({
         </div>
       )}
       {extra}
+      {countdown && <CountdownTimer target={countdown} color={meta.cardFrom} className="mb-1.5" />}
       <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
         <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
         <span>
-          Claim by <span className="font-semibold text-gray-700">{fmtDate(claimBefore)}</span>
+          Claim by <span className="font-semibold text-gray-700">{fmtDate(claimBefore)}{claimTime ? ` · ${claimTime}` : ''}</span>
           {redeemBefore && <> · Redeem by <span className="font-semibold text-gray-700">{fmtDate(redeemBefore)}</span></>}
         </span>
       </div>
@@ -510,7 +516,7 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                             )}
 
                             <div className={`flex items-center justify-between w-full pl-4 pr-6 pt-4 ${hero.features ? '' : 'h-full'}`}>
-                              <div className="max-w-[52%]">
+                              <div className={`max-w-[52%] ${hero.mainCardTextOffset ?? ''}`}>
                                 <p className="text-lg font-extrabold leading-tight" style={{ color: hero.textColor }}>
                                   {hero.headline}
                                 </p>
@@ -656,7 +662,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     {/* Info */}
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-sm font-bold text-gray-900">{m.label}</h3>
+                        <h3 className="text-sm font-bold text-gray-900">
+                          {m.label}
+                          {(m.type === 'spin' || m.type === 'dice') && m.dailyTries !== undefined && (
+                            <span className="text-xs font-semibold text-gray-400 ml-1">({m.triesUsedToday ?? 0}/{m.dailyTries})</span>
+                          )}
+                        </h3>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {/* Urgency chip */}
                           {m.status === 'active' && daysUntil(m.endDate) <= 7 && daysUntil(m.endDate) > 0 && (
@@ -703,6 +714,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                               <span key={p} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white" style={{ color: meta.cardFrom }}>{p}</span>
                             ))}
                           </div>
+                          {m.timeWindow && (
+                            <div className="flex items-center gap-1.5 text-[10px] font-semibold mt-2" style={{ color: meta.cardFrom }}>
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span>{m.timeWindow}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-2 pt-2 border-t" style={{ borderColor: `${meta.cardFrom}22` }}>
                             {(m.activeToday ?? 0) > 0 && (
                               <>
@@ -795,11 +812,13 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           reward={m.flashReward}
                           progress={m.flashTotalSlots !== undefined && m.flashClaimed !== undefined ? { current: m.flashClaimed, total: m.flashTotalSlots, label: 'claimed' } : undefined}
                           claimBefore={m.endDate}
+                          claimTime={m.flashClaimTime}
                           redeemBefore={m.flashRedeemBefore}
-                          extra={m.flashTimeWindow ? (
+                          countdown={m.flashClaimTime ? combineDateTime(m.endDate, m.flashClaimTime) : undefined}
+                          extra={m.timeWindow ? (
                             <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-2" style={{ color: meta.cardFrom }}>
                               <Clock className="w-3 h-3 shrink-0" />
-                              <span>{m.flashTimeWindow}</span>
+                              <span>{m.timeWindow}</span>
                             </div>
                           ) : undefined}
                         />
@@ -831,13 +850,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                       {m.type === 'combo' && (
                         <ClaimInfoBox
                           meta={meta}
+                          reward={m.label}
                           progress={m.comboTotalSpots !== undefined ? { current: m.comboClaimed ?? 0, total: m.comboTotalSpots, label: 'claimed' } : undefined}
                           claimBefore={m.endDate}
                           redeemBefore={m.comboRedeemBefore}
                           extra={
-                            m.comboVariant === 'freeitem' ? (
-                              <p className="text-sm font-bold mb-2" style={{ color: meta.cardFrom }}>{m.label}</p>
-                            ) : (
+                            m.comboVariant === 'freeitem' ? undefined : (
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-baseline gap-1.5">
                                   {m.comboOriginalPrice !== undefined && (

@@ -83,6 +83,21 @@ export function formatDate(dateStr: string): string {
   })
 }
 
+/** Combines a date with a "6:00 PM"-style time string into a parseable ISO datetime. Returns the plain date (midnight) if no time is given. */
+export function combineDateTime(dateStr: string, timeStr?: string): string {
+  const d = new Date(dateStr)
+  if (!timeStr) return d.toISOString()
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i)
+  if (!match) return d.toISOString()
+  let hours = parseInt(match[1], 10)
+  const minutes = parseInt(match[2], 10)
+  const isPM = match[3].toUpperCase() === 'PM'
+  if (isPM && hours !== 12) hours += 12
+  if (!isPM && hours === 12) hours = 0
+  d.setHours(hours, minutes, 0, 0)
+  return d.toISOString()
+}
+
 export function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)

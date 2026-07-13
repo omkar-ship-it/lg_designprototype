@@ -315,12 +315,17 @@ export interface CustomerBusiness {
     playedToday?: boolean
     /** Overrides the mechanic type's default game route for this specific campaign instance — e.g. a bespoke rub-to-reveal claim experience instead of the standard claim screen. */
     claimRoute?: string
+    /** Daily active window, e.g. "4:00 PM – 6:00 PM" — omit for mechanics that run all day */
+    timeWindow?: string
     // stamp
     stampsCollected?: number
     totalStamps?: number
     finalReward?: string
     // spin / dice / shake
     prizes?: string[]
+    /** Tries allowed per day — shown as "(used/daily)" next to the mechanic name */
+    dailyTries?: number
+    triesUsedToday?: number
     // checkin
     checkInStreak?: number
     totalPoints?: number
@@ -344,8 +349,8 @@ export interface CustomerBusiness {
     flashClaimed?: number
     flashRedeemBefore?: string
     flashTerms?: string
-    /** Daily active window, e.g. "3:00 PM – 5:00 PM" — omit for deals that run all day */
-    flashTimeWindow?: string
+    /** Time of day the claim deadline falls at, e.g. "6:00 PM" — combined with endDate for the claim-by display and countdown timer */
+    flashClaimTime?: string
     // friend (bring a friend)
     friendReward?: string
     friendMinFriends?: number
