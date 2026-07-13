@@ -9,7 +9,7 @@ import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
 import { CountdownTimer } from '@/components/customer/countdown-timer'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META, combineDateTime } from '@/lib/utils'
+import { MECHANIC_META, nextDailyDeadline } from '@/lib/utils'
 import type { MechanicType, CustomerBusiness, ClaimableReward } from '@/lib/types'
 
 const MECHANIC_GAME_LINKS: Record<MechanicType, string> = {
@@ -206,7 +206,7 @@ const CLAIM_STYLE_TYPES: MechanicType[] = ['buyxgety', 'coupon', 'flash', 'frien
 const BOXED_ACTIVITY_TYPES: MechanicType[] = [...CLAIM_STYLE_TYPES, 'spin', 'dice', 'shake', 'lottery', 'stamp', 'checkin']
 
 function ClaimInfoBox({
-  meta, reward, progress, claimBefore, claimTime, redeemBefore, extra, countdown,
+  meta, reward, progress, claimBefore, claimTime, redeemBefore, extra,
 }: {
   meta: typeof MECHANIC_META[MechanicType]
   reward?: string
@@ -216,8 +216,6 @@ function ClaimInfoBox({
   claimTime?: string
   redeemBefore?: string
   extra?: React.ReactNode
-  /** ISO datetime countdown shown above the date row, e.g. for time-limited Flash Deals */
-  countdown?: string
 }) {
   const pct = progress ? Math.min(100, Math.round((progress.current / progress.total) * 100)) : 0
   return (
@@ -238,7 +236,6 @@ function ClaimInfoBox({
         </div>
       )}
       {extra}
-      {countdown && <CountdownTimer target={countdown} color={meta.cardFrom} className="mb-1.5" />}
       <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
         <CalendarDays className="w-3 h-3 text-gray-400 shrink-0" />
         <span>
@@ -680,6 +677,9 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                               +100 pts
                             </span>
                           )}
+                          {m.type === 'flash' && m.flashClaimTime && (
+                            <CountdownTimer target={nextDailyDeadline(m.flashClaimTime)} color={meta.cardFrom} />
+                          )}
                         </div>
                       </div>
                       <p className="text-xs text-gray-500 mb-2.5 leading-relaxed">{m.description}</p>
@@ -808,7 +808,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                           claimBefore={m.endDate}
                           claimTime={m.flashClaimTime}
                           redeemBefore={m.flashRedeemBefore}
-                          countdown={m.flashClaimTime ? combineDateTime(m.endDate, m.flashClaimTime) : undefined}
                         />
                       )}
 

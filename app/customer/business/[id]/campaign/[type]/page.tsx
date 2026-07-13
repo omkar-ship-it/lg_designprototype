@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Users, Delete, Gift, Sparkles } from 'lucide-react'
 import { customerBusinesses } from '@/lib/mock-data'
-import { MECHANIC_META, combineDateTime } from '@/lib/utils'
+import { MECHANIC_META, nextDailyDeadline } from '@/lib/utils'
 import { MechanicPattern } from '@/components/customer/mechanic-pattern'
 import { HERO_COVER } from '@/components/customer/hero-cover-data'
 import { CountdownTimer } from '@/components/customer/countdown-timer'
@@ -88,23 +88,16 @@ interface ClaimRedeemGridProps {
   participants?: number
   /** Time of day the claim deadline falls at, e.g. "6:00 PM" — appended to the Claim Before date */
   claimTime?: string
-  /** ISO datetime countdown shown above the grid — flash deals only */
-  countdown?: string
 }
 
 // Shared claim/redeem/spots/reward grid — reused by buyxgety, coupon, flash, friend, groupunlock, combo
-function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, claimTime, countdown }: ClaimRedeemGridProps) {
+function ClaimRedeemGrid({ cardFrom, cardTo, claimLabel = 'Claim Before', claimDate, redeemDate, progress, reward, terms, participants, claimTime }: ClaimRedeemGridProps) {
   return (
     <>
       {participants !== undefined && (
         <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold mb-3" style={{ color: cardFrom }}>
           <Users className="w-3 h-3" />
           <span>{participants.toLocaleString()} people already joined</span>
-        </div>
-      )}
-      {countdown && (
-        <div className="flex justify-center mb-3">
-          <CountdownTimer target={countdown} color={cardFrom} />
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -518,6 +511,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               {mechanic.triesUsedToday ?? 0}/{mechanic.dailyTries} tries
             </span>
           )}
+          {mechanic.type === 'flash' && mechanic.flashClaimTime && (
+            <CountdownTimer target={nextDailyDeadline(mechanic.flashClaimTime)} color={meta.cardFrom} className="mt-0.5" />
+          )}
         </div>
 
         {/* Offered by — who this campaign belongs to, up front rather than buried at the bottom */}
@@ -887,7 +883,6 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     terms={mechanic.flashTerms}
                     participants={mechanic.participants}
                     claimTime={mechanic.flashClaimTime}
-                    countdown={mechanic.flashClaimTime ? combineDateTime(mechanic.endDate, mechanic.flashClaimTime) : undefined}
                   />
                 </div>
               </MechanicCard>

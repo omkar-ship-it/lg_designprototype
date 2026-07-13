@@ -5,12 +5,10 @@ import { Timer } from 'lucide-react'
 function getRemaining(targetMs: number) {
   const diffMs = targetMs - Date.now()
   const clamped = Math.max(0, diffMs)
-  const totalSeconds = Math.floor(clamped / 1000)
+  const totalMinutes = Math.floor(clamped / 60000)
   return {
-    days: Math.floor(totalSeconds / 86400),
-    hours: Math.floor((totalSeconds % 86400) / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
     expired: diffMs <= 0,
   }
 }
@@ -22,26 +20,23 @@ interface CountdownTimerProps {
   className?: string
 }
 
-/** Live "time left to claim" countdown — ticks every second, used on Flash Deal cards. */
+/** Compact "Hh Mm left" badge — used next to the Flash Deal name. Ticks every 30s since seconds aren't shown. */
 export function CountdownTimer({ target, color, className = '' }: CountdownTimerProps) {
   const targetMs = new Date(target).getTime()
   const [remaining, setRemaining] = useState(() => getRemaining(targetMs))
 
   useEffect(() => {
-    const id = setInterval(() => setRemaining(getRemaining(targetMs)), 1000)
+    const id = setInterval(() => setRemaining(getRemaining(targetMs)), 30000)
     return () => clearInterval(id)
   }, [targetMs])
 
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-bold ${className}`} style={{ color }}>
-      <Timer className="w-3.5 h-3.5 shrink-0" />
-      {remaining.expired ? (
-        <span>Deal ended</span>
-      ) : remaining.days > 0 ? (
-        <span>{remaining.days}d {remaining.hours}h {remaining.minutes}m left to claim</span>
-      ) : (
-        <span>{remaining.hours}h {remaining.minutes}m {remaining.seconds}s left to claim</span>
-      )}
-    </div>
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${className}`}
+      style={{ background: `${color}18`, color }}
+    >
+      <Timer className="w-3 h-3 shrink-0" />
+      {remaining.expired ? 'Ended' : `${remaining.hours}h ${remaining.minutes}m`}
+    </span>
   )
 }

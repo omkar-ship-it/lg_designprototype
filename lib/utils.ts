@@ -98,6 +98,16 @@ export function combineDateTime(dateStr: string, timeStr?: string): string {
   return d.toISOString()
 }
 
+/** Next occurrence of a "6:00 PM"-style daily deadline — today's if still ahead, tomorrow's if today's has already passed. Used for same-day countdowns on recurring daily deals. */
+export function nextDailyDeadline(timeStr: string): string {
+  const now = new Date()
+  const target = new Date(combineDateTime(now.toISOString(), timeStr))
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1)
+  }
+  return target.toISOString()
+}
+
 export function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
