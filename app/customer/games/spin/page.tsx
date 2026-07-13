@@ -82,7 +82,7 @@ export default function SpinWheelPage() {
   if (state === 'result' && won)
     return (
       <WinCelebration
-        reward={wonReward} emoji={meta.emoji} hidePlayAgain
+        reward={wonReward} emoji={meta.emoji} iconSrc="/spin-wheel-icon.png" hidePlayAgain
         accentFrom={meta.cardFrom} accentTo={meta.cardTo}
         onClose={() => { setRotation(0); idleRef.current = 0; setState('idle') }}
       />

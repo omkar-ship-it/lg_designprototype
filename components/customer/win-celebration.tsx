@@ -55,6 +55,8 @@ function Confetti() {
 interface WinCelebrationProps {
   reward: string
   emoji?: string
+  /** Image path shown instead of the emoji, e.g. "/spin-wheel-icon.png" */
+  iconSrc?: string
   code?: string
   businessName?: string
   hidePlayAgain?: boolean
@@ -64,7 +66,7 @@ interface WinCelebrationProps {
   accentTo?: string
 }
 
-export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, onClose, accentFrom, accentTo }: WinCelebrationProps) {
+export function WinCelebration({ reward, emoji = '🎁', iconSrc, code, hidePlayAgain, onClose, accentFrom, accentTo }: WinCelebrationProps) {
   const router = useRouter()
   const displayCode = code ?? `LG-WIN7`
   const accent = accentFrom ?? '#7C3AED'
@@ -93,7 +95,11 @@ export function WinCelebration({ reward, emoji = '🎁', code, hidePlayAgain, on
           className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-5 select-none"
           style={{ background: `${accent}12`, border: `2.5px solid ${accent}30` }}
         >
-          <span className="text-6xl">{emoji}</span>
+          {iconSrc ? (
+            <img src={iconSrc} alt="" className="w-20 h-20" style={{ objectFit: 'contain' }} />
+          ) : (
+            <span className="text-6xl">{emoji}</span>
+          )}
         </motion.div>
 
         <motion.div

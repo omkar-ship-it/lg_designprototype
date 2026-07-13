@@ -6,6 +6,13 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
 }
 
+function wedgePath(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(cx, cy, r, endAngle)
+  const end = polarToCartesian(cx, cy, r, startAngle)
+  const largeArc = endAngle - startAngle <= 180 ? 0 : 1
+  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`
+}
+
 function burstPath(cx: number, cy: number, rOuter: number, rInner: number, points: number) {
   const pts: string[] = []
   for (let i = 0; i < points * 2; i++) {
@@ -20,14 +27,68 @@ function heartPath(cx: number, cy: number, s: number) {
   return `M ${cx},${cy + s * 0.32} C ${cx - s},${cy - s * 0.4} ${cx - s * 0.5},${cy - s} ${cx},${cy - s * 0.32} C ${cx + s * 0.5},${cy - s} ${cx + s},${cy - s * 0.4} ${cx},${cy + s * 0.32} Z`
 }
 
+const WHEEL_SLICES = ['☕', '🏷️', '🧁', '⭐', '🏷️', '🧁']
+
 export function SpinWheelArt({ className = '' }: { className?: string }) {
+  const rawId = useId()
+  const gid = `sw-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+  const cx = 60, cy = 56, r = 42
+
   return (
-    <img
-      src="/spin-wheel-icon.png"
-      alt="Spin the Wheel"
-      className={className}
-      style={{ objectFit: 'contain' }}
-    />
+    <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
+      <defs>
+        <radialGradient id={`${gid}-hub`} cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#FDE68A" />
+          <stop offset="100%" stopColor="#D97706" />
+        </radialGradient>
+        <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#4C1D95" floodOpacity="0.25" />
+        </filter>
+      </defs>
+
+      {/* pedestal */}
+      <rect x="46" y="100" width="28" height="7" rx="3.5" fill="#4C1D95" opacity="0.55" />
+      <rect x="55" y="94" width="10" height="10" rx="2" fill="#4C1D95" opacity="0.55" />
+
+      {/* wheel */}
+      <g filter={`url(#${gid}-shadow)`}>
+        <circle cx={cx} cy={cy} r={r + 4} fill="#4C1D95" />
+        {WHEEL_SLICES.map((emoji, i) => {
+          const startAngle = i * 60
+          const endAngle = startAngle + 60
+          const mid = (startAngle + endAngle) / 2
+          const labelPos = polarToCartesian(cx, cy, r * 0.62, mid)
+          const isPurple = i % 2 === 0
+          return (
+            <g key={i}>
+              <path d={wedgePath(cx, cy, r, startAngle, endAngle)} fill={isPurple ? '#7C3AED' : '#FFFFFF'} />
+              <text
+                x={labelPos.x}
+                y={labelPos.y}
+                fontSize="11"
+                textAnchor="middle"
+                dominantBaseline="central"
+              >
+                {emoji}
+              </text>
+            </g>
+          )
+        })}
+        <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#4C1D95" strokeWidth="2.5" />
+        {/* rim bulbs */}
+        {Array.from({ length: 12 }, (_, i) => {
+          const p = polarToCartesian(cx, cy, r + 4, i * 30)
+          return <circle key={i} cx={p.x} cy={p.y} r="1.6" fill="#FFFFFF" />
+        })}
+      </g>
+
+      {/* pointer */}
+      <path d={`M ${cx} 6 L ${cx - 6} 16 L ${cx + 6} 16 Z`} fill="#F59E0B" stroke="#B45309" strokeWidth="1" />
+
+      {/* hub */}
+      <circle cx={cx} cy={cy} r="9" fill={`url(#${gid}-hub)`} stroke="#B45309" strokeWidth="1" />
+      <circle cx={cx - 2.5} cy={cy - 2.5} r="2.2" fill="#FFFBEB" opacity="0.8" />
+    </svg>
   )
 }
 
