@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, CalendarDays, Gift } from 'lucide-react'
 import Link from 'next/link'
-import { hexToRgb } from '@/lib/utils'
+import { hexToRgb, hexMix } from '@/lib/utils'
 
 interface RubMeta {
   cardFrom: string
@@ -102,6 +102,8 @@ export function RubClaimScreen({
   const router = useRouter()
   const accentRgb = hexToRgb(meta.cardFrom).join(',')
   const deepRgb = hexToRgb(meta.cardTo).join(',')
+  const lightAccent = hexMix(meta.cardFrom, '#FFFFFF', 0.45)
+  const lightAccentRgb = hexToRgb(lightAccent).join(',')
   const confettiColors = [meta.cardFrom, meta.cardTo, '#67E8F9', '#A5F3FC', '#FBBF24', '#FFFFFF']
 
   const [claiming, setClaiming]         = useState(false)
@@ -134,8 +136,8 @@ export function RubClaimScreen({
   const emitSmoke = useCallback((count: number, intensity: number) => {
     const smokeColors = [
       `rgba(${accentRgb},0.75)`,
-      'rgba(253,186,116,0.70)',
-      'rgba(255,237,213,0.65)',
+      `rgba(${lightAccentRgb},0.70)`,
+      'rgba(255,255,255,0.65)',
       'rgba(255,255,255,0.72)',
       `rgba(${deepRgb},0.55)`,
     ]
@@ -150,11 +152,11 @@ export function RubClaimScreen({
         size:     (intensity > 60 ? 18 : 12) + Math.random() * 22,
         duration: 0.8 + Math.random() * 0.9,
         opacity:  0.5 + Math.random() * 0.38,
-        color:    isBright ? 'rgba(253,186,116,0.7)' : smokeColors[Math.floor(Math.random() * smokeColors.length)],
+        color:    isBright ? `rgba(${lightAccentRgb},0.8)` : smokeColors[Math.floor(Math.random() * smokeColors.length)],
       }
     })
     setParticles(prev => [...prev, ...newParticles].slice(-32))
-  }, [accentRgb, deepRgb])
+  }, [accentRgb, deepRgb, lightAccentRgb])
 
   const handleClaim = useCallback(() => {
     if (firedRef.current) return
@@ -395,7 +397,7 @@ export function RubClaimScreen({
                 disabled={claiming}
                 className="w-full py-4 rounded-2xl text-base font-extrabold text-white disabled:opacity-70"
                 style={{
-                  background: `linear-gradient(135deg, #67E8F9, ${meta.cardFrom}, ${meta.cardTo})`,
+                  background: `linear-gradient(135deg, ${lightAccent}, ${meta.cardFrom}, ${meta.cardTo})`,
                   boxShadow: `0 8px 32px rgba(${accentRgb},0.4)`,
                 }}
                 animate={!claiming
@@ -403,7 +405,7 @@ export function RubClaimScreen({
                   : {}}
                 transition={{ duration: 1.8, repeat: !claiming ? Infinity : 0, ease: 'easeInOut' }}
               >
-                {claiming ? '✨ Revealing your reward…' : '🪔 Rub to Reveal'}
+                {claiming ? '✨ Claiming your reward…' : '🪔 Rub to Claim'}
               </motion.button>
             </motion.div>
           )}
