@@ -20,6 +20,21 @@ function daysSince(iso: string) {
   return Math.floor((TODAY_DATE.getTime() - new Date(iso).getTime()) / 86400000)
 }
 
+// ── Summary stat period filter (mirrors the dashboard's date window) ──────────
+type Period = 'all' | '7d' | 'month' | '3m' | 'year'
+const PERIODS: { key: Period; label: string }[] = [
+  { key: 'all',   label: 'All time' },
+  { key: '7d',    label: '7 Days' },
+  { key: 'month', label: 'Month' },
+  { key: '3m',    label: '3 Months' },
+  { key: 'year',  label: 'Year' },
+]
+const PERIOD_DAYS: Record<Period, number> = { all: Infinity, '7d': 7, month: 30, '3m': 90, year: 365 }
+// Visits and points have no per-event dates on the Customer record (just lifetime totals),
+// so — same approach as the dashboard — they're scaled by an illustrative fraction rather
+// than filtered from real per-event data the way plays/wins/redeems are.
+const PERIOD_SCALE: Record<Period, number> = { all: 1, '7d': 0.08, month: 0.28, '3m': 0.55, year: 0.85 }
+
 type Segment = 'loyalist' | 'regular' | 'at-risk' | 'inactive'
 
 function getSegment(c: typeof customers[0]): Segment {
@@ -172,6 +187,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const customer = customers.find(c => c.id === id) ?? customers[0]
   const [tab, setTab] = useState<Tab>('overview')
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all')
+  const [period, setPeriod] = useState<Period>('all')
 
   const segment        = getSegment(customer)
   const segMeta        = SEGMENT_META[segment]
@@ -183,8 +199,18 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const winRatePct     = customer.gamesPlayed > 0
     ? Math.round((customer.rewardsEarned / customer.gamesPlayed) * 100) : 0
   const lifetimeValue  = Math.round(customer.totalVisits * 300)
+
+  // ── Period-scoped summary stats ──────────────────────────────────────────────
+  const periodDays    = PERIOD_DAYS[period]
+  const gamesInPeriod  = customer.gameHistory.filter(g => daysSince(g.playedAt) <= periodDays)
+  const playsInPeriod  = gamesInPeriod.length
+  const winsInPeriod   = gamesInPeriod.filter(g => g.won).length
+  const redeemsInPeriod = customer.rewards.filter(r =>
+    r.status === 'redeemed' && r.redeemedAt && daysSince(r.redeemedAt) <= periodDays
+  ).length
+  const visitsInPeriod = period === 'all' ? customer.totalVisits : Math.round(customer.totalVisits * PERIOD_SCALE[period])
   // Mirrors the customer-facing app's check-in convention of 100 pts per visit — no separate points ledger on the vendor side yet.
-  const points         = customer.totalVisits * 100
+  const pointsInPeriod = visitsInPeriod * 100
 
   const filteredHistory = visitHistory.filter(e => {
     if (visitFilter === 'all') return true
@@ -260,37 +286,48 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         </motion.div>
       )}
 
+      {/* ── Stat period filter ── */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.06 }}
+        className="inline-flex items-center gap-1 p-1.5 rounded-full bg-v-purple/5 border border-v-purple/10 w-fit mb-3">
+        {PERIODS.map(p => (
+          <button key={p.key} onClick={() => setPeriod(p.key)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap ${period === p.key ? 'bg-white text-v-text shadow-sm' : 'text-v-purple/50 hover:text-v-purple'}`}>
+            {p.label}
+          </button>
+        ))}
+      </motion.div>
+
       {/* ── Decision Stats ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         {[
           {
             label: 'No. of Visits',
-            value: customer.totalVisits,
-            sub: `${visitsPerMonth}× / month`,
+            value: visitsInPeriod,
+            sub: period === 'all' ? `${visitsPerMonth}× / month` : `est. for ${PERIODS.find(p => p.key === period)!.label.toLowerCase()}`,
             icon: '📅', color: '#7C3AED',
           },
           {
             label: 'Plays',
-            value: customer.gamesPlayed,
-            sub: `${customer.totalVisits} total visits`,
+            value: playsInPeriod,
+            sub: `${visitsInPeriod} visits`,
             icon: '🎮', color: '#DB2777',
           },
           {
             label: 'Wins',
-            value: customer.rewardsEarned,
-            sub: `of ${customer.gamesPlayed} plays`,
+            value: winsInPeriod,
+            sub: `of ${playsInPeriod} plays`,
             icon: '🎯', color: '#D97706',
           },
           {
             label: 'Redeems',
-            value: redemption.redeemed.length,
-            sub: `of ${redemption.total} rewards earned`,
+            value: redeemsInPeriod,
+            sub: `of ${winsInPeriod} rewards earned`,
             icon: '🎁', color: '#16A34A',
           },
           {
             label: 'Points',
-            value: points.toLocaleString(),
+            value: pointsInPeriod.toLocaleString(),
             sub: `100 pts / visit`,
             icon: '⭐', color: '#2563EB',
           },
