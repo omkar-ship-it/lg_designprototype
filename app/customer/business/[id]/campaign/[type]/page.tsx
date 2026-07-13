@@ -688,7 +688,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 participants={mechanic.participants}
                 playedToday={mechanic.playedToday}
                 playedLabel="Played today"
-                submitLabel={`Play Now ${meta.emoji}`}
+                submitLabel="Play Now"
                 digits={digits}
                 pressDigit={pressDigit}
                 pressBackspace={pressBackspace}
