@@ -266,10 +266,10 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             icon: '📅', color: '#7C3AED',
           },
           {
-            label: 'Win Rate',
-            value: `${winRatePct}%`,
-            sub: `${customer.rewardsEarned} of ${customer.gamesPlayed} plays`,
-            icon: '🎯', color: winRatePct >= 50 ? '#16A34A' : winRatePct > 0 ? '#D97706' : '#6B7280',
+            label: 'Redeems',
+            value: redemption.redeemed.length,
+            sub: `of ${redemption.total} rewards earned`,
+            icon: '🎁', color: '#16A34A',
           },
           {
             label: 'Pending Rewards',
