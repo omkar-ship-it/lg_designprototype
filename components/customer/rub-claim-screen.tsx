@@ -40,6 +40,9 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/** Taps directly on the lamp needed to claim — kept small so claiming stays quick, no drag-to-rub gesture required. */
+const REQUIRED_TAPS = 2
+
 const R    = 95
 const CX   = 110
 const CY   = 110
@@ -114,6 +117,7 @@ export function RubClaimScreen({
   const [genieVisible, setGenieVisible] = useState(false)
   const [ringClaimed, setRingClaimed]   = useState(false)
   const [pieces, setPieces]             = useState<ConfettiPiece[]>([])
+  const [tapCount, setTapCount]         = useState(0)
 
   const firedRef = useRef(false)
 
@@ -174,6 +178,22 @@ export function RubClaimScreen({
       setShowReward(true)
     }, 680)
   }, [emitSmoke])
+
+  // Tapping the lamp itself is the claim gesture — a small puff + wobble on the first tap,
+  // then the full reveal on the second, so claiming stays quick with no drag/rub gesture needed.
+  const handleLampTap = useCallback(() => {
+    if (firedRef.current || claiming) return
+    setTapCount(prev => {
+      const next = prev + 1
+      if (next >= REQUIRED_TAPS) {
+        handleClaim()
+      } else {
+        emitSmoke(8, 35)
+        if (typeof navigator !== 'undefined') navigator.vibrate?.(25)
+      }
+      return next
+    })
+  }, [claiming, emitSmoke, handleClaim])
 
   const removeParticle = useCallback((id: number) => {
     setParticles(prev => prev.filter(p => p.id !== id))
@@ -298,10 +318,13 @@ export function RubClaimScreen({
             )}
           </svg>
 
-          {/* Inner circle */}
+          {/* Inner circle — tapping it is the claim gesture */}
           <motion.div
             className="absolute inset-3 rounded-full flex items-center justify-center overflow-visible"
+            onClick={!claimed ? handleLampTap : undefined}
+            whileTap={!claimed ? { scale: 0.96 } : {}}
             style={{
+              cursor: !claimed ? 'pointer' : 'default',
               background: `radial-gradient(circle at 40% 35%, rgba(${accentRgb},0.55) 0%, rgba(${deepRgb},0.85) 70%)`,
               boxShadow: ringClaimed
                 ? `0 0 0 2px rgba(${accentRgb},0.70), 0 0 50px 20px rgba(${accentRgb},0.38), 0 0 100px 34px rgba(${deepRgb},0.22), inset 0 0 60px 20px rgba(253,186,116,0.14)`
@@ -334,11 +357,15 @@ export function RubClaimScreen({
                   key="lamp"
                   animate={claiming
                     ? { rotate: [-9, 9, -7, 7, -4, 4, 0], scale: [1, 1.06, 1] }
-                    : { scale: [1, 1.02, 1] }
+                    : tapCount > 0
+                      ? { rotate: [0, -8, 8, -5, 5, 0], scale: [1, 1.05, 1] }
+                      : { scale: [1, 1.02, 1] }
                   }
                   transition={claiming
                     ? { duration: 0.4, ease: 'easeInOut' }
-                    : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
+                    : tapCount > 0
+                      ? { duration: 0.45, ease: 'easeInOut' }
+                      : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
                   }
                   style={{
                     filter: claiming
@@ -383,30 +410,31 @@ export function RubClaimScreen({
           </motion.div>
         </div>
 
-        {/* Claim button */}
+        {/* Tap hint — the lamp itself is the claim button now */}
         <AnimatePresence>
           {!claimed && (
             <motion.div
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full max-w-xs mb-5"
+              className="w-full max-w-xs mb-5 flex flex-col items-center gap-2.5"
             >
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleClaim}
-                disabled={claiming}
-                className="w-full py-4 rounded-2xl text-base font-extrabold text-white disabled:opacity-70"
-                style={{
-                  background: `linear-gradient(135deg, ${lightAccent}, ${meta.cardFrom}, ${meta.cardTo})`,
-                  boxShadow: `0 8px 32px rgba(${accentRgb},0.4)`,
-                }}
-                animate={!claiming
-                  ? { boxShadow: [`0 8px 32px rgba(${accentRgb},0.3)`, `0 8px 48px rgba(${accentRgb},0.6)`, `0 8px 32px rgba(${accentRgb},0.3)`] }
-                  : {}}
-                transition={{ duration: 1.8, repeat: !claiming ? Infinity : 0, ease: 'easeInOut' }}
+              <motion.p
+                key={claiming ? 'claiming' : tapCount}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-sm font-bold text-gray-700"
               >
-                {claiming ? '✨ Claiming your reward…' : '🪔 Rub to Claim'}
-              </motion.button>
+                {claiming ? '✨ Claiming your reward…' : tapCount > 0 ? 'One more tap!' : 'Tap the lamp to claim'}
+              </motion.p>
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: REQUIRED_TAPS }, (_, i) => (
+                  <span
+                    key={i}
+                    className="w-2 h-2 rounded-full transition-colors"
+                    style={{ background: i < tapCount ? meta.cardFrom : `${meta.cardFrom}30` }}
+                  />
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
