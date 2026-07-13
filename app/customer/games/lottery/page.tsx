@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import { MECHANIC_META, hexToRgb, hexMix } from '@/lib/utils'
+import { MECHANIC_META, hexToRgb } from '@/lib/utils'
 
 const meta = MECHANIC_META.lottery
 const accentRgb = hexToRgb(meta.cardFrom).join(',')
@@ -200,18 +200,18 @@ export default function LotteryPage() {
 
                 {/* Ticket body */}
                 <div className="px-5 py-6 text-center"
-                  style={{ background: `linear-gradient(180deg, ${hexMix(meta.cardTo, '#000000', 0.6)} 0%, #0D0B1E 100%)` }}>
-                  <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Your ticket number</p>
+                  style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${meta.cardFrom}0D 100%)` }}>
+                  <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: meta.cardTo, opacity: 0.5 }}>Your ticket number</p>
                   <motion.p
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 280, damping: 14, delay: 0.5 }}
                     className="text-6xl font-black tracking-widest mb-1"
-                    style={{ color: meta.cardFrom, textShadow: `0 0 30px rgba(${accentRgb},0.5)` }}
+                    style={{ color: meta.cardFrom }}
                   >
                     #{padTicketNo(ticketNo)}
                   </motion.p>
-                  <p className="text-xs text-white/30">
+                  <p className="text-xs" style={{ color: meta.cardTo, opacity: 0.55 }}>
                     Ticket {tickets} of yours · Draw {DRAW_DATE}
                   </p>
                 </div>
@@ -221,9 +221,9 @@ export default function LotteryPage() {
 
                 {/* Ticket footer */}
                 <div className="px-5 py-2.5 flex items-center justify-between"
-                  style={{ background: '#0D0B1E' }}>
-                  <p className="font-mono text-[9px] text-white/20 tracking-wider">{serialNo}</p>
-                  <p className="text-[9px] text-white/15">Terms apply</p>
+                  style={{ background: `${meta.cardFrom}0D` }}>
+                  <p className="font-mono text-[9px] tracking-wider" style={{ color: meta.cardTo, opacity: 0.4 }}>{serialNo}</p>
+                  <p className="text-[9px]" style={{ color: meta.cardTo, opacity: 0.35 }}>Terms apply</p>
                 </div>
               </motion.div>
 
