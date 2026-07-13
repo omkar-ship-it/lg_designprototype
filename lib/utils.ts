@@ -105,7 +105,7 @@ export const MECHANIC_META: Record<MechanicType, { label: string; badgeBg: strin
   lottery: { label: 'LOTTERY',      badgeBg: '#EDE9FE', badgeText: '#4C3FA8', cardFrom: '#7C6EF0', cardTo: '#4C3FA8', emoji: '🎟️' },
   checkin: { label: 'CHECK-IN',     badgeBg: '#D1FAE5', badgeText: '#065F46', cardFrom: '#10B981', cardTo: '#047857', emoji: '📍' },
   buyxgety: { label: 'BUY X GET Y', badgeBg: '#DCFCE7', badgeText: '#166534', cardFrom: '#16A34A', cardTo: '#15803D', emoji: '💰' },
-  coupon:  { label: 'COUPON CODES', badgeBg: '#FFEDD5', badgeText: '#9A3412', cardFrom: '#EA580C', cardTo: '#9A3412', emoji: '🎫' },
+  coupon:  { label: 'COUPON CODES', badgeBg: '#CFFAFE', badgeText: '#155E75', cardFrom: '#06B6D4', cardTo: '#0E7490', emoji: '🎫' },
   flash:   { label: 'FLASH DEAL',   badgeBg: '#DBEAFE', badgeText: '#1E40AF', cardFrom: '#2563EB', cardTo: '#1E3A8A', emoji: '⚡' },
   friend:  { label: 'BRING A FRIEND', badgeBg: '#FFE4E6', badgeText: '#9F1239', cardFrom: '#F43F5E', cardTo: '#9F1239', emoji: '👫' },
   groupunlock: { label: 'COMMUNITY OFFER', badgeBg: '#CCFBF1', badgeText: '#115E59', cardFrom: '#0D9488', cardTo: '#115E59', emoji: '🤝' },

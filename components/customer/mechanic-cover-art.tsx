@@ -136,32 +136,32 @@ export function CouponTicketArt({ className = '' }: { className?: string }) {
     <svg viewBox="0 0 170 100" className={className} aria-hidden="true">
       <defs>
         <filter id={`${gid}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7C2D12" floodOpacity="0.28" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0B4A5C" floodOpacity="0.28" />
         </filter>
       </defs>
 
       <g filter={`url(#${gid}-shadow)`}>
-        <rect x="10" y="14" width="140" height="72" rx="10" fill="#FFF7ED" />
+        <rect x="10" y="14" width="140" height="72" rx="10" fill="#ECFBFE" />
         {/* perforation notches */}
-        <circle cx={perfX} cy="14" r="6" fill="#EA580C" />
-        <circle cx={perfX} cy="86" r="6" fill="#EA580C" />
-        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#EA580C" strokeWidth="2" strokeDasharray="4 4" />
+        <circle cx={perfX} cy="14" r="6" fill="#06B6D4" />
+        <circle cx={perfX} cy="86" r="6" fill="#06B6D4" />
+        <line x1={perfX} y1="24" x2={perfX} y2="76" stroke="#06B6D4" strokeWidth="2" strokeDasharray="4 4" />
 
         {/* left zone: tag icon + code lines */}
-        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#9A3412" strokeWidth="2.5" transform="rotate(-8 36 40)" />
-        <circle cx="32" cy="38" r="1.4" fill="#9A3412" transform="rotate(-8 36 40)" />
-        <rect x="50" y="38" width="42" height="4" rx="2" fill="#FDBA74" />
-        <rect x="50" y="48" width="30" height="4" rx="2" fill="#FED7AA" />
+        <rect x="28" y="34" width="16" height="12" rx="2" fill="none" stroke="#0E7490" strokeWidth="2.5" transform="rotate(-8 36 40)" />
+        <circle cx="32" cy="38" r="1.4" fill="#0E7490" transform="rotate(-8 36 40)" />
+        <rect x="50" y="38" width="42" height="4" rx="2" fill="#67E8F9" />
+        <rect x="50" y="48" width="30" height="4" rx="2" fill="#A5F3FC" />
 
         {/* barcode */}
         {holes.map((y, i) => (
-          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#7C2D12" opacity="0.85" />
+          <rect key={i} x={120 + (i % 3) * 6} y="30" width={i % 2 === 0 ? 2.5 : 1.5} height="40" fill="#0B4A5C" opacity="0.85" />
         ))}
       </g>
 
       {/* percent starburst badge */}
       <g filter={`url(#${gid}-shadow)`}>
-        <path d={burstPath(148, 82, 20, 15, 10)} fill="#EA580C" />
+        <path d={burstPath(148, 82, 20, 15, 10)} fill="#06B6D4" />
         <text x="148" y="82" fontSize="15" fontWeight="700" fill="#FFFFFF" textAnchor="middle" dominantBaseline="central">%</text>
       </g>
     </svg>

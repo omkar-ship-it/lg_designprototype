@@ -40,7 +40,7 @@ export const HERO_COVER: Partial<Record<MechanicType, HeroCover>> = {
   },
   coupon: {
     headline: 'Exclusive Savings', tagline: 'Apply your code at checkout and save more.',
-    bgFrom: '#FFF7ED', bgTo: '#FFEDD5', textColor: '#7C2D12', layout: 'side', art: CouponTicketArt,
+    bgFrom: '#ECFBFE', bgTo: '#B4E1EB', textColor: '#0B4A5C', layout: 'side', art: CouponTicketArt,
     features: [
       { icon: Tag, label: 'Extra Savings' },
       { icon: ShoppingCart, label: 'Easy to Use' },

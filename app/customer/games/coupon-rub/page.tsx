@@ -46,7 +46,7 @@ const STARS = [
   { x: 57, y: 62, s:  5, o: 0.12 },
 ]
 
-const CONFETTI_COLORS = [meta.cardFrom, meta.cardTo, '#FDBA74', '#FED7AA', '#FBBF24', '#FFFFFF']
+const CONFETTI_COLORS = [meta.cardFrom, meta.cardTo, '#67E8F9', '#A5F3FC', '#FBBF24', '#FFFFFF']
 
 type SmokeParticle = {
   id: number
@@ -379,7 +379,7 @@ export default function CouponRubPage() {
                 disabled={claiming}
                 className="w-full py-4 rounded-2xl text-base font-extrabold text-white disabled:opacity-70"
                 style={{
-                  background: `linear-gradient(135deg, #FDBA74, ${meta.cardFrom}, ${meta.cardTo})`,
+                  background: `linear-gradient(135deg, #67E8F9, ${meta.cardFrom}, ${meta.cardTo})`,
                   boxShadow: `0 8px 32px rgba(${accentRgb},0.4)`,
                 }}
                 animate={!claiming
