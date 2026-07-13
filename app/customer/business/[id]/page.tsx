@@ -158,7 +158,7 @@ function GroupUnlockCTA({ m, meta, onReserve }: { m: Mechanic; meta: typeof MECH
   if (m.hasReserved && groupFull) {
     return (
       <Link
-        href={`/customer/games/${m.type}`}
+        href={m.claimRoute ?? `/customer/games/${m.type}`}
         onClick={e => e.stopPropagation()}
         className="block w-full py-2.5 rounded-xl text-xs font-bold text-white text-center transition-all active:scale-95"
         style={{ background: `linear-gradient(135deg, ${meta.cardFrom}, ${meta.cardTo})` }}
@@ -288,8 +288,10 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   const joinCampaign = () => {
     if (!activeCampaign || digits.some(d => !d)) return
     closeCampaign()
-    const base = activeCampaign.type === 'coupon' && activeCampaign.couponClaimExperience === 'rub'
-      ? '/customer/games/coupon-rub'
+    // groupunlock only reaches this PIN sheet via "Reserve a Spot" — claimRoute is for the
+    // separate "Claim Now" link in GroupUnlockCTA, shown once the group is full.
+    const base = activeCampaign.claimRoute && activeCampaign.type !== 'groupunlock'
+      ? activeCampaign.claimRoute
       : MECHANIC_GAME_LINKS[activeCampaign.type]
     // Stamp: code is the participation code — auto-apply on landing
     router.push(activeCampaign.type === 'stamp' ? `${base}?stamp=1` : base)

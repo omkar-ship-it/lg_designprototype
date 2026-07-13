@@ -291,8 +291,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   const joinCampaign = () => {
     if (digits.some(d => !d)) return
-    const base = mechanic.type === 'coupon' && mechanic.couponClaimExperience === 'rub'
-      ? '/customer/games/coupon-rub'
+    // groupunlock's "Reserve a Spot" step always goes to the standard route — claimRoute only
+    // applies to the "Claim Now" step once the group is full and this camper has reserved.
+    const isGroupReserveStep = mechanic.type === 'groupunlock'
+      && !(mechanic.hasReserved && (mechanic.groupJoined ?? 0) >= (mechanic.groupTarget ?? Infinity))
+    const base = !isGroupReserveStep && mechanic.claimRoute
+      ? mechanic.claimRoute
       : MECHANIC_GAME_LINKS[mechanic.type as MechanicType]
     router.push(mechanic.type === 'stamp' ? `${base}?stamp=1` : base)
   }

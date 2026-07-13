@@ -313,6 +313,8 @@ export interface CustomerBusiness {
     totalRewards: number
     activeToday?: number
     playedToday?: boolean
+    /** Overrides the mechanic type's default game route for this specific campaign instance — e.g. a bespoke rub-to-reveal claim experience instead of the standard claim screen. */
+    claimRoute?: string
     // stamp
     stampsCollected?: number
     totalStamps?: number
@@ -336,7 +338,6 @@ export interface CustomerBusiness {
     couponClaimed?: number
     couponRedeemBefore?: string
     couponTerms?: string
-    couponClaimExperience?: 'rub'
     // flash
     flashReward?: string
     flashTotalSlots?: number
