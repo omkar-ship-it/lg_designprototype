@@ -178,6 +178,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const winRatePct     = customer.gamesPlayed > 0
     ? Math.round((customer.rewardsEarned / customer.gamesPlayed) * 100) : 0
   const lifetimeValue  = Math.round(customer.totalVisits * 300)
+  // Mirrors the customer-facing app's check-in convention of 100 pts per visit — no separate points ledger on the vendor side yet.
+  const points         = customer.totalVisits * 100
 
   const filteredHistory = visitHistory.filter(e => {
     if (visitFilter === 'all') return true
@@ -188,9 +190,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const isAtRisk   = segment === 'at-risk' || segment === 'inactive'
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'overview',   label: 'Overview' },
-    { key: 'visits',     label: 'Visit History',   count: customer.totalVisits },
     { key: 'campaigns',  label: 'Campaigns',        count: campaignAct.active.length + campaignAct.previous.length },
     { key: 'rewards',    label: 'Rewards',          count: redemption.pending.length || undefined },
+    { key: 'visits',     label: 'Visit History',   count: customer.totalVisits },
   ]
 
   return (
@@ -270,17 +272,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             icon: '🎯', color: winRatePct >= 50 ? '#16A34A' : winRatePct > 0 ? '#D97706' : '#6B7280',
           },
           {
-            label: 'Lifetime Value',
-            value: `₹${lifetimeValue.toLocaleString()}`,
-            sub: `est. ₹300/visit`,
-            icon: '💰', color: '#D97706',
-          },
-          {
             label: 'Pending Rewards',
             value: redemption.pending.length,
             sub: redemption.pending.length > 0 ? 'Needs redemption' : 'All redeemed',
             icon: redemption.pending.length > 0 ? '🔔' : '✅',
             color: redemption.pending.length > 0 ? '#C2410C' : '#16A34A',
+          },
+          {
+            label: 'Points',
+            value: points.toLocaleString(),
+            sub: `100 pts / visit`,
+            icon: '⭐', color: '#D97706',
           },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}>
